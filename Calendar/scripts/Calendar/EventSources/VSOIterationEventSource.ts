@@ -18,13 +18,13 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     public name = "Iterations";
     public order = 20;
     public background = true;
-    private _iterations: Calendar_Contracts.CalendarEvent[];
+    private _events: Calendar_Contracts.CalendarEvent[];
 
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
 
         var result: Calendar_Contracts.CalendarEvent[] = [];
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
-        this._iterations = null;
+        this._events = null;
 
         var webContext = VSS.getWebContext();
         var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
@@ -52,7 +52,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
             });
 
             result.sort((a, b) => { return a.startDate.valueOf() - b.startDate.valueOf(); });
-            this._iterations = result;
+            this._events = result;
             deferred.resolve(result);
 
         },
@@ -63,18 +63,10 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
         return deferred.promise;
     }
 
-    private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent) : boolean {
-        if (event.startDate && event.endDate) {
-            var today: Date = Utils_Core.DateUtils.shiftToUTC(new Date());
-            return today >= event.startDate && today <= event.endDate;
-        }
-        return false;
-    }
-
     public getCategories(query: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.IEventCategory[]> {
         var deferred = Q.defer<any>();
-        if (this._iterations) {
-            deferred.resolve(this._getCategoryData(this._iterations.slice(0), query));
+        if (this._events) {
+            deferred.resolve(this._getCategoryData(this._events.slice(0), query));
             
         }
         else {
@@ -116,5 +108,13 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
             });
 
         return categories;
+    }
+
+    private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {
+        if (event.startDate && event.endDate) {
+            var today: Date = Utils_Core.DateUtils.shiftToUTC(new Date());
+            return today >= event.startDate && today <= event.endDate;
+        }
+        return false;
     }
 }

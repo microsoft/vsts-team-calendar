@@ -114,26 +114,6 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
         return deferred.promise;
     }
-    private _getCategoryData(events: Calendar_Contracts.CalendarEvent[], query: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {
-        var memberMap: { [id: string]: boolean } = {};
-        var categories: Calendar_Contracts.IEventCategory[] = [];
-        $.each(events,(index: number, event: Calendar_Contracts.CalendarEvent) => {
-            if (Calendar_DateUtils.eventIn(event, query)) {
-                var member = <Work_Contracts.Member>(<any>event).member;
-                if (!memberMap[member.id]) {
-                    memberMap[member.id] = true;
-                    categories.push({
-                        title: member.displayName,
-                        imageUrl: member.imageUrl
-                    });
-                }
-
-                // TODO calculate the days off
-            }
-        });
-
-        return categories;
-    }
 
     public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         this._events = null;
@@ -287,6 +267,27 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         });
 
         return deferred.promise;
+    }
+
+    private _getCategoryData(events: Calendar_Contracts.CalendarEvent[], query: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {
+        var memberMap: { [id: string]: boolean } = {};
+        var categories: Calendar_Contracts.IEventCategory[] = [];
+        $.each(events,(index: number, event: Calendar_Contracts.CalendarEvent) => {
+            if (Calendar_DateUtils.eventIn(event, query)) {
+                var member = <Work_Contracts.Member>(<any>event).member;
+                if (!memberMap[member.id]) {
+                    memberMap[member.id] = true;
+                    categories.push({
+                        title: member.displayName,
+                        imageUrl: member.imageUrl
+                    });
+                }
+
+                // TODO calculate the days off
+            }
+        });
+
+        return categories;
     }
 
     private _buildTeamImageUrl(hostUri: string, id: string): string {

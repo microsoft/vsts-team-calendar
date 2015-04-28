@@ -802,7 +802,7 @@ var VSS;
     }
     VSS.api = api;
     function setupAmdLoader() {
-        var rootUri = getRootUri(hostPageContext.webContext);
+        var hostRootUri = getRootUri(hostPageContext.webContext);
         // Place context so that VSS scripts pick it up correctly
         window.__vssPageContext = hostPageContext;
         // MS Ajax config needs to exist before loading MS Ajax library
@@ -812,7 +812,7 @@ var VSS;
             hostPageContext.coreReferences.stylesheets.forEach(function (stylesheet) {
                 if (stylesheet.isCoreStylesheet) {
                     var cssLink = document.createElement("link");
-                    cssLink.href = getAbsoluteUrl(stylesheet.url, rootUri);
+                    cssLink.href = getAbsoluteUrl(stylesheet.url, hostRootUri);
                     cssLink.rel = "stylesheet";
                     safeAppendToDom(cssLink, "head");
                 }
@@ -835,54 +835,87 @@ var VSS;
                         alreadyLoaded = !!(global.Sys && global.Sys.Browser);
                     }
                     if (!alreadyLoaded) {
-                        scripts.push({ source: getAbsoluteUrl(script.url, rootUri) });
+                        scripts.push({ source: getAbsoluteUrl(script.url, hostRootUri) });
                     }
                 }
             });
         }
+        // Define a new config for extension loader
+        var newConfig = {
+            baseUrl: extensionContext.baseUri,
+            paths: {},
+            shim: {}
+        };
+        // See whether any configuration specified initially. If yes, copy them to new config
+        if (initOptions.moduleLoaderConfig) {
+            if (initOptions.moduleLoaderConfig.baseUrl) {
+                newConfig.baseUrl = initOptions.moduleLoaderConfig.baseUrl;
+            }
+            // Copy paths
+            extendLoaderPaths(initOptions.moduleLoaderConfig, newConfig);
+            // Copy shim
+            extendLoaderShim(initOptions.moduleLoaderConfig, newConfig);
+        }
+        // Use some of the host config to support VSSF and TFS platform as well as some 3rd party libraries
         if (hostPageContext.moduleLoaderConfig) {
-            var loaderConfig = hostPageContext.moduleLoaderConfig;
-            if (loaderConfig) {
-                loaderConfig.baseUrl = getAbsoluteUrl(loaderConfig.baseUrl, rootUri);
-                if (loaderConfig.paths) {
-                    for (var key in loaderConfig.paths) {
-                        if (loaderConfig.paths.hasOwnProperty(key)) {
-                            loaderConfig.paths[key] = translateLoaderConfigUrl(loaderConfig.paths[key], rootUri, loaderConfig.baseUrl);
-                        }
-                    }
+            // Copy host shim
+            extendLoaderShim(hostPageContext.moduleLoaderConfig, newConfig);
+            // Get host base URL
+            var hostBaseUrl = hostPageContext.moduleLoaderConfig.baseUrl || "";
+            extendLoaderPaths(hostPageContext.moduleLoaderConfig, newConfig, function (path, value) {
+                if (path === "VSS/Resources") {
+                    // VSS Resources
+                    return hostRootUri + value + path.substr(path.length);
                 }
-                if (initOptions.moduleLoaderConfig) {
-                    var extensionBaseUrl = initOptions.moduleLoaderConfig.baseUrl || extensionContext.baseUri || "/";
-                    if (extensionBaseUrl[extensionBaseUrl.length - 1] !== "/") {
-                        extensionBaseUrl += "/";
-                    }
-                    if (initOptions.moduleLoaderConfig.paths) {
-                        for (var key in initOptions.moduleLoaderConfig.paths) {
-                            if (initOptions.moduleLoaderConfig.paths.hasOwnProperty(key)) {
-                                var value = initOptions.moduleLoaderConfig.paths[key];
-                                // Prepend the base url unless the path is absolute (http://) or rooted (starts with /)
-                                if (!value.match("^https?://") && value[0] !== "/") {
-                                    value = extensionBaseUrl + value;
-                                }
-                                loaderConfig.paths[key] = value;
-                            }
-                        }
-                    }
-                    if (initOptions.moduleLoaderConfig.shim) {
-                        for (var key in initOptions.moduleLoaderConfig.shim) {
-                            if (initOptions.moduleLoaderConfig.shim.hasOwnProperty(key)) {
-                                loaderConfig.shim[key] = initOptions.moduleLoaderConfig.shim[key];
-                            }
-                        }
-                    }
+                else if (path.indexOf("VSS/") === 0) {
+                    // Path to bundle if minified
+                    return hostRootUri + hostBaseUrl + value;
                 }
-                scripts.push({ content: "require.config(" + JSON.stringify(loaderConfig) + ");" });
+                return "";
+            });
+            // Use some known paths from host
+            if (hostPageContext.moduleLoaderConfig.contributionPaths) {
+                hostPageContext.moduleLoaderConfig.contributionPaths.forEach(function (path) {
+                    // Translate path to absolute URL pointing to host
+                    newConfig.paths[path] = hostRootUri + hostBaseUrl + path;
+                });
             }
         }
+        scripts.push({ content: "require.config(" + JSON.stringify(newConfig) + ");" });
         addScriptElements(scripts, 0, function () {
             loaderConfigured = true;
             triggerReady();
         });
+    }
+    function extendLoaderPaths(source, target, pathTranslator) {
+        if (source.paths) {
+            if (!target.paths) {
+                target.paths = {};
+            }
+            for (var key in source.paths) {
+                if (source.paths.hasOwnProperty(key)) {
+                    var value = source.paths[key];
+                    if (pathTranslator) {
+                        value = pathTranslator(key, source.paths[key]);
+                    }
+                    if (value) {
+                        target.paths[key] = value;
+                    }
+                }
+            }
+        }
+    }
+    function extendLoaderShim(source, target) {
+        if (source.shim) {
+            if (!target.shim) {
+                target.shim = {};
+            }
+            for (var key in source.shim) {
+                if (source.shim.hasOwnProperty(key)) {
+                    target.shim[key] = source.shim[key];
+                }
+            }
+        }
     }
     function getRootUri(webContext) {
         var hostContext = (webContext.account || webContext.host);

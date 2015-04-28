@@ -313,11 +313,6 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             for (var i = 0; i < fns.length; ++i) {
                 var fn = fns[i];
 
-                // The eventAfterAllRender callback only takes a view param
-                //if (args.length === 1) {
-                //    // TODO: This can't be optimized
-                //    view = <any>event;
-                //}
                 var result = fn(event, updatedElement, view);
                 if (callbackType === FullCalendarCallbackType.eventRender && result === false) {
                     broken = true;

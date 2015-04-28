@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar built-in services</title>
+    <script src="/sdk/Scripts/VSS.SDK.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            setupModuleLoader: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Calendar/": "/scripts/Calendar/"
+                }
+            }
+        });
+        VSS.require([
+            "Calendar/EventSources/FreeFormEventsSource",
+            "Calendar/EventSources/VSOCapacityEventSource",
+            "Calendar/EventSources/VSOIterationEventSource"
+        ], function (FreeFormEventsSource, VSOCapacityEventSource, VSOIterationEventSource) {
+
+            VSS.register("freeForm", function (context) {
+                return new FreeFormEventsSource.FreeFormEventsSource();
+            });
+            VSS.register("daysOff", function (context) {
+                return new VSOCapacityEventSource.VSOCapacityEventSource();
+            });
+            VSS.register("iterations", function (context) {
+                return new VSOIterationEventSource.VSOIterationEventSource();
+            });
+
+            VSS.notifyLoadSucceeded();
+        });
+    </script>
+</body>
+</html>

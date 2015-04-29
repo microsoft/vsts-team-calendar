@@ -19,7 +19,7 @@
                 "usesSdk": true
             }
         ],
-        "microsoft.calendar#eventSources": [
+        "#eventSources": [
             {
                 "id": "freeForm",
                 "uri": "calendarServices.html"

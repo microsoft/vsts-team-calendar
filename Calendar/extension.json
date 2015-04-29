@@ -1,5 +1,5 @@
 {
-    "namespace": "Microsoft.calendar",
+    "namespace": "microsoft.calendar",
     "version": "0.0.1",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
@@ -7,7 +7,7 @@
         "name": "Microsoft and the community"
     },
     "baseUri": "https://localhost:44302",
-    "icon": "https://localhost:44302/img/calendar-logo.png",
+    "icon": "https://localhost:44302/images/calendar-logo.png",
     "contributions": {
         "vss.web#hubs": [
             {
@@ -19,7 +19,7 @@
                 "usesSdk": true
             }
         ],
-        "Microsoft.calendar#eventSources": [
+        "microsoft.calendar#eventSources": [
             {
                 "id": "freeForm",
                 "uri": "calendarServices.html"

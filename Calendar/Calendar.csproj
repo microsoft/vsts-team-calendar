@@ -61,6 +61,8 @@
     <Content Include="calendarServices.html" />
     <Content Include="calendar.html" />
     <Content Include="css\site.css" />
+    <Content Include="images\calendar-logo.png" />
+    <Content Include="images\calendar-screen-shot.png" />
     <Content Include="sdk\Scripts\VSS.SDK.js" />
   </ItemGroup>
   <ItemGroup>
@@ -175,7 +177,6 @@
     <Content Include="css\site.css.map" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="extension-vsoalmcalendar.json" />
     <Content Include="extension.json" />
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +184,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="web.config" />
+    <Content Include="extension-tryit.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

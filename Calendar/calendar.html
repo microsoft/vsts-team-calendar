@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Calendar App</title>
+    <title>Calendar Extension</title>
     <script src="/sdk/Scripts/VSS.SDK.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.3.1/fullcalendar.min.css" />
     <link rel="stylesheet" href="/css/site.css" />
@@ -24,11 +24,11 @@
 
         // Wait for the SDK to be initialized
         VSS.ready(function () {
-            require(["Calendar/app"], function (items) { });
+            require(["Calendar/extension"], function (items) { });
             VSS.notifyLoadSucceeded();
         });
     </script>
-    <div id="calendar-app">
+    <div id="calendar-extension">
         <div class="splitter horizontal right">
             <div class="leftPane">
                 <div class="calendar-view">

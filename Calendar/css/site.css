@@ -1,41 +1,41 @@
-#calendar-app {
+#calendar-extension {
     font-size: 14px;
     position: fixed;
     width: 100%;
     height: 100%;
 }
 
-    #calendar-app .fc-bg .fc-today {
+    #calendar-extension .fc-bg .fc-today {
         background: #BDD7EE;
     }
 
-    #calendar-app > .splitter > .leftPane {
+    #calendar-extension > .splitter > .leftPane {
         width: 75%;
         overflow: auto;
     }
 
-    #calendar-app > .splitter > .handleBar {
+    #calendar-extension > .splitter > .handleBar {
         left: 75%;
     }
 
-    #calendar-app > .splitter > .rightPane {
+    #calendar-extension > .splitter > .rightPane {
         left: 75%;
         overflow: auto;
     }
 
-    #calendar-app .calendar-view {        
+    #calendar-extension .calendar-view {        
         padding: 10px 10px 0px 10px;
     }
 
-        #calendar-app .calendar-view .menu-container {        
+        #calendar-extension .calendar-view .menu-container {        
             border-bottom: none;
         }
 
-        #calendar-app .calendar-view .calendar-container {
+        #calendar-extension .calendar-view .calendar-container {
             margin: 0px 10px 0px 10px;
         }
 
-        #calendar-app .calendar-view td span.sprint-label {
+        #calendar-extension .calendar-view td span.sprint-label {
             float: left;
             font-size: 11px;
             font-weight: bold;
@@ -44,15 +44,15 @@
             margin-left: 4px;
         }
 
-        #calendar-app .calendar-view td.fc-bgevent.sprint-event {
+        #calendar-extension .calendar-view td.fc-bgevent.sprint-event {
             background-color: inherit;
         }
 
-            #calendar-app .calendar-view td.fc-bgevent.sprint-event.hover {
+            #calendar-extension .calendar-view td.fc-bgevent.sprint-event.hover {
                 background-color: #ddd;
             }
 
-    #calendar-app .calendar-title {
+    #calendar-extension .calendar-title {
         font-family: Segoe UI Light,Segoe UI,Tahoma,Arial,Verdana;
         font-weight: lighter;
         font-size: 18px;
@@ -128,12 +128,12 @@ th.fc-day-header {
     text-align: left;
 }
 
-#calendar-app div.fc-content {
+#calendar-extension div.fc-content {
     padding-top: 2px;
     padding-bottom: 2px;
 }
 
-#calendar-app a.fc-event {
+#calendar-extension a.fc-event {
     border-radius: inherit;
 }
 

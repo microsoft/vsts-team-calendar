@@ -1,6 +1,3 @@
-/// <reference path='../VSS/References/VSS-Common.d.ts' />
-/// <reference path='../VSS/VSS.SDK.d.ts' />
-
 /**
 * Interface for a calendar event provider
 */

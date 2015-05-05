@@ -78,100 +78,10 @@
     <TypeScriptCompile Include="scripts\Calendar\Views.ts" />
     <TypeScriptCompile Include="scripts\ref\fullCalendar\fullCalendar.d.ts" />
     <TypeScriptCompile Include="scripts\ref\moment\moment.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Build\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Build\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Core\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Core\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\DistributedTask\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\DistributedTask\TaskAgentRestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\DistributedTask\TaskRestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\TestManagement\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\TestManagement\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\VersionControl\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\VersionControl\GitRestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\VersionControl\TfvcRestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\WorkItemTracking\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\WorkItemTracking\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Work\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\TFS\Work\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Adapters\Knockout.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Ajax.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Artifacts\Constants.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Artifacts\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Authentication\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Authentication\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Authentication\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Common\Constants\Platform.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Common\Contracts\FormInput.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Common\Contracts\Platform.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Common\Contracts\System.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Context.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Contributions\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Contributions\Controls.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Contributions\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Contributions\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Common.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Data.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\EditableGrid.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\FileInput.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Grids.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Hubs.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Menus.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Navigation.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Search.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\TreeView.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Controls\Validation.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\CrossService\Ajax.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\CrossService\Proxy.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\DelegatedAuthorization\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Diag.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FeatureAvailability\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FeatureAvailability\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FeatureAvailability\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FileContainer\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FileContainer\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\FileContainer\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Host.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Identities\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Identities\Picker\Controls.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Identities\Picker\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Identities\Picker\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Identities\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Locations.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Locations\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Locations\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Operations\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Operations\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\handlebars.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\jquery.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\knockout.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\q.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\VSS-Common.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\VSS.SDK.Interfaces.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\References\VSS.WebPlatform.Interfaces.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Resources\VSS.Resources.Common.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Resources\VSS.Resources.Platform.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Resources\VSS.Resources.TFSSeedFileResources.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\SDK.Host.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\SDK.Interfaces.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Search.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Serialization.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Service.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Settings.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Telemetry\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Telemetry\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Telemetry\Services.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Utils\Core.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Utils\Html.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\Utils\UI.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\VSS.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\VSS.SDK.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\WebApi\Constants.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\WebApi\Contracts.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\WebApi\RestClient.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\XDM.d.ts" />
-    <TypeScriptCompile Include="scripts\VSS\XDM.Host.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\VSS\jquery.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\VSS\knockout.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\VSS\q.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\VSS\VSS.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="css\site.css.map" />
@@ -183,14 +93,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="web.config" />
     <Content Include="extension-tryit.json" />
-    <None Include="web.Debug.config">
-      <DependentUpon>web.config</DependentUpon>
-    </None>
-    <None Include="web.Release.config">
-      <DependentUpon>web.config</DependentUpon>
-    </None>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

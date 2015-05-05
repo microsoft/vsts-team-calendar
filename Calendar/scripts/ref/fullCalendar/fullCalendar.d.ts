@@ -3,7 +3,7 @@
 // Definitions by: Neil Stalker <https://github.com/nestalk>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
-/// <reference path="../../VSS/References/jquery.d.ts"/>
+/// <reference path="../VSS/jquery.d.ts"/>
 
 declare module FullCalendar {
     export interface Calendar {

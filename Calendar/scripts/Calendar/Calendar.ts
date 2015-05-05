@@ -1,4 +1,4 @@
-﻿/// <reference path='../VSS/References/VSS-Common.d.ts' />
+﻿/// <reference path='../ref/VSS/VSS.d.ts' />
 /// <reference path='../ref/fullCalendar/fullCalendar.d.ts' />
 /// <reference path='../ref/moment/moment.d.ts' />
 

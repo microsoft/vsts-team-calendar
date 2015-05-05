@@ -1,5 +1,4 @@
-/// <reference path='../../VSS/References/VSS-Common.d.ts' />
-/// <reference path='../../VSS/VSS.SDK.d.ts' />
+/// <reference path='../../ref/VSS/VSS.d.ts' />
 
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_ColorUtils = require("Calendar/Utils/Color");

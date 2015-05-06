@@ -81,7 +81,7 @@
     <TypeScriptCompile Include="scripts\ref\VSS\jquery.d.ts" />
     <TypeScriptCompile Include="scripts\ref\VSS\knockout.d.ts" />
     <TypeScriptCompile Include="scripts\ref\VSS\q.d.ts" />
-    <TypeScriptCompile Include="scripts\ref\VSS\VSS.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\VSS\vss.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="css\site.css.map" />

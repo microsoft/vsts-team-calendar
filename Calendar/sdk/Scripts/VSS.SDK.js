@@ -350,6 +350,23 @@ var XDM;
             var messageString = JSON.stringify(message);
             this._postToWindow.postMessage(messageString, this._targetOrigin || "*");
         };
+        XDMChannel.prototype._shouldSkipSerialization = function (obj) {
+            for (var i = 0, l = XDMChannel.WINDOW_TYPES_TO_SKIP_SERIALIZATION.length; i < l; i++) {
+                var instanceType = XDMChannel.WINDOW_TYPES_TO_SKIP_SERIALIZATION[i];
+                if (window[instanceType] && obj instanceof window[instanceType]) {
+                    return true;
+                }
+            }
+            if (window.jQuery) {
+                for (var i = 0, l = XDMChannel.JQUERY_TYPES_TO_SKIP_SERIALIZATION.length; i < l; i++) {
+                    var instanceType = XDMChannel.JQUERY_TYPES_TO_SKIP_SERIALIZATION[i];
+                    if (window.jQuery[instanceType] && obj instanceof window.jQuery[instanceType]) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
         XDMChannel.prototype._customSerializeObject = function (obj, parentObjects, nextCircularRefId, depth) {
             var _this = this;
             if (parentObjects === void 0) { parentObjects = null; }
@@ -358,10 +375,25 @@ var XDM;
             if (!obj || depth > XDMChannel.MAX_XDM_DEPTH) {
                 return null;
             }
+            if (this._shouldSkipSerialization(obj)) {
+                return null;
+            }
             var serializeMember = function (parentObject, newObject, key) {
-                var item = parentObject[key];
+                var item;
+                try {
+                    item = parentObject[key];
+                }
+                catch (ex) {
+                }
+                var itemType = typeof item;
+                if (itemType === "undefined") {
+                    return;
+                }
                 // Check for a circular reference by looking at parent objects
-                var parentItemIndex = parentObjects.originalObjects.indexOf(item);
+                var parentItemIndex = -1;
+                if (itemType === "object") {
+                    parentItemIndex = parentObjects.originalObjects.indexOf(item);
+                }
                 if (parentItemIndex >= 0) {
                     // Circular reference found. Add reference to parent
                     var parentItem = parentObjects.newObjects[parentItemIndex];
@@ -373,7 +405,6 @@ var XDM;
                     };
                 }
                 else {
-                    var itemType = typeof item;
                     if (itemType === "function") {
                         var proxyFunctionId = _this._nextProxyFunctionId++;
                         newObject[key] = {
@@ -416,7 +447,16 @@ var XDM;
             else {
                 returnValue = {};
                 parentObjects.newObjects.push(returnValue);
-                for (var key in obj) {
+                var keys = [];
+                try {
+                    for (var key in obj) {
+                        keys.push(key);
+                    }
+                }
+                catch (ex) {
+                }
+                for (var i = 0, l = keys.length; i < l; i++) {
+                    var key = keys[i];
                     // Don't serialize properties that start with an underscore.
                     if (key && key[0] !== "_") {
                         serializeMember(obj, returnValue, key);
@@ -480,6 +520,14 @@ var XDM;
         };
         XDMChannel._nextChannelId = 1;
         XDMChannel.MAX_XDM_DEPTH = 100;
+        XDMChannel.WINDOW_TYPES_TO_SKIP_SERIALIZATION = [
+            "Node",
+            "Window",
+            "Event"
+        ];
+        XDMChannel.JQUERY_TYPES_TO_SKIP_SERIALIZATION = [
+            "jQuery"
+        ];
         return XDMChannel;
     })();
     XDM.XDMChannel = XDMChannel;
@@ -843,6 +891,7 @@ var VSS;
         // Define a new config for extension loader
         var newConfig = {
             baseUrl: extensionContext.baseUri,
+            contributionPaths: null,
             paths: {},
             shim: {}
         };
@@ -860,25 +909,14 @@ var VSS;
         if (hostPageContext.moduleLoaderConfig) {
             // Copy host shim
             extendLoaderShim(hostPageContext.moduleLoaderConfig, newConfig);
-            // Get host base URL
-            var hostBaseUrl = hostPageContext.moduleLoaderConfig.baseUrl || "";
-            extendLoaderPaths(hostPageContext.moduleLoaderConfig, newConfig, function (path, value) {
-                if (path === "VSS/Resources") {
-                    // VSS Resources
-                    return hostRootUri + value + path.substr(path.length);
+            // Add contribution paths to new config
+            var contributionPaths = hostPageContext.moduleLoaderConfig.contributionPaths;
+            if (contributionPaths) {
+                for (var p in contributionPaths) {
+                    if (contributionPaths.hasOwnProperty(p)) {
+                        newConfig.paths[p] = hostRootUri + contributionPaths[p].value;
+                    }
                 }
-                else if (path.indexOf("VSS/") === 0) {
-                    // Path to bundle if minified
-                    return hostRootUri + hostBaseUrl + value;
-                }
-                return "";
-            });
-            // Use some known paths from host
-            if (hostPageContext.moduleLoaderConfig.contributionPaths) {
-                hostPageContext.moduleLoaderConfig.contributionPaths.forEach(function (path) {
-                    // Translate path to absolute URL pointing to host
-                    newConfig.paths[path] = hostRootUri + hostBaseUrl + path;
-                });
             }
         }
         scripts.push({ content: "require.config(" + JSON.stringify(newConfig) + ");" });

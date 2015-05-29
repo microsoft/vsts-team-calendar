@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="scripts\Calendar\extension.ts" />
+    <TypeScriptCompile Include="scripts\Calendar\Utils\Guid.ts" />
     <TypeScriptCompile Include="scripts\Calendar\Utils\Color.ts" />
     <TypeScriptCompile Include="scripts\Calendar\Utils\Date.ts" />
     <TypeScriptCompile Include="scripts\Calendar\Calendar.ts" />

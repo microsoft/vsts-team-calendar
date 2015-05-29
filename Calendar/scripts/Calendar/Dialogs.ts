@@ -5,6 +5,7 @@ import Controls = require("VSS/Controls");
 import Controls_Common = require("VSS/Controls/Common");
 import Controls_Validation = require("VSS/Controls/Validation");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
 import Utils_UI = require("VSS/Utils/UI");
 import WebApi_Contracts = require("VSS/WebApi/Contracts");
 
@@ -137,11 +138,11 @@ export class EditEventDialog extends Controls_Common.ModalDialog {
     }
 
     private _formatDateValue(date: Date): string {
-        return date === null ? "" : Utils_Core.DateUtils.format(new Date(date.valueOf()), "d");
+        return date === null ? "" : Utils_Date.format(new Date(date.valueOf()), "d");
     }
 
     private _parseDateValue(date: string): Date {
-        return date === null ? null : Utils_Core.DateUtils.parseDateString(date, "d", true);
+        return date === null ? null : Utils_Date.parseDateString(date, "d", true);
     }
 
     protected _setError(errorMessage: string) {
@@ -352,8 +353,8 @@ class DateRelativeToValidator extends Controls_Validation.BaseValidator<DateRela
             result = false;
 
         if (fieldText && relativeToFieldText) {
-            fieldDate = Utils_Core.DateUtils.parseDateString(fieldText, this._options.parseFormat, true);
-            relativeToFieldDate = Utils_Core.DateUtils.parseDateString(relativeToFieldText, this._options.parseFormat, true);
+            fieldDate = Utils_Date.parseDateString(fieldText, this._options.parseFormat, true);
+            relativeToFieldDate = Utils_Date.parseDateString(relativeToFieldText, this._options.parseFormat, true);
         }
         else {
             return true;

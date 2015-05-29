@@ -1,11 +1,15 @@
 ﻿/// <reference path='../ref/VSS/VSS.d.ts' />
 /// <reference path='../ref/fullCalendar/fullCalendar.d.ts' />
 /// <reference path='../ref/moment/moment.d.ts' />
+/// <reference path='../ref/VSS/jquery.d.ts' />
 
 import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Calendar_Contracts = require("Calendar/Contracts");
+import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
+import Utils_String = require("VSS/Utils/String");
 
 export interface CalendarOptions {
     fullCalendarOptions: IDictionaryStringTo<any>;
@@ -147,8 +151,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         var view = this._element.fullCalendar("getView");
 
         return {
-            startDate: Utils_Core.DateUtils.shiftToUTC(new Date(view.start.valueOf())),
-            endDate: Utils_Core.DateUtils.shiftToUTC(new Date(view.end.valueOf()))
+            startDate: Utils_Date.shiftToUTC(new Date(view.start.valueOf())),
+            endDate: Utils_Date.shiftToUTC(new Date(view.end.valueOf()))
         };
     }
 
@@ -171,7 +175,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
-        var end = Utils_Core.DateUtils.addDays(new Date(event.endDate.valueOf()), 1);
+        var end = Utils_Date.addDays(new Date(event.endDate.valueOf()), 1);
         var calEvent: any  = {
             id: event.eventId,
             title: event.title,
@@ -249,9 +253,9 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             source.getEvents().then(
                 (results) => {
                     var calendarEvents = results.map((value, index) => {
-                        var end = value.endDate ? Utils_Core.DateUtils.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
+                        var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         var event: any = {
-                            id: value.eventId || Utils_Core.GUIDUtils.newGuid(),
+                            id: value.eventId || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
                             allDay: true,
                             start: value.startDate,
@@ -282,7 +286,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     callback(calendarEvents);
 
                 },(reason) => {
-                    console.error(Utils_Core.StringUtils.format("Error getting event data.\nEvent source: {0}\nReason: {1}", source.name, reason));
+                    console.error(Utils_String.format("Error getting event data.\nEvent source: {0}\nReason: {1}", source.name, reason));
                     callback([]);
                 });
         };

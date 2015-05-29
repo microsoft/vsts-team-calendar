@@ -5,6 +5,7 @@
 import Calendar = require("Calendar/Calendar");
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Dialogs = require("Calendar/Dialogs");
+import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
 import Controls_Common = require("VSS/Controls/Common");
 import Controls_Menus = require("VSS/Controls/Menus");
@@ -14,6 +15,7 @@ import Service = require("VSS/Service");
 import Tfs_Core_WebApi = require("TFS/Core/RestClient");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 import WebApi_Contracts = require("VSS/WebApi/Contracts");
 import Work_Client = require("TFS/Work/RestClient");
@@ -207,8 +209,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         // Setup the event
         var event: Calendar_Contracts.CalendarEvent = {
             title: "",
-            startDate: Utils_Core.DateUtils.shiftToUTC(new Date()),
-            eventId: Utils_Core.GUIDUtils.newGuid()
+            startDate: Utils_Date.shiftToUTC(new Date()),
+            eventId: Calendar_Utils_Guid.newGuid()
         };
 
         this._addEvent(event, addEventSources[0])		
@@ -318,8 +320,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         if (addEventSources.length > 0) {
             var event: Calendar_Contracts.CalendarEvent = {
                 title: "",
-                startDate: Utils_Core.DateUtils.shiftToUTC(new Date(date.valueOf())),
-                eventId: Utils_Core.GUIDUtils.newGuid()
+                startDate: Utils_Date.shiftToUTC(new Date(date.valueOf())),
+                eventId: Calendar_Utils_Guid.newGuid()
             };
 
 
@@ -343,7 +345,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 }
             };
 
-            var dataDate = Utils_Core.DateUtils.format(Utils_Core.DateUtils.shiftToUTC(new Date(date.valueOf())), "yyyy-MM-dd"); //2015-04-19
+            var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(date.valueOf())), "yyyy-MM-dd"); //2015-04-19
             var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
             if (this._popupMenu) {
                 this._popupMenu.dispose();
@@ -421,7 +423,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: Utils_Core.DateUtils.addDays(new Date((<Date>event.start).valueOf()), 1),
+            startDate: Utils_Date.addDays(new Date((<Date>event.start).valueOf()), 1),
             endDate: <Date>event.end,
             title: event.title,
             eventId: event.id,
@@ -459,7 +461,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             event.category = calendarEvent.category;
 
                             //Update dates
-                            var end = Utils_Core.DateUtils.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
                             event.end = end;
                             event.start = calendarEvent.startDate;
                             this._calendar.updateEvent(event);
@@ -482,7 +484,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
                             //Update dates
-                            var end = Utils_Core.DateUtils.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
                             event.end = end;
                             event.start = calendarEvent.startDate;
 
@@ -528,8 +530,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         workClient.getTeamIterations(teamContext).then(
-            (iterations: Work_Contracts.TeamSettingsIterations) => {
-                iterations.values.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+            (iterations: Work_Contracts.TeamSettingsIteration[]) => {
+                iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                     result.push(iteration);
                 });
 

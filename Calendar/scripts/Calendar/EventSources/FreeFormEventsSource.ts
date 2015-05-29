@@ -8,8 +8,9 @@ import Contributions_Contracts = require("VSS/Contributions/Contracts");
 import Contributions_RestClient = require("VSS/Contributions/RestClient");
 import Q = require("q");
 import Service = require("VSS/Service");
-import WebApi_Constants = require("VSS/WebApi/Constants");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_String = require("VSS/Utils/String");
+import WebApi_Constants = require("VSS/WebApi/Constants");
 
 export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
@@ -26,7 +27,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     }
 
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        return this._beginGetAppSetting();
+        return this._beginGetExtensionSetting();
     }
 
     public getCategories(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.IEventCategory[]> {
@@ -38,11 +39,11 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        this._beginGetAppSetting().then(() => {
+        this._beginGetExtensionSetting().then(() => {
             events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
                 this._events.push(calendarEvent);
             });
-            this._beginUpdateAppSetting().then(deferred.resolve, deferred.reject);
+            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
 
         });
         return deferred.promise;
@@ -50,7 +51,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public removeEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        this._beginGetAppSetting().then(() => {
+        this._beginGetExtensionSetting().then(() => {
             events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
                 var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e) { return e.eventId === calendarEvent.eventId; })[0]; //better check here
                 var index = this._events.indexOf(eventInArray);
@@ -58,7 +59,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     this._events.splice(index, 1);
                 }
             });
-            this._beginUpdateAppSetting().then(deferred.resolve, deferred.reject);
+            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
 
         });
         return deferred.promise;
@@ -66,7 +67,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        this._beginGetAppSetting().then(() => {
+        this._beginGetExtensionSetting().then(() => {
             events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
                 var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e) { return e.eventId === calendarEvent.eventId; })[0]; //better check here
                 var index = this._events.indexOf(eventInArray);
@@ -74,21 +75,21 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     this._events.splice(index, 1, calendarEvent);
                 }
             });
-            this._beginUpdateAppSetting().then(deferred.resolve, deferred.reject);
+            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
 
         });
         return deferred.promise;
     }
 
-    private _beginGetAppSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    private _beginGetExtensionSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
         var contributionsClient: Contributions_RestClient.ContributionsHttpClient = Service.VssConnection
             .getConnection(null, Contracts_Platform.ContextHostType.Application)
             .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         contributionsClient.getAppData(VSS.getExtensionContext().id, this._teamId).then(
-            (appSetting: Contributions_Contracts.AppSetting) => {
-                this._events = this._appSettingToEvents(appSetting.value);
+            (ExtensionSetting: Contributions_Contracts.ExtensionSetting) => {
+                this._events = this._extensionSettingToEvents(ExtensionSetting.value);
                 deferred.resolve(this._events);
             },
             (e: Error) => {
@@ -98,17 +99,17 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    private _beginUpdateAppSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    private _beginUpdateExtensionSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        var appSetting = this._eventsToAppSetting();
+        var ExtensionSetting = this._eventsToExtensionSetting();
 
         var contributionsClient = Service.VssConnection
             .getConnection(null, Contracts_Platform.ContextHostType.Application)
             .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
-        contributionsClient.updateAppData(appSetting, VSS.getExtensionContext().id, this._teamId).then(
-            (appSetting: Contributions_Contracts.AppSetting) => {
-                this._events = this._appSettingToEvents(appSetting.value);
+        contributionsClient.updateAppData(ExtensionSetting, VSS.getExtensionContext().id, this._teamId).then(
+            (ExtensionSetting: Contributions_Contracts.ExtensionSetting) => {
+                this._events = this._extensionSettingToEvents(ExtensionSetting.value);
                 deferred.resolve(this._events);
             },
             (e: Error) => {
@@ -118,20 +119,20 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    private _eventsToAppSetting(): Contributions_Contracts.AppSetting {
-        var appSettingValue = JSON.stringify({
+    private _eventsToExtensionSetting(): Contributions_Contracts.ExtensionSetting {
+        var ExtensionSettingValue = JSON.stringify({
             'events': this._events
         });
-        var appSetting: Contributions_Contracts.AppSetting = {
+        var ExtensionSetting: Contributions_Contracts.ExtensionSetting = {
             'key': this._teamId,
-            'value': appSettingValue
+            'value': ExtensionSettingValue
         };
-        return appSetting;
+        return ExtensionSetting;
     }
 
-    private _appSettingToEvents(appSettingValue: string): Calendar_Contracts.CalendarEvent[] {
-        if (appSettingValue) {
-            var json = JSON.parse(appSettingValue);
+    private _extensionSettingToEvents(ExtensionSettingValue: string): Calendar_Contracts.CalendarEvent[] {
+        if (ExtensionSettingValue) {
+            var json = JSON.parse(ExtensionSettingValue);
             return json.events ? json.events : [];
         }
         return [];
@@ -162,7 +163,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     categoryMap[name].subTitle = event.title;
                 }
                 else {
-                    categoryMap[name].subTitle = Utils_Core.StringUtils.format("{0} event{1}", count, count > 1 ? "s" : "");
+                    categoryMap[name].subTitle = Utils_String.format("{0} event{1}", count, count > 1 ? "s" : "");
                 }
                 countMap[name] = count;
             }

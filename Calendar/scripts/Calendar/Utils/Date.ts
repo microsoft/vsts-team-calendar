@@ -80,8 +80,8 @@ function loadIterations(): void {
         .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
     
     workClient.getTeamIterations(teamContext).then(
-        (iterations: Work_Contracts.TeamSettingsIterations) => {
-            iterations.values.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+        (iterations: Work_Contracts.TeamSettingsIteration[]) => {
+            iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                 _iterations.push(iteration);
             });
 

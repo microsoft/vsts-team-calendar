@@ -495,7 +495,7 @@ interface IHostHistoryService {
     *
     * @return Hash part of the host page's url (url following #)
     */
-    getHash(): string;
+    getHash(): IPromise<string>;
 
     /**
     * Sets the provided hash from the hosted content.
@@ -14618,7 +14618,7 @@ export var newLine: string;
 export var tab: string;
 export var lineFeed: string;
 /**
-    * 		HTML Encodes the string. Use this method to help prevent cross site scripting attacks
+    *         HTML Encodes the string. Use this method to help prevent cross site scripting attacks
     *     by cleaning text which may contain HTML elements before the string is display in a web page.
     *
     *
@@ -14627,7 +14627,7 @@ export var lineFeed: string;
     */
 export function htmlEncode(str: string): string;
 /**
-    * 		HTML Encodes the string. Use this method to help prevent cross site scripting attacks
+    *         HTML Encodes the string. Use this method to help prevent cross site scripting attacks
     *     by cleaning text which may contain HTML elements before the string is display in a web page.
     *     Does not encode single quotes.
     *
@@ -14637,7 +14637,7 @@ export function htmlEncode(str: string): string;
     */
 export function htmlEncodeJavascriptAttribute(str: string): string;
 /**
-    * 		HTML Decodes the string.
+    *         HTML Decodes the string.
     *
     *
     * @param str The string to be decoded
@@ -14645,7 +14645,7 @@ export function htmlEncodeJavascriptAttribute(str: string): string;
     */
 export function htmlDecode(str: string): string;
 /**
-    * 		HTML Decodes the string.
+    *         HTML Decodes the string.
     *
     *
     * @param str The string to be decoded
@@ -14656,8 +14656,8 @@ export function htmlDecode(str: string): string;
     */
 export function decodeHtmlSpecialChars(str: string): string;
 /**
-    * 		HTML encodes the string and replaces newlines with HTML break tags.
-    * 		Use this method to maintain line breaks when displaying strings.
+    *         HTML encodes the string and replaces newlines with HTML break tags.
+    *         Use this method to maintain line breaks when displaying strings.
     *
     *
     * @param str The string to be encoded.
@@ -14665,7 +14665,7 @@ export function decodeHtmlSpecialChars(str: string): string;
     */
 export function nl2br(str: string): string;
 /**
-*	returns a string with the first letter as UpperCase and the rest lower case
+*    returns a string with the first letter as UpperCase and the rest lower case
 *   Assumes the string is trimmed (no leading white-space) and starts with a valid character
 *   if the first char is not an alphabet, no char will be made upper case
 * @param str  The string to be converted.</param>

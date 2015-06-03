@@ -1,5 +1,4 @@
-﻿import Utils_Core = require("VSS/Utils/Core");
-
+﻿import Utils_String = require("VSS/Utils/String");
 
 var allColors = [
     "D6252E", /*red*/
@@ -43,7 +42,7 @@ export function generateColor(name: string): string {
         value += name.charCodeAt(i) * (i + 1);
     }
 
-    return Utils_Core.StringUtils.format("#{0}", allColors[value % allColors.length]);
+    return Utils_String.format("#{0}", allColors[value % allColors.length]);
 }
 
 /**

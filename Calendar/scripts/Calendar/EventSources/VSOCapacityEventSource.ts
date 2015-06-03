@@ -6,6 +6,8 @@ import Q = require("q");
 import Service = require("VSS/Service");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
+import Utils_String = require("VSS/Utils/String");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 import Work_Client = require("TFS/Work/RestClient");
 import Work_Contracts = require("TFS/Work/Contracts");
@@ -22,7 +24,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
         var result: Calendar_Contracts.CalendarEvent[] = [];
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
-        var capacityPromises: IPromise<Work_Contracts.Capacities>[] = [];
+        var capacityPromises: IPromise<Work_Contracts.TeamMemberCapacity[]>[] = [];
         var iterationTeamDaysOffPromises: IPromise<Work_Contracts.TeamSettingsDaysOff>[] = [];
         this._events = null;
 
@@ -33,16 +35,16 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         workClient.getTeamIterations(teamContext).then(
-            (iterations: Work_Contracts.TeamSettingsIterations) => {
-                iterations.values.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+            (iterations: Work_Contracts.TeamSettingsIteration[]) => {
+                iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                     iterationTeamDaysOffPromises.push(workClient.getTeamDaysOff(teamContext, iteration.id));
                     iterationTeamDaysOffPromises[iterationTeamDaysOffPromises.length - 1].then(
                         (teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
                             if (teamDaysOff && teamDaysOff.daysOff && teamDaysOff.daysOff.length) {
                                 teamDaysOff.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                     var event: any = {};
-                                    event.startDate = Utils_Core.DateUtils.shiftToUTC(new Date(daysOffRange.start.valueOf()));
-                                    event.endDate = Utils_Core.DateUtils.shiftToUTC(new Date(daysOffRange.end.valueOf()));
+                                    event.startDate = Utils_Date.shiftToUTC(new Date(daysOffRange.start.valueOf()));
+                                    event.endDate = Utils_Date.shiftToUTC(new Date(daysOffRange.end.valueOf()));
                                     event.title = "Team Day Off";
                                     event.member = {
                                         displayName: webContext.team.name,
@@ -58,14 +60,14 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
                     capacityPromises.push(workClient.getCapacities(teamContext, iteration.id));
                     capacityPromises[capacityPromises.length - 1].then(
-                        (capacities: Work_Contracts.Capacities) => {
-                            if (capacities && capacities.values && capacities.values.length) {
-                                for (var i = 0, l = capacities.values.length; i < l; i++) {
-                                    var capacity = capacities.values[i];
+                        (capacities: Work_Contracts.TeamMemberCapacity[]) => {
+                            if (capacities && capacities.length) {
+                                for (var i = 0, l = capacities.length; i < l; i++) {
+                                    var capacity = capacities[i];
                                     capacity.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                         var event: any = {};
-                                        event.startDate = Utils_Core.DateUtils.shiftToUTC(new Date(daysOffRange.start.valueOf()));
-                                        event.endDate = Utils_Core.DateUtils.shiftToUTC(new Date(daysOffRange.end.valueOf()));
+                                        event.startDate = Utils_Date.shiftToUTC(new Date(daysOffRange.start.valueOf()));
+                                        event.endDate = Utils_Date.shiftToUTC(new Date(daysOffRange.end.valueOf()));
                                         event.title = capacity.teamMember.displayName + " Day Off";
                                         event.member = capacity.teamMember;
                                         event.category = "DaysOff";
@@ -152,7 +154,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     public removeEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         this._events = null;
         var deferred = Q.defer();
-        var dayOffStart = Utils_Core.DateUtils.shiftToUTC(events[0].startDate);
+        var dayOffStart = Utils_Date.shiftToUTC(events[0].startDate);
         var memberId = events[0].member.id;
         var isTeam: boolean = events[0].member.uniqueName === undefined;
         var webContext = VSS.getWebContext();
@@ -290,6 +292,6 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }
 
     private _buildTeamImageUrl(hostUri: string, id: string): string {
-        return Utils_Core.StringUtils.format("{0}_api/_common/IdentityImage?id={1}", hostUri, id);
+        return Utils_String.format("{0}_api/_common/IdentityImage?id={1}", hostUri, id);
     }
 }

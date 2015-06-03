@@ -7,6 +7,8 @@ import Q = require("q");
 import Service = require("VSS/Service");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
+import Utils_String = require("VSS/Utils/String");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 import Work_Client = require("TFS/Work/RestClient");
 import Work_Contracts = require("TFS/Work/Contracts");
@@ -33,13 +35,13 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
 
         // fetch the wit events
         workClient.getTeamIterations(teamContext).then(
-            (iterations: Work_Contracts.TeamSettingsIterations) => {
-                iterations.values.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+            (iterations: Work_Contracts.TeamSettingsIteration[]) => {
+                iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                     if (iteration && iteration.attributes && iteration.attributes.startDate) {
                         var event: any = {};
-                        event.startDate = Utils_Core.DateUtils.shiftToUTC(iteration.attributes.startDate);
+                        event.startDate = Utils_Date.shiftToUTC(iteration.attributes.startDate);
                         if (iteration.attributes.finishDate) {
-                            event.endDate = Utils_Core.DateUtils.shiftToUTC(iteration.attributes.finishDate);
+                            event.endDate = Utils_Date.shiftToUTC(iteration.attributes.finishDate);
                         }
                         event.title = iteration.name;
                         if (this._isCurrentIteration(event)) {
@@ -92,9 +94,9 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                 if (Calendar_DateUtils.eventIn(event, query)) {
                     var category: Calendar_Contracts.IEventCategory = {
                         title: event.title,
-                        subTitle: Utils_Core.StringUtils.format("{0} - {1}",
-                            Utils_Core.DateUtils.format(event.startDate, "M"),
-                            Utils_Core.DateUtils.format(event.endDate, "M")),
+                        subTitle: Utils_String.format("{0} - {1}",
+                            Utils_Date.format(event.startDate, "M"),
+                            Utils_Date.format(event.endDate, "M")),
                     };
                     if (event.category) {
                         category.color = Calendar_ColorUtils.generateBackgroundColor(event.title)
@@ -111,7 +113,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
 
     private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {
         if (event.startDate && event.endDate) {
-            var today: Date = Utils_Core.DateUtils.shiftToUTC(new Date());
+            var today: Date = Utils_Date.shiftToUTC(new Date());
             return today >= event.startDate && today <= event.endDate;
         }
         return false;

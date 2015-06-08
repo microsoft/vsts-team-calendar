@@ -24,9 +24,6 @@ The Team Calendar extension provides Visual Studio Online teams an integrated ca
 
 ## How to try the calendar
 
-The current code in this repository is designed with the **next** deployment of Visual Studio Online (late May 2015). 
-However, scripts and content compatible with the current level of Visual Studio Online have been published to a public Azure web site (https://vsoalmcalendar-demo.azurewebsites.net). This will enable you to play with extension in your account. 
-
 1. Browse the code to understand how an extension is developed.
  * To learn more extensions, see an [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview)
 2. Modify the "try it" extension manifest 

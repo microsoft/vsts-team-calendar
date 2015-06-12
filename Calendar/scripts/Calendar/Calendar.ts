@@ -7,6 +7,7 @@ import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
+import Q = require("q");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
 import Utils_String = require("VSS/Utils/String");
@@ -24,7 +25,7 @@ export interface SourceAndOptions {
 
 export interface CalendarEventSource {
 
-    (source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions, outSourceToken: Object): void;
+    (source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions): void;
 
     eventSource: Calendar_Contracts.IEventSource;
     state?: CalendarEventSourceState;
@@ -124,9 +125,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     public addEventSources(sources: SourceAndOptions[]): CalendarEventSource[] {
 
         sources.forEach((source) => {
-            var outSourceToken = {};
-
-            var calendarSource = this._createEventSource(source.source, source.options || {}, outSourceToken);
+            var calendarSource = this._createEventSource(source.source, source.options || {});
             this._calendarSources.push(calendarSource);
             this._element.fullCalendar("addEventSource", calendarSource);
 
@@ -138,7 +137,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                         // This callback doesn't make sense for individual events.
                         continue;
                     }
-                    this.addCallback(callbackType, this._createFilteredCallback(source.callbacks[callbackTypes[i]],(event) => event["sourceToken"] === outSourceToken["token"]));
+                    this.addCallback(callbackType, this._createFilteredCallback(source.callbacks[callbackTypes[i]],(event) => event["eventType"] === source.source.id));
                 }
             }
         });
@@ -238,9 +237,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         };
     }
 
-    private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions, outSourceToken: Object): CalendarEventSource {
-        outSourceToken["token"] = Math.random();
-
+    private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions): CalendarEventSource {
         var state: CalendarEventSourceState = {};
 
         var getEventsMethod = (start: moment.Moment, end: moment.Moment, timezone: string|boolean, callback: (events: FullCalendar.EventSource) => void) => {
@@ -249,8 +246,9 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                 callback(state.cachedEvents);
                 return;
             }
-
-            source.getEvents().then(
+            var getEventsPromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>> source.getEvents();
+            Q.timeout(getEventsPromise, 2000, "Could not load event source " + source.name + ". Request timed out.")
+                .then(
                 (results) => {
                     var calendarEvents = results.map((value, index) => {
                         var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
@@ -260,7 +258,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             allDay: true,
                             start: value.startDate,
                             end: end,
-                            sourceToken: outSourceToken["token"],
+                            eventType: source.id,
                             rendering: options.rendering || '',
                             category: value.category,
                             member: value.member

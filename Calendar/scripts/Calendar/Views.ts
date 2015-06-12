@@ -506,11 +506,22 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             member: event.member
         };
 
-        var calendarEventSource: Calendar.CalendarEventSource = <any> event.source.events;
-        if (calendarEventSource.eventSource && calendarEventSource.eventSource.removeEvents) {
+        var calendarEventSource: Calendar_Contracts.IEventSource;
+        var eventSource;
+        if (event.source) {
+            calendarEventSource = <Calendar_Contracts.IEventSource>event.source.events;
+            if (calendarEventSource) {
+                eventSource = (<any>calendarEventSource).eventSource;
+            }
+        } else if (event.eventType) {
+            eventSource = this._eventSources.getById(event.eventType);
+        }
+
+        if (eventSource && eventSource.removeEvents) {
             if (confirm("Are you sure you want to delete the event?")) {
-                calendarEventSource.eventSource.removeEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
-                    calendarEventSource.state.dirty = true;
+                eventSource.removeEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    var originalEventSource = this._getCalendarEventSource(eventSource.id);
+                    originalEventSource.state.dirty = true;
                     this._calendar.removeEvent(<string>event.id);
                 });
             }

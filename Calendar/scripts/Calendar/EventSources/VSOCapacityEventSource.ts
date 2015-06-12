@@ -36,6 +36,10 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
         workClient.getTeamIterations(teamContext).then(
             (iterations: Work_Contracts.TeamSettingsIteration[]) => {
+                if (!iterations || iterations.length === 0) {
+                    this._events = result;
+                    deferred.resolve(result);
+                }
                 iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                     iterationTeamDaysOffPromises.push(workClient.getTeamDaysOff(teamContext, iteration.id));
                     iterationTeamDaysOffPromises[iterationTeamDaysOffPromises.length - 1].then(

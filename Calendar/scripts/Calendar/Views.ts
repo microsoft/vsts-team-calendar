@@ -112,8 +112,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             this._addDefaultEventSources();
 
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventAfterRender, this._eventAfterRender.bind(this));
-            this._calendar.addCallback(Calendar.FullCalendarCallbackType.dayClick, this._dayClick.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventClick, this._eventClick.bind(this));
+            this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventDrop, this._eventMoved.bind(this));
+            this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventResize, this._eventMoved.bind(this));
+            this._calendar.addCallback(Calendar.FullCalendarCallbackType.select, this._daysSelected.bind(this));
         });
 
         var setAspectRatio = Utils_Core.throttledDelegate(this, 300, function () {
@@ -241,7 +243,6 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _eventRender(eventSource: Calendar_Contracts.IEventSource, event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
-
         if (event.rendering !== 'background') {
             var commands = [];
 
@@ -311,7 +312,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         }
     }
 
-    private _dayClick(date: Date, jsEvent: MouseEvent, view: FullCalendar.View) {
+    private _daysSelected(startDate: Date, endDate: Date, allDay: boolean, jsEvent: MouseEvent, view: FullCalendar.View) {
         //This should not be hard-coded, we should instead figure out context menu commands
         //and dialog contents dynamically from the source
         var addEventSources: Calendar_Contracts.IEventSource[];
@@ -320,7 +321,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         if (addEventSources.length > 0) {
             var event: Calendar_Contracts.CalendarEvent = {
                 title: "",
-                startDate: Utils_Date.shiftToUTC(new Date(date.valueOf())),
+                startDate: Utils_Date.shiftToUTC(new Date(startDate.valueOf())),
+                endDate: Utils_Date.addDays(Utils_Date.shiftToUTC(new Date(endDate.valueOf())), -1),
                 eventId: Calendar_Utils_Guid.newGuid()
             };
 
@@ -328,7 +330,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             var commands = [];
 
             commands.push({ rank: 5, id: "addEvent", text: "Add event", icon: "icon-add" });
-            commands.push({ rank: 10, id: "addDayOff", text: "Add day off", icon: "icon-tfs-build-reason-schedule", disabled: !this._isInIteration(date) });
+            commands.push({ rank: 10, id: "addDayOff", text: "Add day off", icon: "icon-tfs-build-reason-schedule", disabled: !this._isInIteration(event.startDate) || !this._isInIteration(event.endDate) });
             var menuOptions = {
                 items: commands,
                 executeAction: (e) => {
@@ -345,7 +347,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 }
             };
 
-            var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(date.valueOf())), "yyyy-MM-dd"); //2015-04-19
+            var dataDate = Utils_Date.format(event.endDate, "yyyy-MM-dd"); //2015-04-19
             var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
             if (this._popupMenu) {
                 this._popupMenu.dispose();
@@ -366,6 +368,41 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.View) {
         this._editEvent(<Calendar_Contracts.IExtendedCalendarEventObject> event);
+    }
+
+    private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
+        var calendarEvent: Calendar_Contracts.CalendarEvent = {
+            startDate: new Date((<Date>event.start).valueOf()),
+            endDate: new Date((<Date>event.end).valueOf()),
+            title: event.title,
+            eventId: event.id,
+            category: event.category,
+            member: event.member
+        };
+        
+        var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
+
+        if (eventSource && eventSource.updateEvents) {
+            if (eventSource.id === "freeForm") {
+                eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    // Set underlying source to dirty so refresh picks up new changes
+                    var originalEventSource = this._getCalendarEventSource(eventSource.id);
+                    originalEventSource.state.dirty = true;
+
+                    // Update title
+                    event.title = calendarEvent.title;
+
+                    // Update category
+                    event.category = calendarEvent.category;
+
+                    //Update dates
+                    
+                    event.end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                    event.start = Utils_Date.addDays(new Date(calendarEvent.startDate.valueOf()), 1);
+                    this._calendar.updateEvent(event);
+                });
+            }
+        }
     }
 
     private _addEvent(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
@@ -430,16 +467,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             category: event.category,
             member: event.member
         };
-        var calendarEventSource: Calendar_Contracts.IEventSource;
-        var eventSource;
-        if(event.source) {
-            calendarEventSource = <Calendar_Contracts.IEventSource>event.source.events;
-            if(calendarEventSource){
-                eventSource = (<any>calendarEventSource).eventSource;
-            }
-        } else if(event.eventType){
-            eventSource = this._eventSources.getById(event.eventType);
-        }
+
+        var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
         if (eventSource && eventSource.updateEvents) {
             if (eventSource.id === "freeForm") {
@@ -506,16 +535,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             member: event.member
         };
 
-        var calendarEventSource: Calendar_Contracts.IEventSource;
-        var eventSource;
-        if (event.source) {
-            calendarEventSource = <Calendar_Contracts.IEventSource>event.source.events;
-            if (calendarEventSource) {
-                eventSource = (<any>calendarEventSource).eventSource;
-            }
-        } else if (event.eventType) {
-            eventSource = this._eventSources.getById(event.eventType);
-        }
+        var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
         if (eventSource && eventSource.removeEvents) {
             if (confirm("Are you sure you want to delete the event?")) {
@@ -526,6 +546,20 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 });
             }
         }
+    }
+
+    private _getEventSourceFromEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.IEventSource {
+        var calendarEventSource: Calendar_Contracts.IEventSource;
+        var eventSource;
+        if (event.source) {
+            calendarEventSource = <Calendar_Contracts.IEventSource>event.source.events;
+            if (calendarEventSource) {
+                eventSource = (<any>calendarEventSource).eventSource;
+            }
+        } else if (event.eventType) {
+            eventSource = this._eventSources.getById(event.eventType);
+        }
+        return eventSource;
     }
 
     private _fetchIterationData(): IPromise<Work_Contracts.TeamSettingsIteration[]> {

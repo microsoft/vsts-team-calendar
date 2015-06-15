@@ -114,7 +114,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             eventReceive: this._getComposedCallback(FullCalendarCallbackType.eventReceive),
             header: false,
             aspectRatio: aspectRatio,
-            columnFormat: "dddd"
+            columnFormat: "dddd",
+            selectable: true
         }, this._options.fullCalendarOptions));
     }
 
@@ -182,6 +183,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             start: event.startDate,
             end: end,
             eventType: eventType,
+            editable: eventType === "freeForm",
             category: event.category
         };
 
@@ -261,7 +263,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             eventType: source.id,
                             rendering: options.rendering || '',
                             category: value.category,
-                            member: value.member
+                            member: value.member,
+                            editable: source.id === "freeForm",
                         };
 
                         if ($.isFunction(source.addEvents)) {

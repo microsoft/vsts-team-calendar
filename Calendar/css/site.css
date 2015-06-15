@@ -5,6 +5,10 @@
     height: 100%;
 }
 
+#calendar-extension .menu-popup {
+    font-size: 12px;
+}
+
     #calendar-extension .fc-bg .fc-today {
         background: #BDD7EE;
     }

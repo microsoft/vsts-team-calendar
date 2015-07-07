@@ -1,43 +1,65 @@
 {
-    "namespace": "microsoft.calendar",
-    "version": "0.0.1",
-    "name": "Team Calendar",
+    "manifestVersion": 1,
+    "id": "team-calendar",
+    "version": "0.1.0",
+    "publisher": "ms",
+    "name": "VSO Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
-    "provider": {
-        "name": "Microsoft and the community"
+    "baseUri": "https://vsoalmcalendar-demo.azurewebsites.net/",
+    "icons": {
+        "default": "images/calendar-logo.png"
     },
-    "baseUri": "https://localhost:44302",
-    "icon": "https://localhost:44302/images/calendar-logo.png",
-    "contributions": {
-        "vss.web#hubs": [
-            {
-                "id": "calendar",
+    "tags": [
+        "Planning",
+        "Time tracking",
+        "Calendar"
+    ],
+    "categories": [
+        "Planning",
+        "Collaboration"
+    ],
+    "contributions": [
+        {
+            "id": "calendar",
+            "targets": [
+                "ms.vss-web.home-hub-group"
+            ],
+            "type": "ms.vss-web.hub",
+            "properties": {
                 "name": "Calendar",
-                "groupId": "home",
                 "order": 22,
-                "uri": "calendar.html",
-                "usesSdk": true
+                "uri": "calendar.html"
             }
-        ],
-        "#eventSources": [
-            {
-                "id": "freeForm",
-                "uri": "calendarServices.html"
-            },
-            {
-                "id": "daysOff",
-                "uri": "calendarServices.html"
-            },
-            {
-                "id": "iterations",
+        },
+        {
+            "id": "freeForm",
+            "targets": [
+                ".calendar"
+            ],
+            "type": "ms.vss-web.service",
+            "properties": {
                 "uri": "calendarServices.html"
             }
-        ]
-    },
-    "contributionPoints": {
-        "eventSources": {
-            "type": "vss.web#service",
-            "description": "Provider of calendar events."
+        },
+        {
+            "id": "daysOff",
+            "targets": [
+                ".calendar"
+            ],
+            "type": "ms.vss-web.service",
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "iterations",
+            "targets": [
+                ".calendar"
+            ],
+            "type": "ms.vss-web.service",
+            "properties": {
+                "uri": "calendarServices.html"
+            }
         }
-    }
+    ]
 }

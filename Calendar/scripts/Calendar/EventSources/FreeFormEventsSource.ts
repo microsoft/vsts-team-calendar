@@ -88,8 +88,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         contributionsClient.getAppData(VSS.getExtensionContext().id, this._teamId).then(
-            (ExtensionSetting: Contributions_Contracts.ExtensionSetting) => {
-                this._events = this._extensionSettingToEvents(ExtensionSetting.value);
+            (dataSetting: Contributions_Contracts.AppDataSetting) => {
+                this._events = this._extensionSettingToEvents(dataSetting.value);
                 deferred.resolve(this._events);
             },
             (e: Error) => {
@@ -108,8 +108,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         contributionsClient.updateAppData(ExtensionSetting, VSS.getExtensionContext().id, this._teamId).then(
-            (ExtensionSetting: Contributions_Contracts.ExtensionSetting) => {
-                this._events = this._extensionSettingToEvents(ExtensionSetting.value);
+            (dataSetting: Contributions_Contracts.AppDataSetting) => {
+                this._events = this._extensionSettingToEvents(dataSetting.value);
                 deferred.resolve(this._events);
             },
             (e: Error) => {
@@ -119,15 +119,15 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    private _eventsToExtensionSetting(): Contributions_Contracts.ExtensionSetting {
-        var ExtensionSettingValue = JSON.stringify({
+    private _eventsToExtensionSetting(): Contributions_Contracts.AppDataSetting {
+        var value = JSON.stringify({
             'events': this._events
         });
-        var ExtensionSetting: Contributions_Contracts.ExtensionSetting = {
+        var dataSetting: Contributions_Contracts.AppDataSetting = {
             'key': this._teamId,
-            'value': ExtensionSettingValue
+            'value': value
         };
-        return ExtensionSetting;
+        return dataSetting;
     }
 
     private _extensionSettingToEvents(ExtensionSettingValue: string): Calendar_Contracts.CalendarEvent[] {

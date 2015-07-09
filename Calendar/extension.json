@@ -21,10 +21,11 @@
     "contributions": [
         {
             "id": "calendar",
+            "type": "ms.vss-web.hub",
+            "description": "Adds the Team 'Calendar' hub to the home hub group.",
             "targets": [
                 "ms.vss-web.home-hub-group"
             ],
-            "type": "ms.vss-web.hub",
             "properties": {
                 "name": "Calendar",
                 "order": 22,
@@ -32,33 +33,63 @@
             }
         },
         {
-            "id": "freeForm",
+            "id": "calendar-event-sources",
+            "type": ".calendar-event-source-collection",
+            "description": "Target for calendar event sources",
             "targets": [
                 ".calendar"
+            ]
+        },
+        {
+            "id": "freeForm",
+            "type": ".calendar-event-source",
+            "description": "Adds free-form calendar events.",
+            "targets": [
+                ".calendar-event-sources"
             ],
-            "type": "ms.vss-web.service",
             "properties": {
                 "uri": "calendarServices.html"
             }
         },
         {
             "id": "daysOff",
+            "type": ".calendar-event-source",
+            "description": "Adds Team and personal days-off calendar events.",
             "targets": [
-                ".calendar"
+                ".calendar-event-sources"
             ],
-            "type": "ms.vss-web.service",
             "properties": {
                 "uri": "calendarServices.html"
             }
         },
         {
             "id": "iterations",
+            "type": ".calendar-event-source",
+            "description": "Adds calendar events for sprints/iterations.",
             "targets": [
-                ".calendar"
+                ".calendar-event-sources"
             ],
-            "type": "ms.vss-web.service",
             "properties": {
                 "uri": "calendarServices.html"
+            }
+        }
+    ],
+    "contributionTypes": [
+        {
+            "id": "calendar-event-source-collection",
+            "name": "Calendar event source collection",
+            "description": "A collection of calendar event sources."
+        },
+        {
+            "id": "calendar-event-source",
+            "name": "Calendar event source",
+            "description": "A provider of calendar events.",
+            "properties": {
+                "uri": {
+                    "description": "URI to the (background/hidden) HTML content which registers the calendar event source object.",
+                    "type": "string",
+                    "required": true
+                }
             }
         }
     ]

@@ -52,7 +52,7 @@ export class EventSourceCollection {
         if (!this._deferred) {
             this._deferred = Q.defer();
             var extensionContext = VSS.getExtensionContext();
-            var eventSourcesTargetId = extensionContext.publisherId + "." + extensionContext.extensionId + ".calendar";
+            var eventSourcesTargetId = extensionContext.publisherId + "." + extensionContext.extensionId + ".calendar-event-sources";
             VSS.getServiceContributions(eventSourcesTargetId).then((contributions) => {
                 var servicePromises = $.map(contributions, contribution => contribution.getInstance(contribution.id));
                 Q.allSettled(servicePromises).then((promiseStates) => {

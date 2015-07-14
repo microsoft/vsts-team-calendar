@@ -1,6 +1,6 @@
 # Team Calendar Extension 
 
-Team Calendar is a sample extension for Visual Studio Online that demonstrates one type of experience **you** can now develop and install into your Visual Studio Online account. Eventually you will be able to share your extensions with other users.
+Team Calendar is an extension for Visual Studio Online that demonstrates one type of experience **you** can now develop and install into your Visual Studio Online account. Eventually you will be able to share your extensions with other users.
 To learn more about Extensions, see the [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview).
 
 **Note:** Extensions is currently in private preview. To get early access, join the free [Visual Studio Partner Program](http://www.vsipprogram.com/join).

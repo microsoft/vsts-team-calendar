@@ -249,7 +249,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                 return;
             }
             var getEventsPromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>> source.getEvents();
-            Q.timeout(getEventsPromise, 2000, "Could not load event source " + source.name + ". Request timed out.")
+            Q.timeout(getEventsPromise, 5000, "Could not load event source " + source.name + ". Request timed out.")
                 .then(
                 (results) => {
                     var calendarEvents = results.map((value, index) => {

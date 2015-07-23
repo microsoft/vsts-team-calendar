@@ -51,7 +51,9 @@ export class EventSourceCollection {
     public static create(): IPromise<EventSourceCollection> {
         if (!this._deferred) {
             this._deferred = Q.defer();
-            VSS.getServiceContributions(VSS.getExtensionContext().namespace + "#eventSources").then((contributions) => {
+            var extensionContext = VSS.getExtensionContext();
+            var eventSourcesTargetId = extensionContext.publisherId + "." + extensionContext.extensionId + ".calendar-event-sources";
+            VSS.getServiceContributions(eventSourcesTargetId).then((contributions) => {
                 var servicePromises = $.map(contributions, contribution => contribution.getInstance(contribution.id));
                 Q.allSettled(servicePromises).then((promiseStates) => {
                     var services = [];
@@ -153,7 +155,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _setupToolbar () {
         this._toolbar = <Controls_Menus.MenuBar>Controls.BaseControl.createIn(Controls_Menus.MenuBar, this._element.find('.menu-container'), {
                             items: this._createToolbarItems(),
-                            executeAction: Utils_Core.delegate(this, this._onToolbarItemClick)
+                            executeAction: this._onToolbarItemClick.bind(this)
                         });
 
         this._element.find('.menu-container').addClass('toolbar');

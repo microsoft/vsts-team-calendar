@@ -115,7 +115,7 @@ export interface CalendarEvent {
     /**
     * Unique id for the event
     */
-    eventId?: string | number;
+    id?: string;
 
     /**
      * Category of the service
@@ -171,7 +171,7 @@ export interface IExtendedCalendarEventObject {
     rendering?: string;
     overlap?: boolean;
     constraint?: string;
-    id?: string|number;
+    id?: string;
     title: string;
     allDay?: boolean;
     start: Date|string;

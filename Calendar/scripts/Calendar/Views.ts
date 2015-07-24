@@ -213,8 +213,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         // Setup the event
         var event: Calendar_Contracts.CalendarEvent = {
             title: "",
-            startDate: Utils_Date.shiftToUTC(new Date()),
-            eventId: Calendar_Utils_Guid.newGuid()
+            startDate: Utils_Date.shiftToUTC(new Date())
         };
 
         this._addEvent(event, addEventSources[0])		
@@ -324,8 +323,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             var event: Calendar_Contracts.CalendarEvent = {
                 title: "",
                 startDate: Utils_Date.shiftToUTC(new Date(startDate.valueOf())),
-                endDate: Utils_Date.addDays(Utils_Date.shiftToUTC(new Date(endDate.valueOf())), -1),
-                eventId: Calendar_Utils_Guid.newGuid()
+                endDate: Utils_Date.addDays(Utils_Date.shiftToUTC(new Date(endDate.valueOf())), -1)
             };
 
 
@@ -377,7 +375,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             startDate: new Date((<Date>event.start).valueOf()),
             endDate: new Date((<Date>event.end).valueOf()),
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
             member: event.member
         };
@@ -465,7 +463,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             startDate: Utils_Date.addDays(new Date((<Date>event.start).valueOf()), 1),
             endDate: <Date>event.end,
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
             member: event.member
         };
@@ -532,7 +530,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
             startDate: start,
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
             member: event.member
         };

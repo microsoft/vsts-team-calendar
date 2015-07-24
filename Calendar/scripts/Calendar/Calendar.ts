@@ -177,7 +177,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
         var end = Utils_Date.addDays(new Date(event.endDate.valueOf()), 1);
         var calEvent: any  = {
-            id: event.eventId,
+            id: event.id,
             title: event.title,
             allDay: true,
             start: event.startDate,
@@ -255,7 +255,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     var calendarEvents = results.map((value, index) => {
                         var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         var event: any = {
-                            id: value.eventId || Calendar_Utils_Guid.newGuid(),
+                            id: value.id,
                             title: value.title,
                             allDay: true,
                             start: value.startDate,

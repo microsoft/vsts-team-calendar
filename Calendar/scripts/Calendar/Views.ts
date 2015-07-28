@@ -377,7 +377,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: event.title,
             id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -399,6 +400,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     
                     event.end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
                     event.start = Utils_Date.addDays(new Date(calendarEvent.startDate.valueOf()), 1);
+                    event.__etag = calendarEvent.__etag;
                     this._calendar.updateEvent(event);
                 });
             }
@@ -465,7 +467,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: event.title,
             id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -482,17 +485,19 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             // Set underlying source to dirty so refresh picks up new changes
                             var originalEventSource = this._getCalendarEventSource(eventSource.id);
                             originalEventSource.state.dirty = true;
+                            var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
 
                             // Update title
-                            event.title = calendarEvent.title;
+                            event.title = updatedEvent.title;
 
                             // Update category
-                            event.category = calendarEvent.category;
+                            event.category = updatedEvent.category;
 
                             //Update dates
-                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                            var end = Utils_Date.addDays(new Date(updatedEvent.endDate.valueOf()), 1);
                             event.end = end;
-                            event.start = calendarEvent.startDate;
+                            event.start = updatedEvent.startDate;
+                            event.__etag = updatedEvent.__etag;
                             this._calendar.updateEvent(event);
                         });
                     },
@@ -532,7 +537,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: event.title,
             id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);

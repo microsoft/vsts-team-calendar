@@ -29,7 +29,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
-        VSS.getService("ms.vss-web.data-service").then(function (extensionDataService: Services_ExtensionData.ExtensionDataService) {
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             extensionDataService.getDocuments(this._teamId).then(
                 (events: Calendar_Contracts.CalendarEvent[]) => {
                     this._events = events;
@@ -52,7 +52,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        VSS.getService("ms.vss-web.data-service").then(function (extensionDataService: Services_ExtensionData.ExtensionDataService) {
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             extensionDataService.createDocument(this._teamId, events[0]).then(
                 (addedEvent: Calendar_Contracts.CalendarEvent) => {
                     this._events.push(addedEvent);
@@ -67,7 +67,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public removeEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        VSS.getService("ms.vss-web.data-service").then(function (extensionDataService: Services_ExtensionData.ExtensionDataService) {
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             extensionDataService.deleteDocument(this._teamId, events[0].id).then(
                 () => {
                     var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === events[0].id; })[0]; //better check here
@@ -78,6 +78,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     deferred.resolve(this._events);
                 },
                 (e: Error) => {
+                    //Handle event has already been deleted
                     deferred.reject(e);
                 });
         });
@@ -86,19 +87,25 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
 
     public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        VSS.getService("ms.vss-web.data-service").then(function (extensionDataService: Services_ExtensionData.ExtensionDataService) {
-            extensionDataService.updateDocument(this._teamId, events[0].id).then(
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
+            extensionDataService.updateDocument(this._teamId, events[0]).then(
                 (updatedEvent: Calendar_Contracts.CalendarEvent) => {
                     var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0]; //better check here
                     var index = this._events.indexOf(eventInArray);
                     if (index > -1) {
                         this._events.splice(index, 1);
                     }
+                    this._events.push(updatedEvent);
                     deferred.resolve(this._events);
                 },
                 (e: Error) => {
+                    //Handle concurrency issue
                     deferred.reject(e);
                 });
+        },
+        (e: Error) => {
+            //Handle concurrency issue
+            deferred.reject(e);
         });
         return deferred.promise;
     }

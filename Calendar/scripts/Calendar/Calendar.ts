@@ -143,7 +143,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             }
         });
 
-        this.refreshEvents();
+        //this.refreshEvents();
         return this._calendarSources;
     }
 
@@ -264,8 +264,12 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             rendering: options.rendering || '',
                             category: value.category,
                             member: value.member,
-                            editable: source.id === "freeForm",
+                            editable: source.id === "freeForm"
                         };
+
+                        if (value.__etag) {
+                            event.__etag = value.__etag;
+                        }
 
                         if ($.isFunction(source.addEvents)) {
                             var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());

@@ -102,6 +102,8 @@ export interface CalendarEvent {
     */
     title: string;
 
+    __etag?: number;
+
     /**
     * Event start date
     */
@@ -172,6 +174,7 @@ export interface IExtendedCalendarEventObject {
     overlap?: boolean;
     constraint?: string;
     id?: string;
+    __etag?: number;
     title: string;
     allDay?: boolean;
     start: Date|string;

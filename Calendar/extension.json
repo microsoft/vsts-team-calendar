@@ -2,10 +2,10 @@
     "manifestVersion": 1,
     "id": "team-calendar",
     "version": "0.1.0",
-    "publisher": "ms",
+    "publisher": "demarcey",
     "name": "VSO Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
-    "baseUri": "https://vsoalmcalendar-demo.azurewebsites.net/",
+    "baseUri": "https://localhost:44302/",
     "icons": {
         "default": "images/calendar-logo.png"
     },

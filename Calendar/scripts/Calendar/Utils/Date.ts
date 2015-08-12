@@ -2,6 +2,7 @@
 import Q = require("q");
 import Service = require("VSS/Service");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
+import Utils_Date = require("VSS/Utils/Date");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 import Work_Client = require("TFS/Work/RestClient");
 import Work_Contracts = require("TFS/Work/Contracts");
@@ -60,7 +61,7 @@ export function getIterationId(dayOff: Date): IPromise<string> {
     _iterationsLoaded.then(() => {
         _iterations.some((value: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
             if (value && value.attributes && value.attributes.startDate && value.attributes.finishDate) {
-                if (dayOff >= value.attributes.startDate && dayOff <= value.attributes.finishDate) {
+                if (dayOff >= Utils_Date.shiftToUTC(value.attributes.startDate) && dayOff <= Utils_Date.shiftToUTC(value.attributes.finishDate)) {
                     deferred.resolve(value.id);
                     return true;
                 }

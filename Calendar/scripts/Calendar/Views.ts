@@ -136,10 +136,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _isInIteration(date: Date): boolean {
         var inIteration: boolean = false;
-        this._iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (date >= iteration.attributes.startDate && date <= iteration.attributes.finishDate) {
+        this._iterations.every((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date >= Utils_Date.shiftToUTC(iteration.attributes.startDate) && date <= Utils_Date.shiftToUTC(iteration.attributes.finishDate)) {
                 inIteration = true;
-                return;
+                return true;
             }
         });
         return inIteration;
@@ -426,7 +426,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _addDayOff(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
         var webContext: WebContext = VSS.getWebContext();
-        event.member = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: "", url: "" };
+        event.member = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: webContext.user.email, url: "" };
         Controls_Common.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, {
             event: event,
             title: "Add Days Off",

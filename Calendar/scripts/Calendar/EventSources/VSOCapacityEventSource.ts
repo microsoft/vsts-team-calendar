@@ -120,7 +120,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent> {
         this._events = null;
         var deferred = Q.defer();
         var dayOffStart = events[0].startDate;
@@ -144,7 +144,14 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             }
             else {
                 this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
-                    var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
+                    var capacityPatch: Work_Contracts.CapacityPatch = {
+                        activities: [
+                            {
+                                "capacityPerDay": 0,
+                                "name": null
+                            }],
+                        daysOff: capacity.daysOff
+                    };
                     capacityPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
                     workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
                         deferred.resolve(events[0]);

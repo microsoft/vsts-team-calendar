@@ -36,7 +36,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     deferred.resolve(this._events);
                 },
                 (e: Error) => {
-                    deferred.reject(e);
+                    this._events = [];
+                    deferred.resolve(this._events);
                 });
         });
 
@@ -50,13 +51,13 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             });
     }
 
-    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent> {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             extensionDataService.createDocument(this._teamId, events[0]).then(
                 (addedEvent: Calendar_Contracts.CalendarEvent) => {
                     this._events.push(addedEvent);
-                    deferred.resolve(this._events);
+                    deferred.resolve(addedEvent);
                 },
                 (e: Error) => {
                     deferred.reject(e);

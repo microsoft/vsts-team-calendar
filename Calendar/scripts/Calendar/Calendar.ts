@@ -187,6 +187,10 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             category: event.category
         };
 
+        if (event.__etag) {
+            calEvent.__etag = event.__etag;
+        }
+
         if(eventType === 'daysOff'){
             calEvent.member = event.member;
             calEvent.title = event.member.displayName + " Day Off";

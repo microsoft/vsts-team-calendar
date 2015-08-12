@@ -386,21 +386,22 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         if (eventSource && eventSource.updateEvents) {
             if (eventSource.id === "freeForm") {
                 eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
                     // Set underlying source to dirty so refresh picks up new changes
                     var originalEventSource = this._getCalendarEventSource(eventSource.id);
                     originalEventSource.state.dirty = true;
 
                     // Update title
-                    event.title = calendarEvent.title;
+                    event.title = updatedEvent.title;
 
                     // Update category
-                    event.category = calendarEvent.category;
+                    event.category = updatedEvent.category;
 
                     //Update dates
                     
-                    event.end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
-                    event.start = Utils_Date.addDays(new Date(calendarEvent.startDate.valueOf()), 1);
-                    event.__etag = calendarEvent.__etag;
+                    event.end = Utils_Date.addDays(new Date(updatedEvent.endDate.valueOf()), 1);
+                    event.start = Utils_Date.addDays(new Date(updatedEvent.startDate.valueOf()), 1);
+                    event.__etag = updatedEvent.__etag;
                     this._calendar.updateEvent(event);
                 });
             }
@@ -414,10 +415,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: "Add Event",
             resizable: false,
             okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    this._calendar.renderEvent(calendarEvent, eventSource.id);
+                    this._calendar.renderEvent(addedEvent, eventSource.id);
                 });
             },
             categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
@@ -432,11 +433,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: "Add Days Off",
             resizable: false,
             okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    calendarEvent.category = "DaysOff";
-                    this._calendar.renderEvent(calendarEvent, eventSource.id);
+                    addedEvent.category = "DaysOff";
+                    this._calendar.renderEvent(addedEvent, eventSource.id);
                 });
             },
             membersPromise: this._getTeamMembers()

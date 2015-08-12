@@ -38,7 +38,7 @@ export interface IEventSource {
     /**
     * Optional method to add events to a given source
     */
-    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent[]>;
+    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent>;
 
     /**
     * Optional method to remove events from this event source

@@ -135,14 +135,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _isInIteration(date: Date): boolean {
-        var inIteration: boolean = false;
-        this._iterations.every((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+        return this._iterations.some((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
             if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date >= Utils_Date.shiftToUTC(iteration.attributes.startDate) && date <= Utils_Date.shiftToUTC(iteration.attributes.finishDate)) {
-                inIteration = true;
                 return true;
             }
         });
-        return inIteration;
     }
 
     private _getCalendarAspectRatio() {

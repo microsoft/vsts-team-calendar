@@ -136,10 +136,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _isInIteration(date: Date): boolean {
         var inIteration: boolean = false;
-        this._iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (date >= iteration.attributes.startDate && date <= iteration.attributes.finishDate) {
+        this._iterations.every((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date >= Utils_Date.shiftToUTC(iteration.attributes.startDate) && date <= Utils_Date.shiftToUTC(iteration.attributes.finishDate)) {
                 inIteration = true;
-                return;
+                return true;
             }
         });
         return inIteration;
@@ -213,8 +213,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         // Setup the event
         var event: Calendar_Contracts.CalendarEvent = {
             title: "",
-            startDate: Utils_Date.shiftToUTC(new Date()),
-            eventId: Calendar_Utils_Guid.newGuid()
+            startDate: Utils_Date.shiftToUTC(new Date())
         };
 
         this._addEvent(event, addEventSources[0])		
@@ -324,8 +323,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             var event: Calendar_Contracts.CalendarEvent = {
                 title: "",
                 startDate: Utils_Date.shiftToUTC(new Date(startDate.valueOf())),
-                endDate: Utils_Date.addDays(Utils_Date.shiftToUTC(new Date(endDate.valueOf())), -1),
-                eventId: Calendar_Utils_Guid.newGuid()
+                endDate: Utils_Date.addDays(Utils_Date.shiftToUTC(new Date(endDate.valueOf())), -1)
             };
 
 
@@ -377,9 +375,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             startDate: new Date((<Date>event.start).valueOf()),
             endDate: new Date((<Date>event.end).valueOf()),
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -387,20 +386,22 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         if (eventSource && eventSource.updateEvents) {
             if (eventSource.id === "freeForm") {
                 eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
                     // Set underlying source to dirty so refresh picks up new changes
                     var originalEventSource = this._getCalendarEventSource(eventSource.id);
                     originalEventSource.state.dirty = true;
 
                     // Update title
-                    event.title = calendarEvent.title;
+                    event.title = updatedEvent.title;
 
                     // Update category
-                    event.category = calendarEvent.category;
+                    event.category = updatedEvent.category;
 
                     //Update dates
                     
-                    event.end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
-                    event.start = Utils_Date.addDays(new Date(calendarEvent.startDate.valueOf()), 1);
+                    event.end = Utils_Date.addDays(new Date(updatedEvent.endDate.valueOf()), 1);
+                    event.start = Utils_Date.addDays(new Date(updatedEvent.startDate.valueOf()), 1);
+                    event.__etag = updatedEvent.__etag;
                     this._calendar.updateEvent(event);
                 });
             }
@@ -414,10 +415,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             title: "Add Event",
             resizable: false,
             okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    this._calendar.renderEvent(calendarEvent, eventSource.id);
+                    this._calendar.renderEvent(addedEvent, eventSource.id);
                 });
             },
             categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
@@ -426,17 +427,18 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _addDayOff(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
         var webContext: WebContext = VSS.getWebContext();
-        event.member = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: "", url: "" };
+        event.member = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: webContext.user.email, url: "" };
         Controls_Common.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, {
             event: event,
             title: "Add Days Off",
             resizable: false,
             okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    calendarEvent.category = "DaysOff";
-                    this._calendar.renderEvent(calendarEvent, eventSource.id);
+                    addedEvent.category = "DaysOff";
+                    addedEvent.id = Calendar_Utils_Guid.newGuid();
+                    this._calendar.renderEvent(addedEvent, eventSource.id);
                 });
             },
             membersPromise: this._getTeamMembers()
@@ -465,9 +467,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             startDate: Utils_Date.addDays(new Date((<Date>event.start).valueOf()), 1),
             endDate: <Date>event.end,
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -484,17 +487,19 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             // Set underlying source to dirty so refresh picks up new changes
                             var originalEventSource = this._getCalendarEventSource(eventSource.id);
                             originalEventSource.state.dirty = true;
+                            var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
 
                             // Update title
-                            event.title = calendarEvent.title;
+                            event.title = updatedEvent.title;
 
                             // Update category
-                            event.category = calendarEvent.category;
+                            event.category = updatedEvent.category;
 
                             //Update dates
-                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                            var end = Utils_Date.addDays(new Date(updatedEvent.endDate.valueOf()), 1);
                             event.end = end;
-                            event.start = calendarEvent.startDate;
+                            event.start = updatedEvent.startDate;
+                            event.__etag = updatedEvent.__etag;
                             this._calendar.updateEvent(event);
                         });
                     },
@@ -532,9 +537,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
             startDate: start,
             title: event.title,
-            eventId: event.id,
+            id: event.id,
             category: event.category,
-            member: event.member
+            member: event.member,
+            __etag: event.__etag
         };
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);

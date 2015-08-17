@@ -5,7 +5,8 @@ import Calendar_DateUtils = require("Calendar/Utils/Date");
 import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Contracts_Platform = require("VSS/Common/Contracts/Platform");
 import Contributions_Contracts = require("VSS/Contributions/Contracts");
-import Contributions_RestClient = require("VSS/Contributions/RestClient");
+import ExtensionManagement_RestClient = require("VSS/ExtensionManagement/RestClient");
+import Services_ExtensionData = require("VSS/SDK/Services/ExtensionData");
 import Q = require("q");
 import Service = require("VSS/Service");
 import Utils_Core = require("VSS/Utils/Core");
@@ -27,7 +28,20 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     }
 
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        return this._beginGetExtensionSetting();
+        var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
+            extensionDataService.getDocuments(this._teamId).then(
+                (events: Calendar_Contracts.CalendarEvent[]) => {
+                    this._events = events;
+                    deferred.resolve(this._events);
+                },
+                (e: Error) => {
+                    this._events = [];
+                    deferred.resolve(this._events);
+                });
+        });
+
+        return deferred.promise;
     }
 
     public getCategories(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.IEventCategory[]> {
@@ -37,105 +51,64 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             });
     }
 
-    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent> {
         var deferred = Q.defer();
-        this._beginGetExtensionSetting().then(() => {
-            events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
-                this._events.push(calendarEvent);
-            });
-            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
-
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
+            extensionDataService.createDocument(this._teamId, events[0]).then(
+                (addedEvent: Calendar_Contracts.CalendarEvent) => {
+                    this._events.push(addedEvent);
+                    deferred.resolve(addedEvent);
+                },
+                (e: Error) => {
+                    deferred.reject(e);
+                });
         });
         return deferred.promise;
     }
 
     public removeEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        this._beginGetExtensionSetting().then(() => {
-            events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
-                var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e) { return e.eventId === calendarEvent.eventId; })[0]; //better check here
-                var index = this._events.indexOf(eventInArray);
-                if (index > -1) {
-                    this._events.splice(index, 1);
-                }
-            });
-            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
-
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
+            extensionDataService.deleteDocument(this._teamId, events[0].id).then(
+                () => {
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === events[0].id; })[0]; //better check here
+                    var index = this._events.indexOf(eventInArray);
+                    if (index > -1) {
+                        this._events.splice(index, 1);
+                    }
+                    deferred.resolve(this._events);
+                },
+                (e: Error) => {
+                    //Handle event has already been deleted
+                    deferred.reject(e);
+                });
         });
         return deferred.promise;
     }
 
     public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer();
-        this._beginGetExtensionSetting().then(() => {
-            events.forEach((calendarEvent: Calendar_Contracts.CalendarEvent, index: number, array: Calendar_Contracts.CalendarEvent[]) => {
-                var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e) { return e.eventId === calendarEvent.eventId; })[0]; //better check here
-                var index = this._events.indexOf(eventInArray);
-                if (index > -1) {
-                    this._events.splice(index, 1, calendarEvent);
-                }
-            });
-            this._beginUpdateExtensionSetting().then(deferred.resolve, deferred.reject);
-
+        VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
+            extensionDataService.updateDocument(this._teamId, events[0]).then(
+                (updatedEvent: Calendar_Contracts.CalendarEvent) => {
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0]; //better check here
+                    var index = this._events.indexOf(eventInArray);
+                    if (index > -1) {
+                        this._events.splice(index, 1);
+                    }
+                    this._events.push(updatedEvent);
+                    deferred.resolve(this._events);
+                },
+                (e: Error) => {
+                    //Handle concurrency issue
+                    deferred.reject(e);
+                });
+        },
+        (e: Error) => {
+            //Handle concurrency issue
+            deferred.reject(e);
         });
         return deferred.promise;
-    }
-
-    private _beginGetExtensionSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
-        var contributionsClient: Contributions_RestClient.ContributionsHttpClient = Service.VssConnection
-            .getConnection(null, Contracts_Platform.ContextHostType.Application)
-            .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-
-        contributionsClient.getAppData(VSS.getExtensionContext().id, this._teamId).then(
-            (dataSetting: Contributions_Contracts.AppDataSetting) => {
-                this._events = this._extensionSettingToEvents(dataSetting.value);
-                deferred.resolve(this._events);
-            },
-            (e: Error) => {
-                deferred.reject(e);
-            });
-
-        return deferred.promise;
-    }
-
-    private _beginUpdateExtensionSetting(): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        var deferred = Q.defer();
-        var ExtensionSetting = this._eventsToExtensionSetting();
-
-        var contributionsClient = Service.VssConnection
-            .getConnection(null, Contracts_Platform.ContextHostType.Application)
-            .getHttpClient(Contributions_RestClient.ContributionsHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-
-        contributionsClient.updateAppData(ExtensionSetting, VSS.getExtensionContext().id, this._teamId).then(
-            (dataSetting: Contributions_Contracts.AppDataSetting) => {
-                this._events = this._extensionSettingToEvents(dataSetting.value);
-                deferred.resolve(this._events);
-            },
-            (e: Error) => {
-                deferred.reject(e);
-            });
-
-        return deferred.promise;
-    }
-
-    private _eventsToExtensionSetting(): Contributions_Contracts.AppDataSetting {
-        var value = JSON.stringify({
-            'events': this._events
-        });
-        var dataSetting: Contributions_Contracts.AppDataSetting = {
-            'key': this._teamId,
-            'value': value
-        };
-        return dataSetting;
-    }
-
-    private _extensionSettingToEvents(ExtensionSettingValue: string): Calendar_Contracts.CalendarEvent[] {
-        if (ExtensionSettingValue) {
-            var json = JSON.parse(ExtensionSettingValue);
-            return json.events ? json.events : [];
-        }
-        return [];
     }
 
     private _categorizeEvents(events: Calendar_Contracts.CalendarEvent[], query?: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {

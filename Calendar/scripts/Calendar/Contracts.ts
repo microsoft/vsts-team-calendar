@@ -38,7 +38,7 @@ export interface IEventSource {
     /**
     * Optional method to add events to a given source
     */
-    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent[]>;
+    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent>;
 
     /**
     * Optional method to remove events from this event source
@@ -102,6 +102,8 @@ export interface CalendarEvent {
     */
     title: string;
 
+    __etag?: number;
+
     /**
     * Event start date
     */
@@ -115,7 +117,7 @@ export interface CalendarEvent {
     /**
     * Unique id for the event
     */
-    eventId?: string | number;
+    id?: string;
 
     /**
      * Category of the service
@@ -171,7 +173,8 @@ export interface IExtendedCalendarEventObject {
     rendering?: string;
     overlap?: boolean;
     constraint?: string;
-    id?: string|number;
+    id?: string;
+    __etag?: number;
     title: string;
     allDay?: boolean;
     start: Date|string;

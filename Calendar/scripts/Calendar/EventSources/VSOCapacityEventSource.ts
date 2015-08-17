@@ -72,7 +72,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                         var event: any = {};
                                         event.startDate = Utils_Date.shiftToUTC(new Date(daysOffRange.start.valueOf()));
                                         event.endDate = Utils_Date.shiftToUTC(new Date(daysOffRange.end.valueOf()));
-                                        event.title = capacity.teamMember.displayName + " Day Off";
+                                        event.title = IdentityHelper.parseUniquefiedIdentityName(capacity.teamMember.displayName) + " Day Off";
                                         event.member = capacity.teamMember;
                                         event.category = "DaysOff";
 
@@ -120,7 +120,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent> {
         this._events = null;
         var deferred = Q.defer();
         var dayOffStart = events[0].startDate;
@@ -290,7 +290,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 if (!memberMap[member.id]) {
                     memberMap[member.id] = true;
                     categories.push({
-                        title: member.displayName,
+                        title: IdentityHelper.parseUniquefiedIdentityName(member.displayName),
                         imageUrl: member.imageUrl
                     });
                 }
@@ -304,5 +304,74 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
     private _buildTeamImageUrl(hostUri: string, id: string): string {
         return Utils_String.format("{0}_api/_common/IdentityImage?id={1}", hostUri, id);
+    }
+
+}
+
+export class IdentityHelper {
+    public static IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START = "<";
+    public static IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END = ">";
+    public static AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START = "<<";
+    public static AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END = ">>";
+    public static AAD_IDENTITY_USER_PREFIX = "user:";
+    public static AAD_IDENTITY_GROUP_PREFIX = "group:";
+    public static IDENTITY_UNIQUENAME_SEPARATOR = "\\";
+    /**
+     * Parse a distinct display name string into an identity reference object
+     * 
+     * @param name A distinct display name for an identity
+     */
+    public static parseUniquefiedIdentityName(name: string): string {
+        if (!name) { return null; }
+
+        var i = name.lastIndexOf(IdentityHelper.AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START);
+        var j = name.lastIndexOf(IdentityHelper.AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END);
+        var isContainer: boolean = false;
+        var isAad: boolean = false;
+        if (i >= 0 && j > i) {
+            isAad = true;
+        }
+
+        // replace "<<" with "<" and ">>" with ">" in case of an AAD identity string representation to make further processing easier
+        name = name.replace(IdentityHelper.AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START, IdentityHelper.IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START)
+            .replace(IdentityHelper.AAD_IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END, IdentityHelper.IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END);
+
+        i = name.lastIndexOf(IdentityHelper.IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START);
+        j = name.lastIndexOf(IdentityHelper.IDENTITY_UNIQUEFIEDNAME_SEPERATOR_END);
+        var displayName = name;
+        var alias = "";
+        var id = "";
+        var localScopeId = "";
+        if (i >= 0 && j > i) {
+            displayName = $.trim(name.substr(0, i));
+            if (isAad) {
+                // if its an AAD identity, the string would be in format - name <<object id>>
+                id = $.trim(name.substr(i + 1, j - i - 1));  // this would be in format objectid\email
+
+                if (id.indexOf(IdentityHelper.AAD_IDENTITY_USER_PREFIX) === 0) {
+                    id = id.substr(IdentityHelper.AAD_IDENTITY_USER_PREFIX.length);
+                }
+                else if (id.indexOf(IdentityHelper.AAD_IDENTITY_GROUP_PREFIX) === 0) {
+                    isContainer = true;
+                    id = id.substr(IdentityHelper.AAD_IDENTITY_GROUP_PREFIX.length);
+                }
+
+                var ii = id.lastIndexOf("\\");
+                if (ii > 0) {
+                    alias = $.trim(id.substr(ii + 1));
+                    id = $.trim(id.substr(0, ii));
+                }
+            }
+            else {
+                alias = $.trim(name.substr(i + 1, j - i - 1));
+                // If the alias component is just a guid then this is not a uniqueName
+                // but the localScopeId which is used only for TFS/AAD groups
+                if (Utils_String.isGuid(alias)) {
+                    localScopeId = alias;
+                    alias = "";
+                }
+            }
+        }
+        return displayName;
     }
 }

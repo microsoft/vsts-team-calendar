@@ -143,7 +143,6 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             }
         });
 
-        this.refreshEvents();
         return this._calendarSources;
     }
 
@@ -177,7 +176,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
         var end = Utils_Date.addDays(new Date(event.endDate.valueOf()), 1);
         var calEvent: any  = {
-            id: event.eventId,
+            id: event.id,
             title: event.title,
             allDay: true,
             start: event.startDate,
@@ -186,6 +185,10 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             editable: eventType === "freeForm",
             category: event.category
         };
+
+        if (event.__etag) {
+            calEvent.__etag = event.__etag;
+        }
 
         if(eventType === 'daysOff'){
             calEvent.member = event.member;
@@ -255,7 +258,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     var calendarEvents = results.map((value, index) => {
                         var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         var event: any = {
-                            id: value.eventId || Calendar_Utils_Guid.newGuid(),
+                            id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
                             allDay: true,
                             start: value.startDate,
@@ -264,8 +267,12 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             rendering: options.rendering || '',
                             category: value.category,
                             member: value.member,
-                            editable: source.id === "freeForm",
+                            editable: source.id === "freeForm"
                         };
+
+                        if (value.__etag) {
+                            event.__etag = value.__etag;
+                        }
 
                         if ($.isFunction(source.addEvents)) {
                             var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());

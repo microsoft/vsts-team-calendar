@@ -146,10 +146,10 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
                     var capacityPatch: Work_Contracts.CapacityPatch = {
                         activities: [
-                            {
-                                "capacityPerDay": 0,
-                                "name": null
-                            }],
+                        {
+                            "capacityPerDay": 0,
+                            "name": null
+                        }],
                         daysOff: capacity.daysOff
                     };
                     capacityPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });

@@ -437,6 +437,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
                     addedEvent.category = "DaysOff";
+                    addedEvent.id = Calendar_Utils_Guid.newGuid();
                     this._calendar.renderEvent(addedEvent, eventSource.id);
                 });
             },

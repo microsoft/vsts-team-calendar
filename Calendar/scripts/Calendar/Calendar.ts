@@ -143,7 +143,6 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             }
         });
 
-        //this.refreshEvents();
         return this._calendarSources;
     }
 
@@ -259,7 +258,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     var calendarEvents = results.map((value, index) => {
                         var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         var event: any = {
-                            id: value.id,
+                            id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
                             allDay: true,
                             start: value.startDate,

@@ -107,12 +107,12 @@ export interface CalendarEvent {
     /**
     * Event start date
     */
-    startDate: Date;
+    startDate: string;
 
     /**
     * Event end date
     */
-    endDate?: Date;
+    endDate?: string;
 
     /**
     * Unique id for the event

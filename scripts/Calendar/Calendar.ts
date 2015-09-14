@@ -173,7 +173,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
-        var end = Utils_Date.addDays(new Date(event.endDate.valueOf()), 1);
+        var end = (<any>$.fullCalendar).moment.parseZone(event.endDate).add(1, 'days').toISOString();
         var calEvent: any  = {
             id: event.id,
             title: event.title,
@@ -255,12 +255,14 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                 .then(
                 (results) => {
                     var calendarEvents = results.map((value, index) => {
-                        var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
+                        //var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
+                        var start = (<any>$.fullCalendar).moment.parseZone(value.startDate).stripZone().stripTime().toISOString();
+                        var end = value.endDate ? (<any>$.fullCalendar).moment.parseZone(value.endDate).add(1, 'days').stripZone().stripTime().toISOString() : start;
                         var event: any = {
                             id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
                             allDay: true,
-                            start: value.startDate,
+                            start: start,
                             end: end,
                             eventType: source.id,
                             rendering: options.rendering || '',

@@ -52,7 +52,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                     }
             });
 
-            result.sort((a, b) => { return a.startDate.valueOf() - b.startDate.valueOf(); });
+            result.sort((a, b) => { return new Date(a.startDate).valueOf() - new Date(b.startDate).valueOf(); });
             this._events = result;
             deferred.resolve(result);
 
@@ -88,15 +88,15 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                 return 0;
             }
 
-            return e1.startDate.getTime() - e2.startDate.getTime();
+            return new Date(e1.startDate).getTime() - new Date(e2.startDate).getTime();
         }),
             (index: number, event: Calendar_Contracts.CalendarEvent) => {
                 if (Calendar_DateUtils.eventIn(event, query)) {
                     var category: Calendar_Contracts.IEventCategory = {
                         title: event.title,
                         subTitle: Utils_String.format("{0} - {1}",
-                            Utils_Date.format(event.startDate, "M"),
-                            Utils_Date.format(event.endDate, "M")),
+                            Utils_Date.format(new Date(event.startDate), "M"),
+                            Utils_Date.format(new Date(event.endDate), "M")),
                     };
                     if (event.category) {
                         category.color = Calendar_ColorUtils.generateBackgroundColor(event.title)
@@ -114,7 +114,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {
         if (event.startDate && event.endDate) {
             var today: Date = Utils_Date.shiftToUTC(new Date());
-            return today >= event.startDate && today <= event.endDate;
+            return today >= new Date(event.startDate) && today <= new Date(event.endDate);
         }
         return false;
     }

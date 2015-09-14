@@ -58,8 +58,8 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
      * shows an error message, or returns the edited note.
      */
     public onOkClick(): any {
-        this._calendarEvent.startDate = this._parseDateValue(this._$startInput.val());
-        this._calendarEvent.endDate = this._parseDateValue(this._$endInput.val());
+        this._calendarEvent.startDate = this._$startInput.val();
+        this._calendarEvent.endDate = this._$endInput.val();
 
         this._buildCalendarEventFromFields();
 
@@ -77,7 +77,7 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
         var $editControl = $(domElem('div', 'event-edit-control'));
         var $fieldsContainer = $(domElem('table')).appendTo($editControl);
 
-        this._$startInput = $("<input type='text' id='fieldStartDate' />").val(this._formatDateValue(this._calendarEvent.startDate))
+        this._$startInput = $("<input type='text' id='fieldStartDate' />").val(this._calendarEvent.startDate)
             .on("blur",(e) => {
                 this.updateOkButton(this._validate());
         });
@@ -87,10 +87,10 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
             });
 
         if (this._calendarEvent.endDate) {
-            this._$endInput.val(this._formatDateValue(this._calendarEvent.endDate));
+            this._$endInput.val(this._calendarEvent.endDate);
         }
         else {
-            this._$endInput.val(this._formatDateValue(this._calendarEvent.startDate));
+            this._$endInput.val(this._calendarEvent.startDate);
         }
 
         // Populate fields container with fields. The form fields array contain pairs of field label and field element itself.

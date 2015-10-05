@@ -1,0 +1,95 @@
+{
+    "manifestVersion": 1,
+    "id": "team-calendar",
+    "version": "0.1.0",
+    "publisher": "ms",
+    "name": "Team Calendar",
+    "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
+    "baseUri": "https://vsoalmcalendar-demo.azurewebsites.net/",
+    "icons": {
+        "default": "images/calendar-logo.png"
+    },
+    "tags": [
+        "Planning",
+        "Time tracking",
+        "Calendar"
+    ],
+    "categories": [
+        "Collaboration"
+    ],
+    "contributions": [
+        {
+            "id": "calendar",
+            "type": "ms.vss-web.hub",
+            "description": "Adds the Team 'Calendar' hub to the home hub group.",
+            "targets": [
+                "ms.vss-web.home-hub-group"
+            ],
+            "properties": {
+                "name": "Calendar",
+                "order": 22,
+                "uri": "calendar.html"
+            }
+        },
+        {
+            "id": "calendar-event-sources",
+            "type": ".calendar-event-source-collection",
+            "description": "Target for calendar event sources",
+            "targets": [
+                ".calendar"
+            ]
+        },
+        {
+            "id": "freeForm",
+            "type": ".calendar-event-source",
+            "description": "Adds free-form calendar events.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "daysOff",
+            "type": ".calendar-event-source",
+            "description": "Adds Team and personal days-off calendar events.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "iterations",
+            "type": ".calendar-event-source",
+            "description": "Adds calendar events for sprints/iterations.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        }
+    ],
+    "contributionTypes": [
+        {
+            "id": "calendar-event-source-collection",
+            "name": "Calendar event source collection",
+            "description": "A collection of calendar event sources."
+        },
+        {
+            "id": "calendar-event-source",
+            "name": "Calendar event source",
+            "description": "A provider of calendar events.",
+            "properties": {
+                "uri": {
+                    "description": "URI to the (background/hidden) HTML content which registers the calendar event source object.",
+                    "type": "string",
+                    "required": true
+                }
+            }
+        }
+    ]
+}

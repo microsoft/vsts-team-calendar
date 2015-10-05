@@ -49,6 +49,11 @@ export interface IEventSource {
     * Optional method to update an event in this event source
     */
     updateEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent[]>;
+    
+    /**
+    * Forms the url which is linked to the title of the summary section for the source
+    */
+    getTitleUrl(webContext: WebContext): IPromise<string>;
 }
 
 /**

@@ -110,6 +110,12 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         });
         return deferred.promise;
     }
+    
+    public getTitleUrl(webContext: WebContext): IPromise<string> {
+        var deferred = Q.defer();
+        deferred.resolve("");
+        return deferred.promise;
+    }
 
     private _categorizeEvents(events: Calendar_Contracts.CalendarEvent[], query?: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {
         var categories: Calendar_Contracts.IEventCategory[] = [];

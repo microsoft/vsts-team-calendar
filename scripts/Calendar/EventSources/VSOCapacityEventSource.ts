@@ -262,6 +262,25 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         });
         return deferred.promise;
     }
+    
+    public getTitleUrl(webContext: WebContext): IPromise<string> {
+        var deferred = Q.defer();
+        var workClient: Work_Client.WorkHttpClient = Service.VssConnection
+            .getConnection()
+            .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
+            var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
+            workClient.getTeamIterations(teamContext, "current").then((iterations: Work_Contracts.TeamSettingsIteration[]) => {
+                if (iterations.length > 0) {
+                    deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_backlogs/capacity/" + iterations[0].name);
+                }
+                else {
+                    deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations");         
+                }
+            }, (error) => {
+                deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations");       
+            });
+        return deferred.promise;
+    }
 
     private _getTeamDaysOff(workClient: Work_Client.WorkHttpClient, teamContext: TFS_Core_Contracts.TeamContext, iterationId): IPromise<Work_Contracts.TeamSettingsDaysOff> {
         var deferred = Q.defer();

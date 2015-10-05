@@ -655,21 +655,34 @@ export class SummaryView extends Controls.BaseControl {
         // Get events categorized
         source.getCategories(query).then(
             (categories: Calendar_Contracts.IEventCategory[]) => {
-                if (categories.length > 0) {
+                //if (categories.length > 0) {
                     var $sectionContainer = newElement("div", "category").appendTo(this.getElement());
-                    newElement("h3", "", source.name).appendTo($sectionContainer);
-                    $.each(categories,(index: number, category: Calendar_Contracts.IEventCategory) => {
-                        var $titleContainer = newElement("div", "category-title").appendTo($sectionContainer);
-                        if (category.imageUrl) {
-                            newElement("img", "category-icon").attr("src", category.imageUrl).appendTo($titleContainer);
+                    var summaryTitle = source.name;
+                    source.getTitleUrl(VSS.getWebContext()).then((titleUrl) => {
+                        if (titleUrl) {
+                            $("<h3>").html("<a target='_blank' href='" + titleUrl + "'>" + summaryTitle + "</a>").appendTo($sectionContainer);  
                         }
-                        if (category.color) {
-                            newElement("div", "category-color").css("background-color", category.color).appendTo($titleContainer);
+                        else {
+                            newElement("h3", "", summaryTitle).appendTo($sectionContainer);                            
                         }
-                        newElement("span", "category-titletext", category.title).appendTo($titleContainer);
-                        newElement("div", ["category-subtitle", (category.color ? "c-color" : ""), (category.imageUrl ? "c-icon" : "")].join(" "), category.subTitle).appendTo($sectionContainer);
+                        if (categories.length > 0) {
+                            $.each(categories,(index: number, category: Calendar_Contracts.IEventCategory) => {
+                                var $titleContainer = newElement("div", "category-title").appendTo($sectionContainer);
+                                if (category.imageUrl) {
+                                    newElement("img", "category-icon").attr("src", category.imageUrl).appendTo($titleContainer);
+                                }
+                                if (category.color) {
+                                    newElement("div", "category-color").css("background-color", category.color).appendTo($titleContainer);
+                                }
+                                newElement("span", "category-titletext", category.title).appendTo($titleContainer);
+                                newElement("div", ["category-subtitle", (category.color ? "c-color" : ""), (category.imageUrl ? "c-icon" : "")].join(" "), category.subTitle).appendTo($sectionContainer);
+                            });
+                        }
+                        else {
+                          newElement("span", "", "(none)").appendTo($sectionContainer);
+                        }  
                     });
-                }
+                //}
                 deferred.resolve(source);
             });
         return deferred.promise;

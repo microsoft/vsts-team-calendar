@@ -57,7 +57,7 @@
             }
 
     #calendar-extension .calendar-title {
-        font-family: "Segoe UI Light,Segoe UI,Tahoma,Arial,Verdana";       
+        /*font-family: "Segoe UI,Tahoma,Arial,Verdana";      */
         font-weight: lighter;
         font-size: 20px;
         color: #444;
@@ -82,7 +82,7 @@
 }
 
     .category > h3 {
-        font-family: "Segoe UI Light,Segoe UI,Tahoma,Arial,Verdana";
+        /*font-family: "Segoe UI,Tahoma,Arial,Verdana";*/
         font-weight: lighter;
         margin-bottom: 3px;
         color: #000

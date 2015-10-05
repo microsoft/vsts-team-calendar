@@ -79,6 +79,12 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
 
         return deferred.promise;
     }
+    
+    public getTitleUrl(webContext: WebContext): IPromise<string> {
+        var deferred = Q.defer();
+        deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations");
+        return deferred.promise;
+    }
 
     private _getCategoryData(events: Calendar_Contracts.CalendarEvent[], query: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[]{
         var categories: Calendar_Contracts.IEventCategory[] = [];

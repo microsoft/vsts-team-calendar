@@ -101,10 +101,7 @@ module.exports = function (grunt) {
       files: [this.data.webOutput + "/**"]
     });
 
-    console.log("hash: " + webHash);
     storageSource.dest = webHash;
-
-    console.log(JSON.stringify(grunt.config('azure-blob'), null, 2));
 
     var newBaseUri = storageContainerUri + '/' + webHash;
     

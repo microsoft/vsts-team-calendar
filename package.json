@@ -21,9 +21,6 @@
     "grunt-azure-blob": "0.0.2",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-jshint": "~0.10.0",
-    "grunt-contrib-nodeunit": "~0.4.1",
-    "grunt-contrib-uglify": "~0.5.0",
     "grunt-typescript": "^0.6.2",
     "hash-files": "^1.0.0"
   }

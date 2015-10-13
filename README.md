@@ -11,7 +11,7 @@ Extensions enable you to create first-class integration experiences within Visua
 
 The Team Calendar extension provides Visual Studio Online teams an integrated calendar view in web access:
 
-![screenshot](Calendar/images/calendar-screen-shot.png)
+![screenshot](images/calendar-screen-shot.png)
 
 ### What the calendar shows
 

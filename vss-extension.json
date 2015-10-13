@@ -1,0 +1,114 @@
+{
+    "manifestVersion": 1,
+    "id": "team-calendar",
+    "version": "0.2.1",
+    "publisher": "fabrikam",
+    "name": "Team Calendar",
+    "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
+    "baseUri": "https://vsoalmcalendar-demo.azurewebsites.net/",
+    "icons": {
+        "default": "images/calendar-logo.png"
+    },
+    "tags": [
+        "planning",
+        "time tracking",
+        "calendar",
+        "capacity"
+    ],
+    "scopes": [
+        "vso.work_write"  
+    ],
+    "categories": [
+        "Collaboration"
+    ],
+    "content": {
+        "details": "content/details.md",
+        "license": "LICENSE"
+    },
+    "details": "content/details.md",
+    "public": true,
+    "screenshots": [
+        {
+            "path": "images/calendar-screen-shot.png"
+        }              
+    ],
+    "branding": {
+        "color": "rgb(235, 60, 0)",
+        "theme":  "dark"
+    },
+    "contributions": [
+        {
+            "id": "calendar",
+            "type": "ms.vss-web.hub",
+            "description": "Calendar hub in the Home hub group.",
+            "targets": [
+                "ms.vss-web.home-hub-group"
+            ],
+            "properties": {
+                "name": "Calendar",
+                "order": 22,
+                "uri": "calendar.html"
+            }
+        },
+        {
+            "id": "calendar-event-sources",
+            "type": ".calendar-event-source-collection",
+            "description": "Target for calendar event sources",
+            "targets": [
+                ".calendar"
+            ]
+        },
+        {
+            "id": "freeForm",
+            "type": ".calendar-event-source",
+            "description": "Calendar event source for free-form events. Enables users to add their own events to the calendar.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "daysOff",
+            "type": ".calendar-event-source",
+            "description": "Calendar event source for team and personal days off.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "iterations",
+            "type": ".calendar-event-source",
+            "description": "Calendar event source for sprints/iterations.",
+            "targets": [
+                ".calendar-event-sources"
+            ],
+            "properties": {
+                "uri": "calendarServices.html"
+            }
+        }
+    ],
+    "contributionTypes": [
+        {
+            "id": "calendar-event-source-collection",
+            "name": "Calendar event source collection",
+            "description": "A collection of calendar event sources."
+        },
+        {
+            "id": "calendar-event-source",
+            "name": "Calendar event source",
+            "description": "A provider of calendar events.",
+            "properties": {
+                "uri": {
+                    "description": "URI to the (background/hidden) HTML content which registers the calendar event source object.",
+                    "type": "string",
+                    "required": true
+                }
+            }
+        }
+    ]
+}

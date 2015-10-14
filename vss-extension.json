@@ -5,7 +5,7 @@
     "publisher": "fabrikam",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
-    "baseUri": "https://vsoalmcalendar-demo.azurewebsites.net/",
+    "baseUri": "https://vsoteamcalendar.blob.core.windows.net/default/33921914aa4c0f96b7769d62919b033c2231a981",
     "icons": {
         "default": "images/calendar-logo.png"
     },

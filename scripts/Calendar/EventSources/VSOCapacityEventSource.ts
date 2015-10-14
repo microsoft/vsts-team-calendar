@@ -293,8 +293,21 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
 
     private _getCapacity(workClient: Work_Client.WorkHttpClient, teamContext: TFS_Core_Contracts.TeamContext, iterationId, memberId: string): IPromise<Work_Contracts.TeamMemberCapacity> {
         var deferred = Q.defer();
-        workClient.getCapacity(teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
-            deferred.resolve(value);
+        workClient.getCapacities(teamContext, iterationId).then((capacities: Work_Contracts.TeamMemberCapacity[]) => {
+            var foundCapacity = capacities.some((value: Work_Contracts.TeamMemberCapacity, index, array) => {
+                if (value.teamMember.id === memberId) {
+                    deferred.resolve(value);
+                    return true;
+                }
+                return false;          
+            });
+            if(!foundCapacity) {
+                var value = {
+                    daysOff: [],
+                    activities: []
+                };
+                deferred.resolve(value);
+            }
         });
 
         return deferred.promise;

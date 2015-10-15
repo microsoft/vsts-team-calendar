@@ -50,7 +50,7 @@ module.exports = function (grunt) {
         },
         {
           expand: true,
-          src: ['images/**', 'vss-extension.json'],
+          src: ['images/**', 'content/**', 'LICENSE', 'vss-extension.json'],
           dest: '<%= dirs.output.packages %>'
         }
       ]

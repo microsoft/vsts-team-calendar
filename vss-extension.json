@@ -1,40 +1,47 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.2.4",
-    "publisher": "ms",
+    "version": "0.2.6",
+    "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more!",
-    "baseUri": "https://vsoteamcalendar.blob.core.windows.net/default/33921914aa4c0f96b7769d62919b033c2231a981",
+    "public": true,
+    "baseUri": "https://vsoteamcalendar.blob.core.windows.net/default/3d0f02a9b0157c638d4a094227280b014cdf2c2f",
     "icons": {
         "default": "images/calendar-logo.png"
     },
     "tags": [
-        "planning",
-        "time tracking",
+        "plan",
+        "time",
         "calendar",
-        "capacity"
+        "capacity",
+        "awesomeness"
     ],
     "scopes": [
         "vso.work_write"  
     ],
     "categories": [
-        "Collaboration"
+        "Plan and track"
     ],
     "content": {
         "details": {
-            "path": "content/details.md"   
+            "path": "overview.md"   
         }
     },
-    "public": true,
     "screenshots": [
         {
             "path": "images/calendar-screen-shot.png"
         }              
     ],
+    "files": [
+        {
+            "path": "images",
+            "addressable": true
+        }
+    ],
     "branding": {
         "color": "rgb(34, 134, 117)",
-        "theme":  "dark"
+        "theme": "dark"
     },
     "contributions": [
         {

@@ -271,7 +271,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
             workClient.getTeamIterations(teamContext, "current").then((iterations: Work_Contracts.TeamSettingsIteration[]) => {
                 if (iterations.length > 0) {
-                    deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_backlogs/capacity/" + iterations[0].name);
+                    var iterationPath = iterations[0].path.substr(iterations[0].path.indexOf('\\') + 1);
+                    deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_backlogs/capacity/" + iterationPath);
                 }
                 else {
                     deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations");         

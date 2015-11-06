@@ -1,4 +1,4 @@
-/// <reference path='../../typings/vss/VSS.d.ts' />
+/// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
 /// <reference path='../../typings/moment/moment.d.ts' />
 

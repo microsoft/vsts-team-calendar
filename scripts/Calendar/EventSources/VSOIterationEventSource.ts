@@ -1,4 +1,6 @@
-/// <reference path='../../../typings/vss/VSS.d.ts' />
+/// <reference path='../../../typings/VSS.d.ts' />
+/// <reference path='../../../typings/q.d.ts' />
+/// <reference path='../../../typings/jquery.d.ts' />
 
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_ColorUtils = require("Calendar/Utils/Color");

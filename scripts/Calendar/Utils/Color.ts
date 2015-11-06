@@ -1,4 +1,4 @@
-﻿/// <reference path='../../../typings/vss/VSS.d.ts' />
+﻿/// <reference path='../../../typings/VSS.d.ts' />
 
 import Utils_String = require("VSS/Utils/String");
 

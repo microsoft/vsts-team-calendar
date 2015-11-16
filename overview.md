@@ -1,23 +1,32 @@
-## Stay on track
+Team Calendar helps busy teams stay on track and informed about important deadines, sprint schedules, and upcoming milestones. Team Calendar is the one place to see and manage the date important to your teams, including sprint schedule, days off (for individuals or the team), and custom events.
 
-Team Calendar is an extension for Visual Studio Online that helps busy teams stay on track and informed about important deadines, sprint schedules, and upcoming milestones. Team Calendar is the one place to see and manage the date important to your teams, including:
+## Quick view of your sprint schedule
 
-* Iterations 
-* Days off (for individuals or the team)
-* Custom events (single or multi-day)
+At a glance see when sprints start and end. No more guessing at how much time you have before the sprint ends.
 
-![screenshot](images/calendar-preview-screen-shot.png)
+![st](images/sprint-start.png)
 
-## How to use
+[Learn how](https://msdn.microsoft.com/Library/vs/alm/work/scrum/define-sprints) to define your sprint schedule
+
+## Easily manage days off 
+
+From your team calendar, mark days you (or anyone on your team) will be out of the office. Simply click a day and choose to add a day off. No more digging around the capacity settings page to set or manage days off.
+
+![ado](images/add-day-off.png)
+
+![ado-dialog](images/add-day-off-dialog.png)
+
+## Plan better
+
+Visualize the availability of the team as you plan your team. Understand who is unavailable and when. Know ahead of time when you have multiple team members out at the same time.
+
+![vdo](images/day-off-view.png)
+
+## Quick steps to get started
 
 Team Calendar automatically shows iterations, days off, and configured working days for your team (see links below for help with setting these things up). 
 
-1. Install the Team Calendar extension into your account
-
-2. Navigate to your project home and open the **Calendar** hub
-
-3. You should see your current sprint highlighted:
-   ![st](images/sprint-start.png)
+1. Navigate to your project home and open the **Calendar** hub
 
 ### Add a custom event
 
@@ -31,19 +40,9 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
   * Days off (for a user or team) can be added by left-clicking on a day
 
-### Add a day off
-
-1. Click a day **within an iteration** and select **Add day off**
-
-   ![ado](images/add-day-off.png)
-
-2. Optionally change the end date and select either **Everyone** (meaning the entire team is off) or an individual user:
-
-   ![adod](images/add-day-off-dialog.png)
-
 ## Useful links
 
-* [Define your sprints](https://msdn.microsoft.com/Library/vs/alm/work/scrum/define-sprints)
+
 * [Configure days off](https://msdn.microsoft.com/en-us/Library/vs/alm/Work/scale/capacity-planning)
 
 ## Learn more about this extension

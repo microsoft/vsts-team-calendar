@@ -1,4 +1,6 @@
-/// <reference path='../../../typings/vss/VSS.d.ts' />
+/// <reference path='../../../typings/VSS.d.ts' />
+/// <reference path='../../../typings/q.d.ts' />
+/// <reference path='../../../typings/jquery.d.ts' />
 
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_DateUtils = require("Calendar/Utils/Date");
@@ -30,9 +32,15 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-            extensionDataService.getDocuments(this._teamId).then(
-                (events: Calendar_Contracts.CalendarEvent[]) => {
-                    this._events = events;
+            extensionDataService.queryCollectionNames([this._teamId]).then(
+                (collections: Contributions_Contracts.ExtensionDataCollection[]) => {
+                    if (collections[0] && collections[0].documents) {
+                        this._events = collections[0].documents;
+                    }
+                    else {
+                        this._events = [];
+                    }
+                    
                     deferred.resolve(this._events);
                 },
                 (e: Error) => {

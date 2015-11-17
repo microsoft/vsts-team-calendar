@@ -6,7 +6,6 @@
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
     "public": true,
-    "baseUri": "https://vsoteamcalendar.blob.core.windows.net/default/3d0f02a9b0157c638d4a094227280b014cdf2c2f",
     "icons": {
         "default": "images/calendar-logo.png"
     },
@@ -15,7 +14,8 @@
         "time",
         "calendar",
         "capacity",
-        "awesomeness"
+        "awesomeness",
+        "PrivatePreview"
     ],
     "targets": [
         {
@@ -42,6 +42,10 @@
         {
             "path": "images",
             "addressable": true
+        },
+        {
+            "path": "dist/web",
+            "addressable": true
         }
     ],
     "branding": {
@@ -59,7 +63,7 @@
             "properties": {
                 "name": "Calendar",
                 "order": 22,
-                "uri": "calendar.html"
+                "uri": "dist/web/calendar.html"
             }
         },
         {
@@ -78,7 +82,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "dist/web/calendarServices.html"
             }
         },
         {
@@ -89,7 +93,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "dist/web/calendarServices.html"
             }
         },
         {
@@ -100,7 +104,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "dist/web/calendarServices.html"
             }
         }
     ],

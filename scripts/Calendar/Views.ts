@@ -1,4 +1,4 @@
-/// <reference path='../../typings/vss/VSS.d.ts' />
+/// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
 /// <reference path='../../typings/moment/moment.d.ts' />
 
@@ -469,9 +469,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
+        var start = (<Date>event.start).toISOString();
+        var end = event.end ? (<any>event.end).add(-1, 'days').stripTime().toISOString() : start;
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: Utils_Date.addDays(new Date((<Date>event.start).valueOf()), 1).toISOString(),
-            endDate: (<Date>event.end).toISOString(),
+            startDate: start,
+            endDate: end,
             title: event.title,
             id: event.id,
             category: event.category,
@@ -502,8 +504,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             event.category = updatedEvent.category;
 
                             //Update dates
-                            var end = Utils_Date.addDays(new Date(updatedEvent.endDate.valueOf()), 1);
-                            event.end = end;
+                            event.end = (<any>$.fullCalendar).moment.parseZone(updatedEvent.endDate).add(1, 'days').toISOString();
                             event.start = updatedEvent.startDate;
                             event.__etag = updatedEvent.__etag;
                             this._calendar.updateEvent(event);

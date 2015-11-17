@@ -62,6 +62,7 @@
         font-size: 20px;
         color: #444;
         margin: 0px 10px 10px 10px;
+        padding-top: 8px;
     }
 
 .event-edit-control > table {

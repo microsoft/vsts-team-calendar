@@ -17,6 +17,11 @@
         "capacity",
         "awesomeness"
     ],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }  
+    ],
     "scopes": [
         "vso.work_write"  
     ],

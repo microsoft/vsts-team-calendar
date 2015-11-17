@@ -197,3 +197,6 @@ ModelManifest.xml
 
 # vset (NPM Package) settings
 settings.vset.json
+
+# VS Code
+.vscode/

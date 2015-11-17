@@ -6,7 +6,7 @@ At a glance see when sprints start and end. No more guessing at how much time yo
 
 ![st](images/sprint-start.png)
 
-[Learn how](https://msdn.microsoft.com/Library/vs/alm/work/scrum/define-sprints) to define your sprint schedule
+Learn how to [setup your sprint schedule](https://msdn.microsoft.com/Library/vs/alm/work/scrum/define-sprints)
 
 ## Easily manage days off 
 
@@ -15,6 +15,8 @@ From your team calendar, mark days you (or anyone on your team) will be out of t
 ![ado](images/add-day-off.png)
 
 ![ado-dialog](images/add-day-off-dialog.png)
+
+Learn more about [capacity planning](https://msdn.microsoft.com/en-us/Library/vs/alm/Work/scale/capacity-planning)
 
 ## Plan better
 
@@ -28,6 +30,10 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
 1. Navigate to your project home and open the **Calendar** hub
 
+   ![calendar](images/calendar-hub.png)
+
+2. You will see any iterations that occur in the month and also any days off already set for users or the team
+
 ### Add a custom event
 
 1. Click a day and select **Add an event**
@@ -38,15 +44,6 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
    ![aed](images/add-event-dialog.png)
 
-  * Days off (for a user or team) can be added by left-clicking on a day
+## Learn more
 
-## Useful links
-
-
-* [Configure days off](https://msdn.microsoft.com/en-us/Library/vs/alm/Work/scale/capacity-planning)
-
-## Learn more about this extension
-
-The source to this extension is available on GitHub: [Microsoft/vso-team-calendar](https://github.com/microsoft/vso-team-calendar). Feel free to take and modify. You can also contribute new event sources to this extension.
-
-To learn more about developing an extension for Visual Studio Online, see the [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview).
+The [source](https://github.com/microsoft/vso-team-calendar) for this extension is on GitHub. Take, fork, and extend. 

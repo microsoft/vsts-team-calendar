@@ -1,42 +1,40 @@
-# Team Calendar Extension 
+![build](https://mseng.visualstudio.com/DefaultCollection/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge?branchName=master)
 
-Team Calendar is an extension for Visual Studio Online that demonstrates one type of experience **you** can now develop and install into your Visual Studio Online account. Eventually you will be able to share your extensions with other users.
-To learn more about Extensions, see the [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview).
+# Team Calendar Extension for Visual Studio Team Services
 
-**Note:** Extensions is currently in private preview. To get early access, join the free [Visual Studio Partner Program](http://www.vsipprogram.com/join).
-
-## Overview
-
-Extensions enable you to create first-class integration experiences within Visual Studio Online, just the way you have always wanted. An extension can be a simple context menu or toolbar action or can be a complex and powerful custom UI experience that light up within the account, collection, or project hubs. 
+Team Calendar helps busy teams stay on track and informed about important deadlines, sprint schedules, and upcoming milestones. Team Calendar is the one place to see and manage the date important to your teams, including sprint schedule, days off (for individuals or the team), and custom events.
 
 The Team Calendar extension provides Visual Studio Online teams an integrated calendar view in web access:
 
 ![screenshot](images/calendar-screen-shot.png)
 
-### What the calendar shows
+See [overview](overview.md) to learn more about the features of this extension.
 
-* Any iterations in the current month (the current iteration is highlighted in a light blue) – all iterations are shown on the right
-* Any days off (individual users or entire team)
-  * Days off (for a user or team) can be added by left-clicking on a day
-* Any events added by team members
-  * Events (single or multi-day) can be added by left-clicking on a day
-  * Events are categorized and shown on the left
+## About extensions
 
-## How to try the calendar
+Extensions enable you to create first-class integration experiences within Visual Studio Online, just the way you have always wanted. An extension can be a simple context menu or toolbar action or can be a complex and powerful custom UI experience that light up within the account, collection, or project hubs. 
 
-1. Browse the code to understand how an extension is developed.
- * To learn more extensions, see an [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview)
-2. Modify the "try it" extension manifest 
-  1. Download `extension-tryit.json` (in the Calendar folder) and save it locally
-  2. Update the namespace field to something globally unique, for example: ```mycompany.team-calendar```
-  3. Note the baseUri field is set to `https://vsoalmcalendar-demo.azurewebsites.net`
-3. Install the extension to your account
-  1. Navigate to https://youraccount.visualstudio.com/_admin/_ext (replace `youraccount` with your real Visual Studio Online account name)
-  2. Click **Install** and browse to your manifest file (extension-tryit.json)
-  3. Click **OK**
+To learn more about Extensions, see the [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview).
 
-## How to add new event sources
+## Developing
+
+Team Calendar contains TypeScript. To compile, run `tsc`.
+
+To package so you can test in your Visual Studio Team Services account, use the [Team Services CLI](https://github.com/Microsoft/tfs-cli) and run:
+
+`tfx extension create --publisher myPublisherId`
+
+You can also build using Grunt:
+
+```
+npm i -g grunt-cli
+npm update
+grunt
+```
+
+## How to add custom event sources
 
 The Team Calendar extension is designed to be extended by other extensions. Other extensions can contribute new "event sources", which will be pulled from when the Team Calendar is rendered. Once you develop your extension, install it in the account that you installed the Team Calendar extension into.
 
 See the [public-events sample](https://github.com/Microsoft/vso-extension-samples/tree/master/public-events) for an example of an extension that contributes to the Team Calendar.
+

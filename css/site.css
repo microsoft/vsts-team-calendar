@@ -145,4 +145,10 @@ th.fc-day-header {
     border-radius: inherit;
 }
 
+#calendar-extension .feedback-area {
+    text-align: right;
+    font-size: 12px;
+    margin: 5px 5px 5px 10px;
+}
+
 /*# sourceMappingURL=site.css.map */

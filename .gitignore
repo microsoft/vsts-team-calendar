@@ -1,5 +1,6 @@
 scripts/**/*.js
 scripts/**/*.js.map
+built/
 dist/
 
 *.vsix

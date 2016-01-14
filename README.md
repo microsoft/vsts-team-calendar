@@ -15,25 +15,7 @@ The Team Calendar extension provides Visual Studio Online teams an integrated ca
 
 ### What the calendar shows
 
-* Any iterations in the current month (the current iteration is highlighted in a light blue) – all iterations are shown on the right
-* Any days off (individual users or entire team)
-  * Days off (for a user or team) can be added by left-clicking on a day
-* Any events added by team members
-  * Events (single or multi-day) can be added by left-clicking on a day
-  * Events are categorized and shown on the left
-
-## How to try the calendar
-
-1. Browse the code to understand how an extension is developed.
- * To learn more extensions, see an [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview)
-2. Modify the "try it" extension manifest 
-  1. Download `extension-tryit.json` (in the Calendar folder) and save it locally
-  2. Update the namespace field to something globally unique, for example: ```mycompany.team-calendar```
-  3. Note the baseUri field is set to `https://vsoalmcalendar-demo.azurewebsites.net`
-3. Install the extension to your account
-  1. Navigate to https://youraccount.visualstudio.com/_admin/_ext (replace `youraccount` with your real Visual Studio Online account name)
-  2. Click **Install** and browse to your manifest file (extension-tryit.json)
-  3. Click **OK**
+See [overview](overview.md) to learn more about the features of this extension.
 
 ## How to add new event sources
 

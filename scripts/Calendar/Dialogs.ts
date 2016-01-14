@@ -2,7 +2,8 @@
 
 import Calendar_Contracts = require("Calendar/Contracts");
 import Controls = require("VSS/Controls");
-import Controls_Common = require("VSS/Controls/Common");
+import Controls_Notifications = require("VSS/Controls/Notifications");
+import Controls_Combos = require("VSS/Controls/Combos");
 import Controls_Dialog = require("VSS/Controls/Dialogs");
 import Controls_Validation = require("VSS/Controls/Validation");
 import Utils_Core = require("VSS/Utils/Core");
@@ -33,7 +34,7 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
     protected _$startInput: JQuery;
     protected _$endInput: JQuery;
 
-    private _eventValidationError: Controls_Common.MessageAreaControl;
+    private _eventValidationError: Controls_Notifications.MessageAreaControl;
     protected _calendarEvent: Calendar_Contracts.CalendarEvent;
 
     public initializeOptions(options?: any) {
@@ -72,7 +73,7 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
     protected _createLayout() {
         this._$container = $(domElem('div')).addClass('edit-event-container').appendTo(this._element);
 
-        this._eventValidationError = <Controls_Common.MessageAreaControl>Controls.BaseControl.createIn(Controls_Common.MessageAreaControl, this._$container, { closeable: false });
+        this._eventValidationError = <Controls_Notifications.MessageAreaControl>Controls.BaseControl.createIn(Controls_Notifications.MessageAreaControl, this._$container, { closeable: false });
 
         var $editControl = $(domElem('div', 'event-edit-control'));
         var $fieldsContainer = $(domElem('table')).appendTo($editControl);
@@ -112,10 +113,10 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
 
         this._$container.append($editControl);
 
-        var startCombo = <Controls_Common.Combo>Controls.Enhancement.enhance(Controls_Common.Combo, this._$startInput, {
+        var startCombo = <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$startInput, {
             type: "date-time"
         });
-        var endCombo = <Controls_Common.Combo>Controls.Enhancement.enhance(Controls_Common.Combo, this._$endInput, {
+        var endCombo = <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$endInput, {
             type: "date-time"
         });
 
@@ -205,7 +206,7 @@ export class EditFreeFormEventDialog<TOptions extends IFreeFormEventDialogOption
         var categories = <IPromise<string[]>>this._options.categories;
         if (categories) {
             categories.then((allCategories: string[]) => {
-                Controls.Enhancement.enhance(Controls_Common.Combo, this._$categoryInput, {
+                Controls.Enhancement.enhance(Controls_Combos.Combo, this._$categoryInput, {
                     source: allCategories,
                     dropCount: 3
                 });
@@ -298,7 +299,7 @@ export class EditCapacityEventDialog<TOptions extends ICapacityEventDialogOption
 
                 super._createLayout();
 
-                Controls.Enhancement.enhance(Controls_Common.Combo, this._$memberInput, {
+                Controls.Enhancement.enhance(Controls_Combos.Combo, this._$memberInput, {
                     source: memberNames,
                     dropCount: 3
                 });

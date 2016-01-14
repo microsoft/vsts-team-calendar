@@ -7,7 +7,7 @@ import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Dialogs = require("Calendar/Dialogs");
 import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
-import Controls_Common = require("VSS/Controls/Common");
+import Controls_Dialogs = require("VSS/Controls/Dialogs");
 import Controls_Menus = require("VSS/Controls/Menus");
 import Controls_Navigation = require("VSS/Controls/Navigation");
 import Q = require("q");
@@ -425,7 +425,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
         };
         
-        Controls_Common.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
+        Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
     }
 
     private _addDayOff(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
@@ -448,7 +448,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             membersPromise: this._getTeamMembers()
         };
         
-        Controls_Common.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, dialogOptions);
+        Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, dialogOptions);
     }
 
     private _getTeamMembers(): IPromise<WebApi_Contracts.IdentityRef[]> {
@@ -513,10 +513,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
                 };
                 
-                Controls_Common.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
+                Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
             }
             else if (eventSource.id === "daysOff") {
-                Controls_Common.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, {
+                Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, {
                     event: calendarEvent,
                     title: "Edit Days Off",
                     resizable: false,

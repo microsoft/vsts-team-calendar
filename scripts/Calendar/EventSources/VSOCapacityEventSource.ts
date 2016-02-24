@@ -195,7 +195,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
                     var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
                     capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
-                        if (Utils_Date.shiftToUTC(dateRange.start).valueOf() === dayOffStart.valueOf()) {
+                        if (this._datesAreEqual(Utils_Date.shiftToUTC(dateRange.start), dayOffStart)) {
                             capacityPatch.daysOff.splice(index, 1);
                             return true;
                         }
@@ -208,6 +208,10 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             }
         });
         return deferred.promise;
+    }
+    
+    private _datesAreEqual(date1: Date, date2: Date) : boolean {
+        return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
     }
 
     public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {

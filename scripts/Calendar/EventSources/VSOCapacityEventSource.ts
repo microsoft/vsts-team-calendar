@@ -1,4 +1,5 @@
 /// <reference path='../../../typings/VSS.d.ts' />
+/// <reference path='../../../typings/TFS.d.ts' />
 /// <reference path='../../../typings/q.d.ts' />
 /// <reference path='../../../typings/jquery.d.ts' />
 

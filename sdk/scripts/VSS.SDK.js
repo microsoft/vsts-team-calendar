@@ -110,6 +110,12 @@ var XDM;
             if (!this._isRejected && !this._isResolved) {
                 this._isRejected = true;
                 this._rejectValue = reason;
+                if (this._rejectCallbacks.length === 0 && window.console && window.console.warn) {
+                    console.warn("Rejected XDM promise with no reject callbacks");
+                    if (reason) {
+                        console.warn(reason);
+                    }
+                }
             }
             if (this._isRejected && this._rejectCallbacks.length > 0) {
                 var rejectCallbacks = this._rejectCallbacks.splice(0);
@@ -259,17 +265,15 @@ var XDM;
                     methodArgs = this._customDeserializeObject(rpcMessage.params);
                 }
                 var result = method.apply(registeredInstance, methodArgs);
-                if (result !== undefined) {
-                    if (result.then && typeof result.then === "function") {
-                        result.then(function (asyncResult) {
-                            _this._success(rpcMessage, asyncResult, rpcMessage.handshakeToken);
-                        }, function (e) {
-                            _this._error(rpcMessage, e, rpcMessage.handshakeToken);
-                        });
-                    }
-                    else {
-                        this._success(rpcMessage, result, rpcMessage.handshakeToken);
-                    }
+                if (result && result.then && typeof result.then === "function") {
+                    result.then(function (asyncResult) {
+                        _this._success(rpcMessage, asyncResult, rpcMessage.handshakeToken);
+                    }, function (e) {
+                        _this._error(rpcMessage, e, rpcMessage.handshakeToken);
+                    });
+                }
+                else {
+                    this._success(rpcMessage, result, rpcMessage.handshakeToken);
                 }
             }
             catch (exception) {
@@ -611,7 +615,9 @@ var XDM;
                 }
             }
             if (channelOwnerFound && !handled) {
-                console.error("No handler found on any channel for message: " + JSON.stringify(rpcMessage));
+                if (window.console) {
+                    console.error("No handler found on any channel for message: " + JSON.stringify(rpcMessage));
+                }
             }
         };
         XDMChannelManager.prototype._subscribe = function (windowObj) {
@@ -635,8 +641,8 @@ var XDM;
 var VSS;
 (function (VSS) {
     VSS.VssSDKVersion = 0.1;
-    VSS.VssSDKRestVersion = "2.0";
-    var htmlElement;
+    VSS.VssSDKRestVersion = "2.1";
+    var bodyElement;
     var webContext;
     var hostPageContext;
     var extensionContext;
@@ -733,7 +739,7 @@ var VSS;
         }
         else {
             if (!initOptions) {
-                init({ setupModuleLoader: true });
+                init({ usePlatformScripts: true });
             }
             else if (!usingPlatformScripts) {
                 usingPlatformScripts = true;
@@ -906,7 +912,7 @@ var VSS;
     }
     VSS.getRegisteredObject = getRegisteredObject;
     /**
-    * Fetch an access token which will allow calls to be made to other VSO services
+    * Fetch an access token which will allow calls to be made to other VSTS services
     */
     function getAccessToken() {
         return parentChannel.invokeRemoteMethod("getAccessToken", "VSS.HostControl");
@@ -923,10 +929,10 @@ var VSS;
     * Requests the parent window to resize the container for this extension based on the current extension size.
     */
     function resize() {
-        if (!htmlElement) {
-            htmlElement = document.getElementsByTagName("html").item(0);
+        if (!bodyElement) {
+            bodyElement = document.getElementsByTagName("body").item(0);
         }
-        parentChannel.invokeRemoteMethod("resize", "VSS.HostControl", [htmlElement.scrollWidth, htmlElement.scrollHeight]);
+        parentChannel.invokeRemoteMethod("resize", "VSS.HostControl", [bodyElement.scrollWidth, bodyElement.scrollHeight]);
     }
     VSS.resize = resize;
     function setupAmdLoader() {
@@ -955,6 +961,7 @@ var VSS;
             return;
         }
         var scripts = [];
+        var anyCoreScriptLoaded = false;
         // Add scripts and loader configuration
         if (hostPageContext.coreReferences.scripts) {
             hostPageContext.coreReferences.scripts.forEach(function (script) {
@@ -967,14 +974,22 @@ var VSS;
                     else if (script.identifier === "JQueryUI") {
                         alreadyLoaded = !!(global.jQuery && global.jQuery.ui && global.jQuery.ui.version);
                     }
-                    else if (script.identifier === "MicrosoftAjax") {
-                        alreadyLoaded = !!(global.Sys && global.Sys.Browser);
+                    else if (script.identifier === "AMDLoader") {
+                        alreadyLoaded = typeof global.define === "function" && !!global.define.amd;
                     }
                     if (!alreadyLoaded) {
                         scripts.push({ source: getAbsoluteUrl(script.url, hostRootUri) });
                     }
+                    else {
+                        anyCoreScriptLoaded = true;
+                    }
                 }
             });
+            if (hostPageContext.coreReferences.coreScriptsBundle && !anyCoreScriptLoaded) {
+                // If core scripts bundle exists and no core scripts already loaded by extension,
+                // we are free to add core bundle. otherwise, load core scripts individually.
+                scripts = [{ source: getAbsoluteUrl(hostPageContext.coreReferences.coreScriptsBundle.url, hostRootUri) }];
+            }
         }
         // Define a new config for extension loader
         var newConfig = {
@@ -1001,7 +1016,7 @@ var VSS;
             var contributionPaths = hostPageContext.moduleLoaderConfig.contributionPaths;
             if (contributionPaths) {
                 for (var p in contributionPaths) {
-                    if (contributionPaths.hasOwnProperty(p)) {
+                    if (contributionPaths.hasOwnProperty(p) && !newConfig.paths[p]) {
                         // Add the contribution path
                         newConfig.paths[p] = hostRootUri + contributionPaths[p].value;
                         // Look for other path mappings that fall under the contribution path (e.g. "bundles")

@@ -77,11 +77,11 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
 
         var $editControl = $(domElem('div', 'event-edit-control'));
         var $fieldsContainer = $(domElem('table')).appendTo($editControl);
-        
-        var startDateString = Utils_Date.stripTimeFromDate(new Date(Utils_Date.localeFormat(new Date(this._calendarEvent.startDate)))).toLocaleDateString();
+
+        var startDateString = moment(this._calendarEvent.startDate).format("L");
         var endDateString = startDateString;
         if (this._calendarEvent.endDate) {
-            endDateString = Utils_Date.stripTimeFromDate(new Date(Utils_Date.localeFormat(new Date(this._calendarEvent.endDate)))).toLocaleDateString();
+            endDateString = moment(this._calendarEvent.endDate).format("L");
         }
 
         this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)

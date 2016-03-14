@@ -77,8 +77,14 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
 
         var $editControl = $(domElem('div', 'event-edit-control'));
         var $fieldsContainer = $(domElem('table')).appendTo($editControl);
+        
+        var startDateString = Utils_Date.stripTimeFromDate(new Date(Utils_Date.localeFormat(new Date(this._calendarEvent.startDate)))).toLocaleDateString();
+        var endDateString = startDateString;
+        if (this._calendarEvent.endDate) {
+            endDateString = Utils_Date.stripTimeFromDate(new Date(Utils_Date.localeFormat(new Date(this._calendarEvent.endDate)))).toLocaleDateString();
+        }
 
-        this._$startInput = $("<input type='text' id='fieldStartDate' />").val(this._calendarEvent.startDate)
+        this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)
             .on("blur",(e) => {
                 this.updateOkButton(this._validate());
         });
@@ -87,12 +93,9 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
                 this.updateOkButton(this._validate());
             });
 
-        if (this._calendarEvent.endDate) {
-            this._$endInput.val(this._calendarEvent.endDate);
-        }
-        else {
-            this._$endInput.val(this._calendarEvent.startDate);
-        }
+
+        this._$endInput.val(endDateString);
+
 
         // Populate fields container with fields. The form fields array contain pairs of field label and field element itself.
         var fields = this._getFormFields();

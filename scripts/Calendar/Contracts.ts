@@ -1,4 +1,57 @@
 /**
+ * Interface for Add Event dialog content
+ */
+export interface IDialogContent{
+    /**
+     * Returns the updated calendar item
+     */
+    onOkClick: () => IPromise<CalendarEvent>; 
+    
+    /**
+     * Returns the current title of the dialog
+     */
+    getTitle?: () => IPromise<string>;
+}
+
+/**
+* Interface for a calendar event provider view
+*/
+export interface IEventEnhancer {
+    
+    /**
+    * Unique id of the enhancer
+    */
+    id: string;
+
+    /**
+    * Unique id of the add dialog content control
+    */
+    addDialogId?: string;
+    
+    /**
+    * Unique id of the side panel control
+    */
+    sidePanelId?: string;
+    
+    /**
+    * optional customizable add-icon for context menu
+    */
+    icon?: string;
+    
+    /**
+    * Determines whether an event is editable in the current context
+    *
+    * @param event
+    */
+    canEdit: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+
+    /**
+     * Determines whether an event can be added
+     */
+    canAdd: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+}
+
+/**
 * Interface for a calendar event provider
 */
 export interface IEventSource {
@@ -17,6 +70,11 @@ export interface IEventSource {
     * Order used in sorting the event sources
     */
     order: number;
+
+    /**
+     * Returns the UI enhancer for the event source
+     */
+    getEnhancer?: () => IPromise<IEventEnhancer>;
 
     /**
     * Set to true if events from this source should be rendered in the background.
@@ -38,17 +96,17 @@ export interface IEventSource {
     /**
      * Get the event categories that match a certain criteria
      */
-    getCategories(query: IEventQuery): IPromise<IEventCategory[]>;
+    getCategories(query?: IEventQuery): IPromise<IEventCategory[]>;
 
     /**
     * Optional method to add events to a given source
     */
-    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent>;
+    addEvent?: (events: CalendarEvent) => IPromise<CalendarEvent>;
 
     /**
     * Optional method to remove events from this event source
     */
-    removeEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent[]>;
+    removeEvent?: (events: CalendarEvent) => IPromise<CalendarEvent[]>;
 
     /**
     * Optional method to update an event in this event source
@@ -66,6 +124,11 @@ export interface IEventSource {
  */
 export interface IEventCategory {
     /**
+     * Unique id of the category
+     * {source id}.{category title}
+     */
+    id: string;
+    /**
      * Title of the event category
      */
     title: string;
@@ -74,6 +137,11 @@ export interface IEventCategory {
      * Sub title of the event category
      */
     subTitle?: string;
+    
+    /**
+     * Ids of the events in the category
+     */
+    events?: string[];
 
     /**
      * Image url of this category
@@ -130,19 +198,29 @@ export interface CalendarEvent {
     id?: string;
     
     /**
-     * Id of the iteration with which the event is associated
-     */
-    iterationId?: string;
-
-    /**
      * Category of the service
      */
-    category?: string;
+    category?: IEventCategory;
+    
+    /**
+     * Id of the iteration to which the event is linked
+     */
+    iterationId?: string;
+    
+    /**
+     * Whether the event is movable on the calendar
+     */
+    movable?: boolean;
 
     /**
      * The member associated with this event
      */
     member?: ICalendarMember;
+    
+    /**
+     * A description of the event
+     */
+    description?: string;
 }
 
 export interface ICalendarMember {
@@ -176,7 +254,6 @@ export interface ICalendarMember {
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventObject {
-
     color?: string;
     backgroundColor?: string;
     borderColor?: string;
@@ -191,13 +268,14 @@ export interface IExtendedCalendarEventObject {
     id?: string;
     __etag?: number;
     title: string;
+    description?: string;
     allDay?: boolean;
     start: Date|string;
     end?: Date|string;
     url?: string;
     source?: any | IExtendedCalendarEventSource;
     member?: ICalendarMember;
-    category?: string;
+    category?: IEventCategory;
     iterationId?: string;
     eventType?: string;
 }

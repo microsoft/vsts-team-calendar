@@ -23,6 +23,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     public order = 20;
     public background = true;
     private _events: Calendar_Contracts.CalendarEvent[];
+    private _categories: Calendar_Contracts.IEventCategory[];
 
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents();
@@ -50,9 +51,21 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                         if (iteration.attributes.finishDate) {
                             event.endDate = (iteration.attributes.finishDate).toISOString();
                         }
+                        
                         event.title = iteration.name;
+                        
+                        event.category = <Calendar_Contracts.IEventCategory> {
+                            id: this.id + "." + iteration.name,
+                            title: iteration.name,
+                            subTitle: Utils_String.format("{0} - {1}",
+                                Utils_Date.format(new Date(event.startDate), "M"),
+                                Utils_Date.format(new Date(event.endDate), "M")),                          
+                        }
                         if (this._isCurrentIteration(event)) {
-                            event.category = iteration.name;
+                            event.category.color = Calendar_ColorUtils.generateBackgroundColor(event.title)
+                        }
+                        else {
+                            event.category.color = "#FFFFFF";
                         }
 
                         result.push(event);
@@ -105,19 +118,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
         }),
             (index: number, event: Calendar_Contracts.CalendarEvent) => {
                 if (Calendar_DateUtils.eventIn(event, query)) {
-                    var category: Calendar_Contracts.IEventCategory = {
-                        title: event.title,
-                        subTitle: Utils_String.format("{0} - {1}",
-                            Utils_Date.format(new Date(event.startDate), "M"),
-                            Utils_Date.format(new Date(event.endDate), "M")),
-                    };
-                    if (event.category) {
-                        category.color = Calendar_ColorUtils.generateBackgroundColor(event.title)
-                    }
-                    else {
-                        category.color = "#FFFFFF";
-                    }
-                    categories.push(category);
+                    categories.push(event.category);
                 }
             });
 

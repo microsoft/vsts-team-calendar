@@ -49,13 +49,13 @@ var currentIterationColor = "#C1E6FF"; /*dark gray*/
  * @return RGB color in the form of #RRGGBB
  */
 export function generateColor(name: string): string {
-    name = name.toLowerCase();
-    if (name === "daysoff") {
+    var id = name.slice(0).toLowerCase();
+    if (id === "daysoff") {
         return daysOffColor;
     }
     var value = 0;
-    for (var i = 0; i < (name || "").length; i++) {
-        value += name.charCodeAt(i) * (i + 1);
+    for (var i = 0; i < (id || "").length; i++) {
+        value += id.charCodeAt(i) * (i + 1);
     }
 
     return Utils_String.format("#{0}", allColors[value % allColors.length]);
@@ -71,4 +71,10 @@ export function generateBackgroundColor(name: string): string {
     return currentIterationColor;
 }
 
-
+/**
+ * Lists all possible colors
+ * @return all possible colors in the form of RRGGBB
+ */
+export function getAllColors(): string[] {
+    return allColors;
+}

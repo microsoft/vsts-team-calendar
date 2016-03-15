@@ -1,11 +1,11 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.3.11",
-    "publisher": "ms-devlabs",
+    "version": "0.3.0",
+    "publisher": "hajohns",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
-    "public": true,
+    "public": false,
     "icons": {
         "default": "images/calendar-logo.png"
     },
@@ -56,7 +56,15 @@
         {
             "path": "calendarServices.html",
             "addressable": true
-        },              
+        },
+        {
+            "path": "freeFormControls.html",
+            "addressable": true  
+        },
+        {
+            "path": "daysOffControls.html",
+            "addressable": true  
+        },                
         {
             "path": "built",
             "addressable": true
@@ -104,6 +112,17 @@
             }
         },
         {
+            "id": "add-freeform-control",
+            "type": "ms.vss-web.control",
+            "description": "",
+            "targets": [
+                ".calendar"
+            ],
+            "properties": {
+                "uri": "freeFormControls.html"
+            }
+        },
+        {
             "id": "daysOff",
             "type": ".calendar-event-source",
             "description": "Calendar event source for team and personal days off.",
@@ -112,6 +131,17 @@
             ],
             "properties": {
                 "uri": "calendarServices.html"
+            }
+        },
+        {
+            "id": "add-daysoff-control",
+            "type": "ms.vss-web.control",
+            "description": "",
+            "targets": [
+                ".calendar"
+            ],
+            "properties": {
+                "uri": "daysOffControls.html"
             }
         },
         {
@@ -143,6 +173,5 @@
                     "required": true
                 }
             }
-        }
-    ]
+        }]
 }

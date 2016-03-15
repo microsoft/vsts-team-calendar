@@ -65,6 +65,15 @@
         padding-top: 8px;
     }
 
+.edit-event-container {    
+    height: 100%;
+    overflow: visible;
+}
+
+ .external-content-host {
+     height: 98%;
+ }
+
 .event-edit-control > table {
     width: 90%;
 }
@@ -75,8 +84,18 @@
 
         .event-edit-control > table td.label:first-child {
             width: 100px;
+            vertical-align: top;
+            padding-top: 5px;
         }
-
+        
+        .event-edit-control > table .event-textarea {
+            width: 100%;
+            resize: none;
+        }
+        
+        .field-input {
+            width: 100%;
+        }
 
 .category {
     margin: 5px 5px 5px 10px;
@@ -127,7 +146,22 @@
         .category .category-subtitle.c-icon {
             margin-left: 21px;
         }
+        
+.rich-content-tooltip.color-picker-tooltip {
+    width: auto;
+}
 
+    .popup-content-container .category-color-choice {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        vertical-align: text-bottom;
+        border: none;
+    }
+    
+    .popup-content-container .category-color-choice.selected-color{
+        border: 1px solid #dedede;
+    }
 
 th.fc-day-header {
     font-weight: normal;
@@ -150,5 +184,4 @@ th.fc-day-header {
     font-size: 12px;
     margin: 5px 5px 5px 10px;
 }
-
 /*# sourceMappingURL=site.css.map */

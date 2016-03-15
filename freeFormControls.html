@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html style="overflow: auto;">
+<head>
+    <title>Calendar external UI controls</title>
+    <link rel="stylesheet" href="css/site.css" />
+    <script src="sdk/scripts/VSS.SDK.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+</head>
+<body>
+    <div id="add-freeform-event"></div>  
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Calendar": "built/Calendar"
+                }
+            }
+        });
+        VSS.require([
+            "Calendar/Dialogs",
+            "VSS/Controls"
+        ], function (CalendarDialogs, Controls) {
+            VSS.register(VSS.getConfiguration().contributedControlInstanceId, function (context) {
+                return  Controls.Control.create(CalendarDialogs.EditFreeFormEventControl, $("#add-freeform-event"), VSS.getConfiguration());
+            });   
+            VSS.notifyLoadSucceeded();
+        });
+    </script>      
+</body>
+</html>

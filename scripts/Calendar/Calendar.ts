@@ -176,35 +176,34 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         var calEvent: any  = {
             id: event.id,
             title: event.title,
+            description: event.description,
             allDay: true,
             start: event.startDate,
             end: end,
             eventType: eventType,
             iterationId: event.iterationId,
-            editable: eventType === "freeForm",
-            category: event.category
+            category: event.category,
+            editable: event.movable,
         };
 
         if (event.__etag) {
             calEvent.__etag = event.__etag;
         }
 
-        if(eventType === 'daysOff'){
+        if(event.member){
             calEvent.member = event.member;
-            calEvent.title = event.member.displayName + " Day Off";
         }
 
-        var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());
-        calEvent.backgroundColor = color;
-        calEvent.borderColor = color;
+        calEvent.color = event.category.color;
+        calEvent.backgroundColor = calEvent.color;
+        calEvent.borderColor = calEvent.color;
 
         this._element.fullCalendar("renderEvent", calEvent, false );
     }
 
      public updateEvent(event: FullCalendar.EventObject) {
-        var color = Calendar_ColorUtils.generateColor(((<any>event).category || "uncategorized").toLowerCase());
-        event.backgroundColor = color;
-        event.borderColor = color;
+        event.backgroundColor = event.color;
+        event.borderColor = event.color;
 
         this._element.fullCalendar("updateEvent", event);
     }
@@ -261,6 +260,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                         var event: any = {
                             id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
+                            description: value.description,
                             allDay: true,
                             start: start,
                             end: end,
@@ -269,21 +269,21 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             category: value.category,
                             iterationId: value.iterationId,
                             member: value.member,
-                            editable: source.id === "freeForm"
+                            editable: value.movable
                         };
 
                         if (value.__etag) {
                             event.__etag = value.__etag;
                         }
 
-                        if ($.isFunction(source.addEvents)) {
-                            var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());
+                        if ($.isFunction(source.addEvent) && value.category) {
+                            var color = <any>value.category.color || Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
                         }
 
                         if (options.rendering === "background" && value.category) {
-                            var color = Calendar_ColorUtils.generateBackgroundColor((<string>event.category || "uncategorized").toLowerCase());
+                            var color = <any>value.category.color || Calendar_ColorUtils.generateBackgroundColor((<string>event.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
                         }

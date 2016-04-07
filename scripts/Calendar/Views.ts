@@ -137,7 +137,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _isInIteration(date: Date): boolean {
         return this._iterations.some((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date >= Utils_Date.shiftToUTC(iteration.attributes.startDate) && date <= Utils_Date.shiftToUTC(iteration.attributes.finishDate)) {
+            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date.valueOf() >= iteration.attributes.startDate.valueOf() && date.valueOf() <= iteration.attributes.finishDate.valueOf()) {
                 return true;
             }
         });
@@ -207,11 +207,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _addEventClicked() : void {
         // Find the free form event source
         var addEventSources: Calendar_Contracts.IEventSource[] = $.grep(this._eventSources.getAllSources(),(eventSource) => { return !!eventSource.addEvents; });
-
+        var now = new Date();
         // Setup the event
         var event: Calendar_Contracts.CalendarEvent = {
             title: "",
-            startDate: new Date().toISOString()
+            startDate: new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0)).toISOString() // Create date equivalent to UTC midnight on the current Date
         };
 
         this._addEvent(event, addEventSources[0])		
@@ -316,8 +316,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         //and dialog contents dynamically from the source
         var addEventSources: Calendar_Contracts.IEventSource[];
         addEventSources = $.grep(this._eventSources.getAllSources(), (eventSource) => { return !!eventSource.addEvents; });
-        var start = startDate.toISOString();
-        var end = (<any>endDate).add(-1, 'days').stripTime().toISOString();
+        var start = new Date(<any>startDate).toISOString();
+        var end = Utils_Date.addDays(new Date(<any>endDate), -1).toISOString();
         if (addEventSources.length > 0) {
             var event: Calendar_Contracts.CalendarEvent = {
                 title: "",
@@ -329,7 +329,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             var commands = [];
 
             commands.push({ rank: 5, id: "addEvent", text: "Add event", icon: "icon-add" });
-            commands.push({ rank: 10, id: "addDayOff", text: "Add day off", icon: "icon-tfs-build-reason-schedule", disabled: !this._isInIteration(Utils_Date.shiftToUTC(new Date(event.startDate))) || !this._isInIteration(Utils_Date.shiftToUTC(new Date(event.endDate))) });
+            commands.push({ rank: 10, id: "addDayOff", text: "Add day off", icon: "icon-tfs-build-reason-schedule", disabled: !this._isInIteration(new Date(event.startDate)) || !this._isInIteration(new Date(event.endDate)) });
             var menuOptions = {
                 items: commands,
                 executeAction: (e) => {
@@ -346,8 +346,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 }
             };
 
-            //var dataDate = Utils_Date.format(event.endDate, "yyyy-MM-dd"); //2015-04-19
-            var dataDate = event.endDate; //2015-04-19
+            var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(event.endDate)), "yyyy-MM-dd"); //2015-04-19
             var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
             if (this._popupMenu) {
                 this._popupMenu.dispose();
@@ -371,14 +370,15 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
-        var end = (<any>event.end).add(-1, 'days').stripTime().toISOString();
+        var end = Utils_Date.addDays(new Date(<any>event.end), -1).toISOString();
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: (<Date>event.start).toISOString(),
+            startDate: new Date(<any>event.start).toISOString(),
             endDate: end,
             title: event.title,
             id: event.id,
             category: event.category,
             member: event.member,
+            iterationId: event.iterationId,
             __etag: event.__etag
         };
         
@@ -400,7 +400,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
                     //Update dates
 
-                    event.end = (<any>$.fullCalendar).moment.parseZone(updatedEvent.endDate).add(1, 'days').toISOString();
+                    event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), -1).toISOString();
                     event.start = updatedEvent.startDate;
                     event.__etag = updatedEvent.__etag;
                     this._calendar.updateEvent(event);
@@ -470,8 +470,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = (<Date>event.start).toISOString();
-        var end = event.end ? (<any>event.end).add(-1, 'days').stripTime().toISOString() : start;
+        var start = new Date(<any>event.start).toISOString();
+        var end = event.end ? Utils_Date.addDays(new Date(<any>event.end), -1).toISOString() : start;
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
             startDate: start,
             endDate: end,
@@ -479,6 +479,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             id: event.id,
             category: event.category,
             member: event.member,
+            iterationId: event.iterationId,
             __etag: event.__etag
         };
 
@@ -505,7 +506,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             event.category = updatedEvent.category;
 
                             //Update dates
-                            event.end = (<any>$.fullCalendar).moment.parseZone(updatedEvent.endDate).add(1, 'days').toISOString();
+                            event.end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                             event.start = updatedEvent.startDate;
                             event.__etag = updatedEvent.__etag;
                             this._calendar.updateEvent(event);
@@ -530,7 +531,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
                             //Update dates
-                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate.valueOf()), 1);
+                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate), 1).toISOString();
                             event.end = end;
                             event.start = calendarEvent.startDate;
 
@@ -543,13 +544,14 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _deleteEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = (<any>event.start).stripTime().toISOString();
+        var start = new Date(<any>event.start).toISOString();
         var calendarEvent: Calendar_Contracts.CalendarEvent = {
             startDate: start,
             title: event.title,
             id: event.id,
             category: event.category,
             member: event.member,
+            iterationId: event.iterationId,
             __etag: event.__etag
         };
 

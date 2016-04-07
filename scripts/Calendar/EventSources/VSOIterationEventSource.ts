@@ -24,6 +24,10 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     public background = true;
     private _events: Calendar_Contracts.CalendarEvent[];
 
+    public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+        return this.getEvents();
+    }
+
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
 
         var result: Calendar_Contracts.CalendarEvent[] = [];
@@ -42,9 +46,9 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                 iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                     if (iteration && iteration.attributes && iteration.attributes.startDate) {
                         var event: any = {};
-                        event.startDate = Utils_Date.shiftToUTC(iteration.attributes.startDate);
+                        event.startDate = (iteration.attributes.startDate).toISOString();
                         if (iteration.attributes.finishDate) {
-                            event.endDate = Utils_Date.shiftToUTC(iteration.attributes.finishDate);
+                            event.endDate = (iteration.attributes.finishDate).toISOString();
                         }
                         event.title = iteration.name;
                         if (this._isCurrentIteration(event)) {
@@ -122,8 +126,9 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
 
     private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {
         if (event.startDate && event.endDate) {
-            var today: Date = Utils_Date.shiftToUTC(new Date());
-            return today >= new Date(event.startDate) && today <= new Date(event.endDate);
+            var now = new Date();
+            var today: number =  new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0)).valueOf();
+            return today >= new Date(event.startDate).valueOf() && today <= new Date(event.endDate).valueOf();
         }
         return false;
     }

@@ -12,6 +12,7 @@ import Services_ExtensionData = require("VSS/SDK/Services/ExtensionData");
 import Q = require("q");
 import Service = require("VSS/Service");
 import Utils_Core = require("VSS/Utils/Core");
+import Utils_Date = require("VSS/Utils/Date");
 import Utils_String = require("VSS/Utils/String");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 
@@ -27,6 +28,32 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     constructor() {
         var webContext = VSS.getWebContext();
         this._teamId = webContext.team.id;
+    }
+    
+    public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+        return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+            $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
+                var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                var end = Utils_Date.shiftToUTC(new Date(event.endDate))
+                if(start.getHours() !== 0) {
+                    // Set dates back to midnight                    
+                    start.setHours(0);
+                    end.setHours(0);
+                    // update the event in the list
+                    var updatedEvent = $.extend({}, event);
+                    updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                    updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                    var index = events.indexOf(eventInArray);
+                    if (index > -1) {
+                        events.splice(index, 1);
+                    }
+                    events.push(updatedEvent);
+                    this.updateEvents([updatedEvent]);
+                }
+            });
+            return events;
+        });
     }
 
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {

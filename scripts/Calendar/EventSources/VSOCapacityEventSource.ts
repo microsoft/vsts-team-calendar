@@ -21,8 +21,40 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     public name = "Days off";
     public order = 30;
     private _events: Calendar_Contracts.CalendarEvent[];
-
-
+    
+    public load(): IPromise<Calendar_Contracts.IEventCategory[]> {
+        
+        return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+            $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
+                var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                var end = Utils_Date.shiftToUTC(new Date(event.endDate))
+                if(start.getHours() !== 0) {
+                    // Set dates back to midnight                    
+                    start.setHours(0);
+                    end.setHours(0);
+                    // update the event in the list
+                    var updatedEvent = $.extend({}, event);
+                    updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                    updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                    var index = events.indexOf(eventInArray);
+                    if (index > -1) {
+                        events.splice(index, 1);
+                    }
+                    events.push(updatedEvent);
+                    
+                    //Update start date first
+                    event.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                    this.updateEvents([event]).then((updatedEvents: Calendar_Contracts.CalendarEvent[]) => {                        
+                        updatedEvents[0].endDate = Utils_Date.shiftToLocal(end).toISOString();
+                        this.updateEvents([updatedEvents[0]])
+                    })
+                }
+            });
+            return events;
+        });
+    }
+    
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
 
         var result: Calendar_Contracts.CalendarEvent[] = [];
@@ -50,15 +82,17 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                             if (teamDaysOff && teamDaysOff.daysOff && teamDaysOff.daysOff.length) {
                                 teamDaysOff.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                     var event: any = {};
-                                    event.startDate = Utils_Date.shiftToUTC(new Date(daysOffRange.start.valueOf()));
-                                    event.endDate = Utils_Date.shiftToUTC(new Date(daysOffRange.end.valueOf()));
+                                    event.startDate =new Date(daysOffRange.start.valueOf()).toISOString();
+                                    event.endDate = new Date(daysOffRange.end.valueOf()).toISOString();
                                     event.title = "Team Day Off";
+                                    event.id = this.id + "." + "Everyone" +"." + new Date(Utils_Date.shiftToUTC(daysOffRange.start).valueOf());
                                     event.member = {
                                         displayName: webContext.team.name,
                                         id: webContext.team.id,
                                         imageUrl: this._buildTeamImageUrl(webContext.host.uri, webContext.team.id)
                                     };
                                     event.category = "DaysOff";
+                                    event.iterationId = iteration.id;
 
                                     result.push(event);
                                 });
@@ -73,11 +107,13 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                     var capacity = capacities[i];
                                     capacity.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                         var event: any = {};
-                                        event.startDate = Utils_Date.shiftToUTC(new Date(daysOffRange.start.valueOf()));
-                                        event.endDate = Utils_Date.shiftToUTC(new Date(daysOffRange.end.valueOf()));
+                                        event.startDate = new Date(daysOffRange.start.valueOf()).toISOString();
+                                        event.endDate = new Date(daysOffRange.end.valueOf()).toISOString();
                                         event.title = IdentityHelper.parseUniquefiedIdentityName(capacity.teamMember.displayName) + " Day Off";
+                                        event.id = this.id + "." + capacity.teamMember.uniqueName +"." + new Date(Utils_Date.shiftToUTC(daysOffRange.start).valueOf());
                                         event.member = capacity.teamMember;
                                         event.category = "DaysOff";
+                                        event.iterationId = iteration.id;   
 
                                         result.push(event);
                                     });
@@ -126,8 +162,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     public addEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent> {
         this._events = null;
         var deferred = Q.defer();
-        var dayOffStart = Utils_Date.shiftToUTC(new Date(events[0].startDate));
-        var dayOffEnd = Utils_Date.shiftToUTC(new Date(events[0].endDate));
+        var dayOffStart = new Date(events[0].startDate);
+        var dayOffEnd = new Date(events[0].endDate);
         var isTeam: boolean = events[0].member.displayName === "Everyone";
         var memberId: string = events[0].member.id;
         var webContext = VSS.getWebContext();
@@ -135,6 +171,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         var workClient: Work_Client.WorkHttpClient = Service.VssConnection
             .getConnection()
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
+            
         Calendar_DateUtils.getIterationId(dayOffStart).then((iterationId: string) => {
             if (isTeam) {
                 this._getTeamDaysOff(workClient, teamContext, iterationId).then((teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
@@ -168,51 +205,46 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     public removeEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
         this._events = null;
         var deferred = Q.defer();
-        var dayOffStart = Utils_Date.shiftToUTC(new Date(events[0].startDate));
+        var dayOffStart = new Date(events[0].startDate);
         var memberId = events[0].member.id;
         var isTeam: boolean = events[0].member.uniqueName === undefined;
+        var iterationId = events[0].iterationId;
         var webContext = VSS.getWebContext();
         var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
         var workClient: Work_Client.WorkHttpClient = Service.VssConnection
             .getConnection()
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-        Calendar_DateUtils.getIterationId(dayOffStart).then((iterationId: string) => {
-            if (isTeam) {
-                this._getTeamDaysOff(workClient, teamContext, iterationId).then((teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
-                    var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
-                    teamDaysOffPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
-                        if (Utils_Date.shiftToUTC(dateRange.start).valueOf() === dayOffStart.valueOf()) {
-                            teamDaysOffPatch.daysOff.splice(index, 1);
-                            return true;
-                        }
-                        return false;
-                    });
-                    workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
-                        deferred.resolve(events[0]);
-                    });
+        if (isTeam) {
+            this._getTeamDaysOff(workClient, teamContext, iterationId).then((teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
+                var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
+                teamDaysOffPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
+                    if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
+                        teamDaysOffPatch.daysOff.splice(index, 1);
+                        return true;
+                    }
+                    return false;
                 });
-            }
-            else {
-                this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
-                    var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
-                    capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
-                        if (this._datesAreEqual(Utils_Date.shiftToUTC(dateRange.start), dayOffStart)) {
-                            capacityPatch.daysOff.splice(index, 1);
-                            return true;
-                        }
-                        return false;
-                    });
-                    workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
-                        deferred.resolve(events[0]);
-                    });
+                workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
+                    deferred.resolve(events[0]);
                 });
-            }
-        });
+            });
+        }
+        else {
+            this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
+                var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
+                capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
+                    if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
+                        capacityPatch.daysOff.splice(index, 1);
+                        return true;
+                    }
+                    return false;
+                });
+                workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
+                    deferred.resolve(events[0]);
+                });
+            });
+        }
         return deferred.promise;
-    }
-    
-    private _datesAreEqual(date1: Date, date2: Date) : boolean {
-        return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
     }
 
     public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
@@ -221,52 +253,51 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         var dayOffStart = new Date(events[0].startDate);
         var dayOffEnd = new Date(events[0].endDate);
         var memberId = events[0].member.id;
+        var iterationId = events[0].iterationId;
         var isTeam: boolean = events[0].member.uniqueName === undefined;
         var webContext = VSS.getWebContext();
         var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
         var workClient: Work_Client.WorkHttpClient = Service.VssConnection
             .getConnection()
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-        Calendar_DateUtils.getIterationId(dayOffStart).then((iterationId: string) => {
-            if (isTeam) {
-                this._getTeamDaysOff(workClient, teamContext, iterationId).then((teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
-                    var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
-                    var updated : boolean = teamDaysOffPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
-                        if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
-                            teamDaysOffPatch.daysOff[index].end = dayOffEnd;
-                            return true;
-                        }
-                        if (dateRange.end.valueOf() === dayOffEnd.valueOf()) {
-                            teamDaysOffPatch.daysOff[index].start = dayOffStart;
-                            return true;
-                        }
-                        return false;
-                    });
-                    workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
-                        deferred.resolve(events[0]);
-                    });
+        if (isTeam) {
+            this._getTeamDaysOff(workClient, teamContext, iterationId).then((teamDaysOff: Work_Contracts.TeamSettingsDaysOff) => {
+                var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
+                var updated : boolean = teamDaysOffPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
+                    if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
+                        teamDaysOffPatch.daysOff[index].end = dayOffEnd;
+                        return true;
+                    }
+                    if (dateRange.end.valueOf() === dayOffEnd.valueOf()) {
+                        teamDaysOffPatch.daysOff[index].start = dayOffStart;
+                        return true;
+                    }
+                    return false;
                 });
-            }
-            else {
-                this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
-                    var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
-                    capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
-                        if (Utils_Date.shiftToUTC(dateRange.start).valueOf() === dayOffStart.valueOf()) {
-                            capacityPatch.daysOff[index].end = dayOffEnd;
-                            return true;
-                        }
-                        if (Utils_Date.shiftToUTC(dateRange.end).valueOf() === dayOffEnd.valueOf()) {
-                            capacityPatch.daysOff[index].start = dayOffStart;
-                            return true;
-                        }
-                        return false;
-                    });
-                    workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
-                        deferred.resolve(events[0]);
-                    });
+                workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
+                    deferred.resolve(events);
                 });
-            }
-        });
+            });
+        }
+        else {
+            this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
+                var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
+                capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
+                    if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
+                        capacityPatch.daysOff[index].end = dayOffEnd;
+                        return true;
+                    }
+                    if (dateRange.end.valueOf() === dayOffEnd.valueOf()) {
+                        capacityPatch.daysOff[index].start = dayOffStart;
+                        return true;
+                    }
+                    return false;
+                });
+                workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
+                    deferred.resolve(events);
+                });
+            });
+        }
         return deferred.promise;
     }
     

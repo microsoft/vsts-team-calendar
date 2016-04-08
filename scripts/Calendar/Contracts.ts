@@ -22,6 +22,11 @@ export interface IEventSource {
     * Set to true if events from this source should be rendered in the background.
     */
     background?: boolean;
+    
+    /**
+     * Returns true when the event source is loaded
+     */
+    load: () => IPromise<CalendarEvent[]>;
 
     /**
     * Get the events that match a certain criteria
@@ -123,6 +128,11 @@ export interface CalendarEvent {
     * Unique id for the event
     */
     id?: string;
+    
+    /**
+     * Id of the iteration with which the event is associated
+     */
+    iterationId?: string;
 
     /**
      * Category of the service
@@ -188,6 +198,7 @@ export interface IExtendedCalendarEventObject {
     source?: any | IExtendedCalendarEventSource;
     member?: ICalendarMember;
     category?: string;
+    iterationId?: string;
     eventType?: string;
 }
 

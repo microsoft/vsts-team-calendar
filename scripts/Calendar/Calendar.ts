@@ -1,6 +1,5 @@
 ﻿/// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
-/// <reference path='../../typings/moment/moment.d.ts' />
 
 import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Calendar_Contracts = require("Calendar/Contracts");
@@ -173,7 +172,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
-        var end = (<any>$.fullCalendar).moment.parseZone(event.endDate).add(1, 'days').toISOString();
+        var end = Utils_Date.addDays(new Date(<any>(event.endDate)), 1).toISOString();
         var calEvent: any  = {
             id: event.id,
             title: event.title,
@@ -181,6 +180,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             start: event.startDate,
             end: end,
             eventType: eventType,
+            iterationId: event.iterationId,
             editable: eventType === "freeForm",
             category: event.category
         };
@@ -244,20 +244,20 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions): CalendarEventSource {
         var state: CalendarEventSourceState = {};
 
-        var getEventsMethod = (start: moment.Moment, end: moment.Moment, timezone: string|boolean, callback: (events: FullCalendar.EventSource) => void) => {
+        var getEventsMethod = (start: Date, end: Date, timezone: string|boolean, callback: (events: FullCalendar.EventSource) => void) => {
 
             if (!state.dirty && state.cachedEvents) {
                 callback(state.cachedEvents);
                 return;
             }
-            var getEventsPromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>> source.getEvents();
-            Q.timeout(getEventsPromise, 5000, "Could not load event source " + source.name + ". Request timed out.")
+            var loadSourcePromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>> source.load();
+            Q.timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.")
                 .then(
                 (results) => {
                     var calendarEvents = results.map((value, index) => {
                         //var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
-                        var start = (<any>$.fullCalendar).moment.parseZone(value.startDate).stripZone().stripTime().toISOString();
-                        var end = value.endDate ? (<any>$.fullCalendar).moment.parseZone(value.endDate).add(1, 'days').stripZone().stripTime().toISOString() : start;
+                        var start = value.startDate;
+                        var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate), 1).toISOString() : start;
                         var event: any = {
                             id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
@@ -267,6 +267,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             eventType: source.id,
                             rendering: options.rendering || '',
                             category: value.category,
+                            iterationId: value.iterationId,
                             member: value.member,
                             editable: source.id === "freeForm"
                         };
@@ -362,13 +363,13 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         var clientEvents = this._element.fullCalendar("clientEvents", filter);
         this._element.fullCalendar("removeEvents", filter);
         return clientEvents;
-    }
-
+    }    
+    
     /**
      * Gets the current date of the calendar
      @ return Date
      */
     public getDate(): Date {
-        return (<moment.Moment><any>this._element.fullCalendar("getDate")).toDate();
+        return this._element.fullCalendar("getDate");
     }
 }

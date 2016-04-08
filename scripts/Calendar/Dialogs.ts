@@ -6,6 +6,7 @@ import Controls_Notifications = require("VSS/Controls/Notifications");
 import Controls_Combos = require("VSS/Controls/Combos");
 import Controls_Dialog = require("VSS/Controls/Dialogs");
 import Controls_Validation = require("VSS/Controls/Validation");
+import Culture = require("VSS/Utils/Culture");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
 import Utils_UI = require("VSS/Utils/UI");
@@ -59,8 +60,8 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
      * shows an error message, or returns the edited note.
      */
     public onOkClick(): any {
-        this._calendarEvent.startDate = this._$startInput.val();
-        this._calendarEvent.endDate = this._$endInput.val();
+        this._calendarEvent.startDate = Utils_Date.shiftToLocal(new Date(this._$startInput.val())).toISOString();
+        this._calendarEvent.endDate = Utils_Date.shiftToLocal(new Date(this._$endInput.val())).toISOString();
 
         this._buildCalendarEventFromFields();
 
@@ -78,10 +79,10 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
         var $editControl = $(domElem('div', 'event-edit-control'));
         var $fieldsContainer = $(domElem('table')).appendTo($editControl);
 
-        var startDateString = moment(this._calendarEvent.startDate).format("L");
+        var startDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.startDate)), Culture.getDateTimeFormat().ShortDatePattern, true);
         var endDateString = startDateString;
         if (this._calendarEvent.endDate) {
-            endDateString = moment(this._calendarEvent.endDate).format("L");
+            endDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.endDate)), Culture.getDateTimeFormat().ShortDatePattern, true);
         }
 
         this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)
@@ -133,7 +134,7 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
             group: "default",
             message: validDateFormatMessage
         });
-
+        
         if (relativeToErrorMessage) {
             <DateRelativeToValidator>Controls.Enhancement.enhance(DateRelativeToValidator, $field, {
                 comparison: dateComparisonOptions,

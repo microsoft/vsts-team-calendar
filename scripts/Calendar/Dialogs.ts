@@ -505,7 +505,7 @@ export class EditCapacityEventControl<TOptions extends ICapacityEventControlOpti
         
     private _getCurrentIteration(date: Date): Work_Contracts.TeamSettingsIteration {
         return this._iterations.filter((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date >= Utils_Date.shiftToUTC(iteration.attributes.startDate) && date <= Utils_Date.shiftToUTC(iteration.attributes.finishDate)) {
+            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date.valueOf() >= iteration.attributes.startDate.valueOf() && date.valueOf() <= iteration.attributes.finishDate.valueOf()) {
                 return true;
             }
         })[0];

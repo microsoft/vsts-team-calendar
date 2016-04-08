@@ -29,7 +29,6 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     private _categories: Calendar_Contracts.IEventCategory[];
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
             $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
                 var start = Utils_Date.shiftToUTC(new Date(event.startDate));

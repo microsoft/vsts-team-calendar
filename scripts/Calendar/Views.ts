@@ -1,7 +1,6 @@
 /// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/TFS.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
-/// <reference path='../../typings/moment/moment.d.ts' />
 
 import Calendar = require("Calendar/Calendar");
 import Calendar_Contracts = require("Calendar/Contracts");
@@ -128,7 +127,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             this._toolbar.updateItems(this._createToolbarItems());
         });
 
-        var setAspectRatio = Utils_Core.throttledDelegate(this, 300, function () {
+        var setAspectRatio = Utils_Core.throttledDelegate(this, 300, () => {
             this._calendar.setOption("aspectRatio", this._getCalendarAspectRatio());
         });
         window.addEventListener("resize",() => {
@@ -297,7 +296,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                     {
                                         items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
                                     }));
-                                Utils_Core.delay(this, 10, function () {
+                                Utils_Core.delay(this, 10, () => {
                                     this._popupMenu.popup(this._element, $element);
                                 });
                                 e.preventDefault();
@@ -363,7 +362,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                         items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
 
                     }));
-                Utils_Core.delay(this, 10, function () {
+                Utils_Core.delay(this, 10, () => {
                     this._popupMenu.popup(this._element, $element);
                 });
             });
@@ -447,7 +446,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                 event.description = updatedEvent.description;
                                                                 
                                 // Update dates
-                                event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), -1).toISOString();
+                                event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                                 event.start = updatedEvent.startDate;
                                 event.__etag = updatedEvent.__etag;
                                 this._calendar.updateEvent(event);

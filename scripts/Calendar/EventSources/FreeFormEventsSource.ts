@@ -34,28 +34,41 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     }
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
-            var updatedEvents: Calendar_Contracts.CalendarEvent[] = [];
-            $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
-                
-                // For now, skip events with date strngs we can't parse.
-                if(Date.parse(event.startDate) && Date.parse(event.endDate)) {
-                    var start = Utils_Date.shiftToUTC(new Date(event.startDate));
-                    var end = Utils_Date.shiftToUTC(new Date(event.endDate));
-                    
-                    if(start.getHours() !== 0) {
-                        // Set dates back to midnight                    
-                        start.setHours(0);
-                        end.setHours(0);
-                        // update the event in the list
-                        event.startDate = Utils_Date.shiftToLocal(start).toISOString();
-                        event.endDate = Utils_Date.shiftToLocal(end).toISOString();
-                        this.updateEvent(null, event);
+
+        return this.getCategories().then((categories: Calendar_Contracts.IEventCategory[]) => {
+             return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+                var updatedEvents: Calendar_Contracts.CalendarEvent[] = [];
+                $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
+                    // For now, skip events with date strngs we can't parse.
+                    if(Date.parse(event.startDate) && Date.parse(event.endDate)) {
+                        
+                        // update legacy events to match new contract
+                        event.movable = true;
+                        var category = event.category
+                        if(!category || typeof(category) === 'string') {
+                            event.category = <Calendar_Contracts.IEventCategory> {
+                                title: category || "Uncategorized",
+                                id: this.id + "." + category || "Uncategorized"
+                            }
+                            this._updateCategoryForEvents([event]);
+                        }
+                        // fix times
+                        var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                        var end = Utils_Date.shiftToUTC(new Date(event.endDate));
+                        if(start.getHours() !== 0) {
+                            // Set dates back to midnight                    
+                            start.setHours(0);
+                            end.setHours(0);
+                            // update the event in the list
+                            event.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                            event.endDate = Utils_Date.shiftToLocal(end).toISOString();
+                            this.updateEvent(null, event);
+                        }                        
+                        updatedEvents.push(event);
                     }
-                    updatedEvents.push(event);
-                }
+                });
+                return events;
             });
-            return updatedEvents;
         });
     }
     
@@ -69,34 +82,20 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
         var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-            this.getCategories(query).then((categories: Calendar_Contracts.IEventCategory[]) => {
-                extensionDataService.queryCollectionNames([this._teamId]).then(
-                    (collections: Contributions_Contracts.ExtensionDataCollection[]) => {
-                        if (collections[0] && collections[0].documents) {
-                            this._events = collections[0].documents.filter((document: any) => { return !!document.startDate; });
-                        }
-                        else {
-                            this._events = [];
-                        }
-                        // legacy events
-                        $.each(this._events, (index: number, event: Calendar_Contracts.CalendarEvent) => { 
-                            event.movable = true;
-                            var category = event.category
-                            if(!category || typeof(category) === 'string') {
-                                event.category = <Calendar_Contracts.IEventCategory> {
-                                    title: category || "Uncategorized",
-                                    id: this.id + "." + category || "Uncategorized"
-                                }
-                            }
-                        })
-                        deferred.resolve(this._events);
-                        this._updateCategoryForEvents(this._events);
-                    },
-                    (e: Error) => {
+            extensionDataService.queryCollectionNames([this._teamId]).then(
+                (collections: Contributions_Contracts.ExtensionDataCollection[]) => {
+                    if (collections[0] && collections[0].documents) {
+                        this._events = collections[0].documents.filter((document: any) => { return !!document.startDate; });
+                    }
+                    else {
                         this._events = [];
-                        deferred.resolve(this._events);
-                    });
-            });
+                    }
+                    deferred.resolve(this._events);
+                },
+                (e: Error) => {
+                    this._events = [];
+                    deferred.resolve(this._events);
+                });
         });
 
         return deferred.promise;
@@ -106,16 +105,13 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
            extensionDataService.queryCollectionNames([this._teamId]).then((collections: Contributions_Contracts.ExtensionDataCollection[]) => {
+               this._categories = [];
                if(collections[0] && collections[0].documents) {
                    this._categories = collections[0].documents.filter((document: any) => { return (!document.startDate && document.id.split(".")[0] === this.id); });
                }
-               else {
-                   this._categories = [];
-               }
-               deferred.resolve(this._categories);
+               deferred.resolve(this._filterCategories(query));
            }, (e: Error) => {
-               this._categories = [];
-               deferred.resolve(this._categories);
+               deferred.resolve([]);
            });
         });
         return deferred.promise;
@@ -163,7 +159,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     event.category = null;
                     this._updateCategoryForEvents([event]);
                     // remove event
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === event.id; })[0]; //better check here
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, (e: Calendar_Contracts.CalendarEvent) => { return e.id === event.id; })[0]; //better check here
                     var index = this._events.indexOf(eventInArray);
                     if (index > -1) {
                         this._events.splice(index, 1);
@@ -182,7 +178,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
            extensionDataService.deleteDocument(this._teamId, category.id).then(() => {
-               var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, function (cat: Calendar_Contracts.IEventCategory) { return cat.id === category.id})[0];
+               var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
                var index = this._categories.indexOf(categoryInArray);
                if(index > -1) {
                    this._categories.splice(index, 1);
@@ -204,7 +200,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             
             extensionDataService.updateDocument(this._teamId, newEvent).then(
                 (updatedEvent: Calendar_Contracts.CalendarEvent) => {
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0]; //better check here
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, (e: Calendar_Contracts.CalendarEvent) => { return e.id === updatedEvent.id; })[0]; //better check here
                     var index = this._events.indexOf(eventInArray);
                     if (index > -1) {
                         this._events.splice(index, 1);
@@ -299,5 +295,22 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         }
         // update categories
         this.updateCategories(updatedCategories);
+    }
+    
+    private _filterCategories(query?: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {
+        if(!this._events) {
+            return [];
+        }
+        if (!query) {
+           return this._categories;
+        }
+        
+        return $.grep(this._categories, (category: Calendar_Contracts.IEventCategory) => {
+            var categoryAdded: boolean = false;
+            return category.events.some((event: string, eventIndex: number) => {
+                var eventInList: Calendar_Contracts.CalendarEvent = $.grep(this._events, (e: Calendar_Contracts.CalendarEvent) => { return e.id === event; })[0];    
+                return (eventInList && Calendar_DateUtils.eventIn(eventInList, query));
+            });
+        });
     }
 }

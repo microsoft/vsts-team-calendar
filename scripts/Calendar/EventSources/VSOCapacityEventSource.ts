@@ -52,13 +52,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     this.updateEvent(event, newEvent);
                 }
             });
-            return events;
-        });
-    }
-    
-    public load2(): IPromise<boolean> {
-        return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
-            return this._initializeCategories().then((categories: Calendar_Contracts.IEventCategory[]) => { return true; });
+            
+            return this._initializeCategories().then((categories: Calendar_Contracts.IEventCategory[]) => { return events; });
         });
     }
        
@@ -98,7 +93,6 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                 if (teamDaysOff && teamDaysOff.daysOff && teamDaysOff.daysOff.length) {
                                     teamDaysOff.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                         var event: any = {};
-                                        // move to local
                                         event.startDate =new Date(daysOffRange.start.valueOf()).toISOString();
                                         event.endDate = new Date(daysOffRange.end.valueOf()).toISOString();
                                         event.title = "Team Day Off";
@@ -126,7 +120,6 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                         var capacity = capacities[i];
                                         capacity.daysOff.forEach((daysOffRange: Work_Contracts.DateRange, i: number, array: Work_Contracts.DateRange[]) => {
                                             var event: any = {};
-                                            // move to local
                                             event.startDate = new Date(daysOffRange.start.valueOf()).toISOString();
                                             event.endDate = new Date(daysOffRange.end.valueOf()).toISOString();
                                             event.title = IdentityHelper.parseUniquefiedIdentityName(capacity.teamMember.displayName) + " Day Off";
@@ -342,7 +335,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         var webContext = VSS.getWebContext();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
            extensionDataService.deleteDocument(webContext.team.id, category.id).then(() => {
-               var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, function (cat: Calendar_Contracts.IEventCategory) { return cat.id === category.id})[0];
+               var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
                var index = this._categories.indexOf(categoryInArray);
                if(index > -1) {
                    this._categories.splice(index, 1);

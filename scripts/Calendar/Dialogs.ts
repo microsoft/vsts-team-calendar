@@ -1,5 +1,4 @@
 /// <reference path='../../typings/VSS.d.ts' />
-/// <reference path='../../typings/moment/moment.d.ts' />
 
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_ColorUtils = require("Calendar/Utils/Color");

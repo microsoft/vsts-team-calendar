@@ -64,7 +64,7 @@ export function getIterationId(dayOff: Date): IPromise<string> {
     _iterationsLoaded.then(() => {
         _iterations.some((value: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
             if (value && value.attributes && value.attributes.startDate && value.attributes.finishDate) {
-                if (dayOff >= Utils_Date.shiftToUTC(value.attributes.startDate) && dayOff <= Utils_Date.shiftToUTC(value.attributes.finishDate)) {
+                if (dayOff.valueOf() >= value.attributes.startDate.valueOf() && dayOff.valueOf() <= value.attributes.finishDate.valueOf()) {
                     deferred.resolve(value.id);
                     return true;
                 }

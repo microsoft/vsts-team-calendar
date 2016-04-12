@@ -60,8 +60,8 @@ export class EditEventDialog<TOptions extends IEventDialogOptions> extends Contr
      * shows an error message, or returns the edited note.
      */
     public onOkClick(): any {
-        this._calendarEvent.startDate = Utils_Date.shiftToLocal(new Date(this._$startInput.val())).toISOString();
-        this._calendarEvent.endDate = Utils_Date.shiftToLocal(new Date(this._$endInput.val())).toISOString();
+        this._calendarEvent.startDate = Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$startInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
+        this._calendarEvent.endDate = Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$endInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
 
         this._buildCalendarEventFromFields();
 

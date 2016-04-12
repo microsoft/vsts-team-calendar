@@ -178,6 +178,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
                     teamDaysOffPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
                     workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
+                        events[0].iterationId = iterationId;
                         deferred.resolve(events[0]);
                     });
                 });
@@ -194,6 +195,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     };
                     capacityPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
                     workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
+                        events[0].iterationId = iterationId;
                         deferred.resolve(events[0]);
                     });
                 });

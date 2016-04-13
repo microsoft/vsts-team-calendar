@@ -41,3 +41,4 @@ See the [public-events sample](https://github.com/Microsoft/vso-extension-sample
 
 
 TEST
+asdf

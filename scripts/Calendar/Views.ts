@@ -558,11 +558,6 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                         event.iterationId = updatedEvent.iterationId;
                         this._calendar.updateEvent(event);
                     });
-                },
-                cancelCallback: () => {
-                    if(event.end) {
-                        (<any>event.end).add(1, 'days').stripTime().toISOString();
-                    }                     
                 }
             };
             

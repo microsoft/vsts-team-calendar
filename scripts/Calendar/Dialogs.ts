@@ -23,19 +23,13 @@ import Q = require("q");
 var domElem = Utils_UI.domElem;
 
 export interface IEventControlOptions {    
-     calendarEvent: Calendar_Contracts.CalendarEvent;
-     title?: string;
-     isEdit?: boolean;
-     validStateChangedHandler: (valid: boolean) => any;
-}
-
-export interface IFreeFormEventControlOptions extends IEventControlOptions { 
-    categoriesPromise: () => IPromise<Calendar_Contracts.IEventCategory[]>;
-}
-
-export interface ICapacityEventControlOptions extends IEventControlOptions {  
+    calendarEvent: Calendar_Contracts.CalendarEvent;
+    title?: string;
+    isEdit?: boolean;
+    validStateChangedHandler: (valid: boolean) => any;
     membersPromise: IPromise<WebApi_Contracts.IdentityRef[]>;
     getIterations: () => IPromise<Work_Contracts.TeamSettingsIteration[]>;
+    categoriesPromise: () => IPromise<Calendar_Contracts.IEventCategory[]>;
 }
 
 export interface IEventDialogOptions extends Controls_Dialog.IModalDialogOptions {
@@ -46,22 +40,53 @@ export interface IEventDialogOptions extends Controls_Dialog.IModalDialogOptions
     isEdit?: boolean;
 }
 
+interface IFieldValidator {
+    field?: JQuery;
+    isValid: boolean;
+    validationErrorMessage?: string;
+    checkValid?: () => IPromise<boolean>;
+}
+
 export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOptions> {
     private _$container: JQuery;
     private _calendarEvent: Calendar_Contracts.CalendarEvent;
-    private __etag: number;
     private _source: Calendar_Contracts.IEventSource;
-    private _content: Calendar_Contracts.IDialogContent;
+    private _contributedControl: Calendar_Contracts.IDialogContent;
+    private _content: Calendar_Contracts.IAddEventContent;
+    private _$contributedContent: JQuery;
+    
+    private _eventValidationError: Controls_Notifications.MessageAreaControl;
+    private _contributionsValid: boolean;
+    
+    private _validators: IFieldValidator[];
+    
+    private _$titleInput: JQuery;
+    private _$startInput: JQuery;
+    private _$endInput: JQuery;
+    private _$textInputs: JQuery[];
+    private _$comboInputs: JQuery[];
 
     public initializeOptions(options?: any) {
-        super.initializeOptions($.extend(options, { "height": 360 }));
+        super.initializeOptions($.extend(options, {
+            height: 345,
+            coreCssClass: "add-event-dialog"
+        }));
     }
 
     public initialize() {
         super.initialize();
+        this._validators = [];
         this._calendarEvent = this._options.calendarEvent;
-        this.__etag = this._calendarEvent.__etag;
         this._source = this._options.source;
+        this._contributionsValid = true;
+        this._$textInputs = [];
+        this._$comboInputs = [];
+        // default content
+        this._content = <Calendar_Contracts.IAddEventContent> {
+            title: true,
+            start: true,
+            end: true
+        }
         this._createLayout();
     }
 
@@ -70,35 +95,22 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
      * shows an error message, or returns the edited note.
      */
     public onOkClick(): any {
-        if(this._content){
-            this._content.onOkClick().then((event) => {
-                this._calendarEvent = event;
-                this._calendarEvent.__etag = this.__etag;
-                this.processResult(this._calendarEvent);
-            });
-        }
-        else{
-            this.onCancelClick();         
-        }
-    }
-        
-    private _validate(valid: boolean){
-        this.updateOkButton(valid);
-    }
-    
-    private _createDefault(){
-        this._content = <EditEventControl<IEventControlOptions>>Controls.Control.createIn(EditEventControl, this._$container, {
-            calendarEvent: this._calendarEvent,
-            isEdit: this._options.isEdit,
-            validStateChangedHandler: this._validate.bind(this),
-        })
-        this._content.getTitle().then((title: string) => {
-            this.setTitle(title);
+        this._buildCalendarEventFromFields().then((results) => {
+            if(this._contributedControl){
+                this._contributedControl.onOkClick().then((event) => {
+                    this._calendarEvent = $.extend(this._calendarEvent, event);
+                    this.processResult(this._calendarEvent);
+                });
+            }
+            else{
+                this.processResult(this._calendarEvent);         
+            }
         });
     }
-    
+            
     private _createLayout() {
         this._$container = $(domElem('div')).addClass('edit-event-container').appendTo(this._element);
+        this._$contributedContent = $(domElem('div')).addClass('contributed-content-container').appendTo(this._element);
         var membersPromise = this._options.membersPromise;
         var content;
         if(this._source.getEnhancer) {
@@ -107,190 +119,391 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                     calendarEvent: this._calendarEvent,
                     isEdit: this._options.isEdit,
                     categoriesPromise: this._source.getCategories.bind(this, this._options.query),
-                    validStateChangedHandler: this._validate.bind(this),
+                    validStateChangedHandler: (valid: boolean) => {
+                        this._contributionsValid = valid;
+                        ("blur", (e) => {                        
+                            this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        });
+                     },
                     membersPromise: this._options.membersPromise,
                     getIterations: !!(<any>this._source).getIterations ? (<any>this._source).getIterations.bind(this._source) : null,
                 };
                 Controls_Contributions.createContributedControl<Calendar_Contracts.IDialogContent>(
-                    this._$container,
+                    this._$contributedContent,
                     enhancer.addDialogId,
-                    options,
+                    $.extend(options, { bowtieVersion: 2 }),
                     Context.getDefaultWebContext()             
                 ).then((control: Calendar_Contracts.IDialogContent) => {
                     try {
-                        this._content = control;
-                        this._content.getTitle().then((title: string) => {
+                        this._contributedControl = control;
+                        if(this._contributedControl.getContributedHeight) {
+                            this._contributedControl.getContributedHeight().then((height: number) => { this._$contributedContent.find(".external-content-host").css("height", height); })
+                        }
+                        else {
+                            this._$contributedContent.find(".external-content-host").css("height", 0)
+                        }
+                        this._contributedControl.getTitle().then((title: string) => {
                             this.setTitle(title);
+                        });
+                        this._contributedControl.getFields().then((fields: Calendar_Contracts.IAddEventContent[]) => {
+                            this._content = fields;
+                            this._renderContent();
                         });
                     }
                     catch (error) {
-                        this._createDefault();
+                        this._renderContent();
                     }
                 }, (error) => {
-                    this._createDefault();
+                    this._renderContent();
                 });
             }, (error) => {
-                this._createDefault();
+                this._renderContent();
             });
         }
         else{
-            this._createDefault();
+            this._renderContent();
         }
-    }  
-}
-
-/**
- * Base class for a control to insert in the dialog which allows users to add a new event or edit an existing one
-*/
-export class EditEventControl<TOptions extends IEventControlOptions> extends Controls.Control<TOptions> implements Calendar_Contracts.IDialogContent {
-    private _$container: JQuery;
-    protected _$startInput: JQuery;
-    protected _$endInput: JQuery;
-    protected _$descriptionInput: JQuery;
-
-    private _eventValidationError: Controls_Notifications.MessageAreaControl;
-    protected _calendarEvent: Calendar_Contracts.CalendarEvent;
+    }
     
-    protected _isValid: boolean;
-    protected _onValidChange: (valid: boolean) => any;
-
-    public initialize() {
-        super.initialize();
-        this._calendarEvent = this._options.calendarEvent;
-        this._isValid = false;
-        this._onValidChange = this._options.validStateChangedHandler;
-        this._createLayout();
-    }
-
-    /**
-     * Returns the title of the control
-     */
-    public getTitle(): IPromise<string> {
-        return Q.resolve(this._options.title || (this._options.isEdit ? "Edit Event" : "Add Event"));
-    }
-
-    /**
-     * Processes the data that the user has entered and either
-     * shows an error message, or returns the edited note.
-     */
-    public onOkClick(): any {
-        this._calendarEvent.startDate = Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$startInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
-        this._calendarEvent.endDate = Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$endInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
-        this._calendarEvent.description = this._$descriptionInput.val();
-
-        this._buildCalendarEventFromFields();
-
-        return Q.resolve(this._calendarEvent);
-    }
-
-    protected _buildCalendarEventFromFields() {
-    }
-
-    protected _createLayout() {
-        this._$container = $(domElem('div')).addClass('edit-event-container').appendTo(this._element);
-
+    private _renderContent() {
         this._eventValidationError = <Controls_Notifications.MessageAreaControl>Controls.BaseControl.createIn(Controls_Notifications.MessageAreaControl, this._$container, { closeable: false });
 
         var $editControl = $(domElem('div', 'event-edit-control'));
-        var $fieldsContainer = $(domElem('table')).appendTo($editControl);
-
-        var startDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.startDate)), Culture.getDateTimeFormat().ShortDatePattern, true);
-        var endDateString = startDateString;
-        if (this._calendarEvent.endDate) {
-            endDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.endDate)), Culture.getDateTimeFormat().ShortDatePattern, true);
-        }
-
-        this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)
-            .bind("blur",(e) => {
-                this._checkValid();
-        });
-        this._$endInput = $("<input type='text' id='fieldEndDate' />")
-            .bind("blur",(e) => {
-                this._checkValid();
-            });
-
-
-        this._$endInput.val(endDateString);
+        var $fieldsContainer = $(domElem('table')).appendTo($editControl);        
         
-        var descriptionString = this._calendarEvent.description || "";
-        this._$descriptionInput = $("<textarea rows='3' id='descriptionText' class='event-textarea' />").val(descriptionString);
-
+        // Build title input
+        if (this._content.title) {
+            this._$titleInput = $("<input type='text' class='requiredInfoLight' id='fieldTitle'/>").val(this._calendarEvent.title)
+                .bind("blur", (e) => {                        
+                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                    });
+        }
+        
+        var startDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.startDate)), Culture.getDateTimeFormat().ShortDatePattern, true);        
+        var endDateString = startDateString;
+        
+        // Build start input
+        if (this._content.start) {
+            this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)
+                .bind("blur", (e) => {                        
+                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                    });       
+        }
+        
+        // Build end input
+        if (this._content.end) {
+            if (this._calendarEvent.endDate) {
+                endDateString = Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(this._calendarEvent.endDate)), Culture.getDateTimeFormat().ShortDatePattern, true);
+            }
+            this._$endInput = $("<input type='text' id='fieldEndDate' />")
+                .bind("blur", (e) => {                        
+                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                    });   
+            this._$endInput.val(endDateString);
+        }
+        
+        // Build text inputs
+        if (this._content.textFields) {
+            var textFields = this._content.textFields;
+            for (var i = 0; i < textFields.length; i++) {
+                var textField = textFields[i]
+                var textInput = $(Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}'/>", textField.label));
+                if (textField.checkValid) {
+                    textInput.bind("blur", (e) => {                        
+                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                    });
+                }
+                if (textField.initialValue) {
+                    textInput.val(textField.initialValue);
+                }
+                if (textField.disabled) {
+                    textInput.prop("disabled", true);
+                }
+                this._$textInputs.push(textInput);           
+            }
+        }
+        
+        // Build combo inputs
+        if (this._content.comboFields) {
+            var comboFields = this._content.comboFields;
+            for (var i = 0; i < comboFields.length; i++) {
+                var comboField = comboFields[i];
+                var comboInput = $(Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}' />", comboField.label));
+                
+                if (comboField.initialValue) {
+                    comboInput.val(comboField.initialValue);
+                }
+                if (comboField.checkValid) {                    
+                    comboInput.bind("blur",(e) => {
+                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                    });
+                }
+                
+                this._$comboInputs.push(comboInput);
+            }
+        }
+        
         // Populate fields container with fields. The form fields array contain pairs of field label and field element itself.
         var fields = this._getFormFields();
         for (var i = 0, l = fields.length; i < l; i += 1) {
             var labelName = fields[i][0];
             var field = fields[i][1];
+            if(field) {
+                if (i === 0) {
+                    field.attr("autofocus", true);
+                }
+                var $row = $(domElem("tr"));
 
-            var $row = $(domElem("tr"));
+                var fieldId = field.attr("id") || $("input", field).attr("id");
+                $(domElem("label")).attr("for", fieldId).text(labelName).appendTo($(domElem("td", "label")).appendTo($row));
 
-            var fieldId = field.attr("id") || $("input", field).attr("id");
-            $(domElem("label")).attr("for", fieldId).text(labelName).appendTo($(domElem("td", "label")).appendTo($row));
+                field.appendTo($(domElem("td"))
+                    .appendTo($row));
 
-            field.appendTo($(domElem("td"))
-                .appendTo($row));
-
-            $row.appendTo($fieldsContainer);
+                $row.appendTo($fieldsContainer);
+            }
         }
-
-        this._$container.append($editControl);
-
-        var startCombo = <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$startInput, {
-            type: "date-time"
+        
+        this._$container.append($editControl).bind("keyup", (event) => {
+            if (event.keyCode == Utils_UI.KeyCode.ENTER) {
+                this.onOkClick();
+            }
+            else if (event.keyCode == Utils_UI.KeyCode.ESCAPE) {
+                this.onClose();
+            }
         });
         
-        var endCombo = <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$endInput, {
+        if (this._content.comboFields) {
+            this._buildComboControls();
+        }
+        
+        // Add date pickers combos to DOM                 
+        <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$startInput, {
             type: "date-time"
         });
-
-        this._setupValidators(this._$startInput, "Start date must be a valid date");
-        this._setupValidators(this._$endInput, "End date must be a valid date", "End date must be equal to or after start date", this._$startInput, DateComparisonOptions.GREATER_OR_EQUAL);
-        this._checkValid();
+                
+        <Controls_Combos.Combo>Controls.Enhancement.enhance(Controls_Combos.Combo, this._$endInput, {
+            type: "date-time"
+        });      
+        
+        this._setupValidators();
+        this._checkValidState().then((isValid: boolean) => { this.updateOkButton(isValid); });
     }
-
-    private _setupValidators($field: JQuery, validDateFormatMessage: string, relativeToErrorMessage?: string, $relativeToField?: JQuery, dateComparisonOptions?: DateComparisonOptions) {
+    
+    private _setupValidators() {
+        this._setupRequiredValidators(this._$titleInput, "Title cannot be empty");
+        this._setupDateValidators(this._$startInput, "Start date must be a valid date");
+        this._setupDateValidators(this._$endInput, "End date must be a valid date", "End date must be equal to or after start date", this._$startInput, DateComparisonOptions.GREATER_OR_EQUAL);
+        
+        // push text input fields
+        for (var i = 0; i < this._$textInputs.length; i++) {
+            var textField = this._content.textFields[i]
+            if (!textField.checkValid && textField.requiredField) {
+                this._setupRequiredValidators(this._$textInputs[i], textField.validationErrorMessage)
+            }
+        }
+        // push combo input fields
+        for (var i = 0; i < this._$comboInputs.length; i++) {
+            var comboField = this._content.comboFields[i]
+            if (!comboField.checkValid && comboField.requiredField) {
+                this._setupRequiredValidators(this._$comboInputs[i], comboField.validationErrorMessage)
+            }
+        }
+    }
+    
+    private _getFormFields(): any[]
+    {
+        var fields = [];
+        // push basic fields          
+        fields.push(["Title", this._$titleInput]);
+        fields.push(["Start Date", this._$startInput]);
+        fields.push(["End Date", this._$endInput]);
+        
+        // push text input fields
+        var textFields = this._content.textFields;
+        var textInputs = this._$textInputs;
+        for (var i = 0; i < textInputs.length; i++) {
+            fields.push([textFields[i].label, textInputs[i]]);
+        }
+        // push combo input fields
+        var comboFields = this._content.comboFields;
+        var comboInputs = this._$comboInputs;
+        for (var i = 0; i < comboInputs.length; i++)         {
+            fields.push([comboFields[i].label, comboInputs[i]]);
+        }
+        return fields;
+    }
+    
+    private _buildComboControls() {
+        var comboFields = this._content.comboFields;
+        var comboInputs = this._$comboInputs;
+        for (var i = 0; i < comboInputs.length; i++) {      
+            if (comboFields[i].disabled) {
+                comboInputs[i].prop("disabled", true);
+            }
+            else {
+                Controls.Enhancement.enhance(Controls_Combos.Combo, comboInputs[i], {
+                    source: comboFields[i].items,
+                    dropCount: 3
+                });
+            }
+        }
+    }
+    
+    private _buildCalendarEventFromFields(): IPromise<any> {
+        if (this._$startInput) {
+            this._calendarEvent.startDate =  Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$startInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
+        }
+        if (this._$endInput) {            
+            this._calendarEvent.endDate = Utils_Date.shiftToLocal(Utils_Date.parseDateString(this._$endInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true)).toISOString();
+        }
+        if (this._$titleInput) {
+            this._calendarEvent.title = $.trim(this._$titleInput.val());
+        }
+        
+        var promises: IPromise<any>[] = [];
+        // create event data from text fields
+        var textFields = this._content.textFields;
+        var textInputs = this._$textInputs;
+        for (var i = 0; i < textInputs.length; i++) {
+            if (textFields[i].okCallback) {
+                promises.push(textFields[i].okCallback(textInputs[i].val()));
+            }
+            else if (textFields[i].eventProperty) {
+                this._calendarEvent[textFields[i].eventProperty] = $.trim(textInputs[i].val());
+            }
+        }
+        // create event data from combo fields
+        var comboFields = this._content.comboFields;
+        var comboInputs = this._$comboInputs;
+        for (var i = 0; i < comboInputs.length; i++) {
+            if (comboFields[i].okCallback) {
+                promises.push(comboFields[i].okCallback(comboInputs[i].val()));
+            }
+            else if (comboFields[i].eventProperty) {
+                this._calendarEvent[comboFields[i].eventProperty] = $.trim(comboInputs[i].val());
+            }
+        }
+        
+        return Q.all(promises);
+    }
+    
+    private _validate(): IPromise<boolean> {
+        if(!this._contributionsValid) {
+            this._clearError();
+            return Q.resolve(false);
+        }
+        
+        var validationResult = [];
+        var groupIsValid: boolean = Controls_Validation.validateGroup('default', validationResult);
+        if (!groupIsValid) {
+            this._setError(validationResult[0].getMessage());
+            return Q.resolve(false);
+        }
+        
+        var errorPromises: IPromise<string>[] = []
+        
+        // validate text input fields
+        var textFields = this._content.textFields;
+        var textInputs = this._$textInputs;
+        for (var i = 0; i < textInputs.length; i++) {
+            var textField = textFields[i]
+            if (textField.checkValid) {
+                errorPromises.push(textField.checkValid($.trim(textInputs[i].val())).then((isValid: boolean) => {
+                    if(!isValid) {
+                        return textField.validationErrorMessage;
+                    }
+                    return "valid"
+                }));
+            }
+        }
+        // validate combo input fields
+        var comboFields = this._content.comboFields;
+        var comboInputs = this._$comboInputs;
+        for (var i = 0; i < comboInputs.length; i++) {
+            var comboField = comboFields[i]
+            if (comboField.checkValid && !comboField.disabled) {
+                errorPromises.push(comboField.checkValid($.trim(comboInputs[i].val())).then((isValid: boolean) => {
+                    if(!isValid) {
+                        return comboField.validationErrorMessage;
+                    }
+                    return "valid"
+                }));
+            }
+        }
+        
+        return Q.all(errorPromises).then((results: string[]) => {
+            var invalidMessages = results.filter(r => r !== "valid");
+            if (invalidMessages && invalidMessages.length > 0) {
+                this._setError(invalidMessages[0]);
+                return false
+            }
+            this._clearError();
+            return true;
+        })
+    }
+    
+    // checks whether the content is valid without showing error messages
+    private _checkValidState(): IPromise<boolean> {
+        this._clearError();
+        if(!this._contributionsValid) {
+            return Q.resolve(false);
+        }
+        
+        var validationResult = [];
+        return  Q.resolve(Controls_Validation.validateGroup('default', validationResult));
+    }
+    
+    private _setupDateValidators($field: JQuery, validDateFormatMessage: string, relativeToErrorMessage?: string, $relativeToField?: JQuery, dateComparisonOptions?: DateComparisonOptions) {
         <Controls_Validation.DateValidator<Controls_Validation.DateValidatorOptions>>Controls.Enhancement.enhance(Controls_Validation.DateValidator, $field, {
             invalidCssClass: "date-invalid",
             group: "default",
-            message: validDateFormatMessage
+            message: validDateFormatMessage,
+            parseFormat: Culture.getDateTimeFormat().ShortDatePattern
         });
+        
+        this._setupRequiredValidators($field, validDateFormatMessage);
         
         if (relativeToErrorMessage) {
             <DateRelativeToValidator>Controls.Enhancement.enhance(DateRelativeToValidator, $field, {
                 comparison: dateComparisonOptions,
                 relativeToField: $relativeToField,
                 group: "default",
-                message: relativeToErrorMessage
+                message: relativeToErrorMessage,
+                parseFormat: Culture.getDateTimeFormat().ShortDatePattern
             });
         }
     }
-
-    protected _getFormFields(): any[] {
-        var fields = [];
-        fields.push(["Start Date", this._$startInput]);
-        fields.push(["End Date", this._$endInput]);
-        fields.push(["Description", this._$descriptionInput]);
-
-        return fields;
-    }
-
-    protected _checkValid() {
-        this._isValid = true;
-        this._onValidChange(this._isValid);
+    
+    private _setupRequiredValidators($field: JQuery, requiredFieldMessage: string) {
+        <Controls_Validation.RequiredValidator<Controls_Validation.BaseValidatorOptions>>Controls.Enhancement.enhance(Controls_Validation.RequiredValidator, $field, 
+        <Controls_Validation.BaseValidatorOptions>{
+            invalidCssClass: "field-invalid",
+            group: "default",
+            message: requiredFieldMessage
+        });
     }
     
-    private _formatDateValue(date: Date): string {
-        return date === null ? "" : Utils_Date.format(new Date(date.valueOf()), "d");
+    private _setupCustomValidators($field: JQuery, validationFunction: (value: string) => boolean, invalidInputMessage: string) {
+        <Controls_Validation.CustomValidator<Controls_Validation.CustomValidatorOptions>>Controls.Enhancement.enhance(Controls_Validation.CustomValidator, $field, 
+        <Controls_Validation.CustomValidatorOptions>{
+            invalidCssClass: "field-invalid",
+            group: "default",
+            message: invalidInputMessage,
+            validate: validationFunction
+        });
+    }
+        
+    private _setError(errorMessage: string) {
+        if (errorMessage && errorMessage.length !== 0 && errorMessage !== "invalid") {
+            this._eventValidationError.setError($("<span />").html(errorMessage));
+        }
+        else {
+            this._clearError();
+        }
     }
 
-    private _parseDateValue(date: string): Date {
-        return date === null ? null : Utils_Date.parseDateString(date, "d", true);
-    }
-
-    protected _setError(errorMessage: string) {
-        this._eventValidationError.setError($("<span />").html(errorMessage));
-    }
-
-    protected _clearError() {
+    private _clearError() {
         this._eventValidationError.clear();
     }
 }
@@ -299,102 +512,96 @@ export class EditEventControl<TOptions extends IEventControlOptions> extends Con
  * A control which allows users to add / edit free-form events.
  * In addition to start/end dates, allows user to enter a title and select a category.
 */
-export class EditFreeFormEventControl<TOptions extends IFreeFormEventControlOptions> extends EditEventControl<TOptions> {
-    private _$titleInput: JQuery;
-    private _$categoryInput: JQuery;
+export class EditFreeFormEventControl extends Controls.Control<IEventControlOptions> implements Calendar_Contracts.IDialogContent {
+    
+    private _calendarEvent: Calendar_Contracts.CalendarEvent;
     private _categories: Calendar_Contracts.IEventCategory[];
+    private _$descriptionInput: JQuery;
+    private static height: number = 50;
+        
+    public initializeOptions(options?: any) {
+        super.initializeOptions($.extend(options, {
+            coreCssClass: "edit-freeform-control"
+        }));
+    }
     
     public initialize() {
         super.initialize();
-        if (this._calendarEvent.title) {
-            this._$titleInput.val(this._calendarEvent.title);
-            this._checkValid();
-        }
+        this._categories = [];
+        this._element.addClass("bowtie-style");
+        this._calendarEvent = this._options.calendarEvent;
+        this._createLayout();
+    }
 
-        this._$categoryInput.val(this._calendarEvent.category ? this._calendarEvent.category.title : "");
+    public onOkClick(): IPromise<any> {
+        return Q.resolve({
+            movable: true,
+            description: this._$descriptionInput.val(),
+            category: this._calendarEvent.category
+        });
     }
     
-    protected _buildCalendarEventFromFields() {
-        this._calendarEvent.movable = true;
-        this._calendarEvent.title = $.trim(this._$titleInput.val());
-        if (this._categories) {
-            var categoryTitle = $.trim(this._$categoryInput.val())
-            var existingCategories = this._categories.filter(cat => cat.title === categoryTitle);
-            if(existingCategories.length > 0) {
-                this._calendarEvent.category = existingCategories[0];
-            }
-            else {
-                if (!categoryTitle || categoryTitle === "") {
-                    categoryTitle = "Uncategorized"
-                }
-                this._calendarEvent.category = <Calendar_Contracts.IEventCategory> {
-                    title: categoryTitle
-                }
-            }
-        }
+    public getTitle(): IPromise<string> {        
+        return Q.resolve(this._options.isEdit ? "Edit Event" : "Add Event");
     }
-
-    protected _createLayout() {
-        this._$titleInput = $("<input type='text' class='requiredInfoLight' id='fieldTitle'/>")
-            .bind("input keyup",(e) => {
-            if (e.keyCode !== Utils_UI.KeyCode.ENTER) {
-                this._checkValid();
-            }
-        });
-
-        this._$categoryInput = $("<input type='text' id='fieldCategory' />").addClass("field-input");
-        // Populate categories
-        this._options.categoriesPromise().then((categories: Calendar_Contracts.IEventCategory[]) => {
+    
+    public getContributedHeight(): IPromise<number> {
+        return Q.resolve(EditFreeFormEventControl.height);
+    }
+    
+    public getFields(): IPromise<Calendar_Contracts.IAddEventContent> {
+        return this._options.categoriesPromise().then((categories: Calendar_Contracts.IEventCategory[]) => {
             if (categories) {
                 this._categories = categories;
-                Controls.Enhancement.enhance(Controls_Combos.Combo, this._$categoryInput, {
-                    source: $.map(categories, (category: Calendar_Contracts.IEventCategory, index: number) => { return category.title }),
-                    dropCount: 3
-                });
+                var categoryTitles = categories.map(cat => { return cat.title });
             }
-        }); 
-        super._createLayout();       
+            return (<Calendar_Contracts.IAddEventContent> {
+                title: true,
+                start: true,
+                end: true,
+                comboFields: [
+                    <Calendar_Contracts.IAddEventComboField> {
+                        label: "Category",
+                        initialValue: this._calendarEvent.category ? this._calendarEvent.category.title : "",
+                        items: categoryTitles || [],
+                        okCallback: this._categoryCallback.bind(this)
+                    }
+                ]
+            });
+        });
     }
+        
+    private _createLayout() {
+        var $container = $(domElem('table')).appendTo(this._element);
+        
+        var descriptionString = this._calendarEvent.description || "";
+        this._$descriptionInput = $("<textarea rows='3' id='descriptionText' class=''requiredInfoLight' />").val(descriptionString);  
+        
+        var $row = $(domElem("tr"));
 
-    protected _getFormFields(): any[] {
-        var fields = [];
+        $(domElem("label")).attr("for", this._$descriptionInput.attr("id")).text("Description").appendTo($(domElem("td", "label")).appendTo($row));
 
-        fields.push(["Title", this._$titleInput]);
-        fields.push(["Start Date", this._$startInput]);
-        fields.push(["End Date", this._$endInput]);
-        fields.push(["Category", this._$categoryInput]);
-        fields.push(["Description", this._$descriptionInput]);
+        this._$descriptionInput.appendTo($(domElem("td"))
+            .appendTo($row));
 
-        return fields;
+        $row.appendTo($container);
     }
-
-    protected _checkValid() {
-        var title: string = $.trim(this._$titleInput.val());
-        if (title.length <= 0) {
-            this._clearError();
-            if(this._isValid){
-                this._isValid = false;
-                this._onValidChange(this._isValid);
-            }
-            return;
+    
+    private _categoryCallback(value: string): IPromise<any> {
+        var title = $.trim(value);
+        if(!title || title.length === 0) {
+            title = "Uncategorized";
         }
-        var validationResult = [];
-        var isValid: boolean = Controls_Validation.validateGroup('default', validationResult);
-        if (!isValid) {
-            this._setError(validationResult[0].getMessage());
-            if(this._isValid){
-                this._isValid = false;
-                this._onValidChange(this._isValid);
-            }
-            return;
+        var category: Calendar_Contracts.IEventCategory = {
+            title: title,
+            id: Utils_String.format("freeForm.{0}", title)
         }
-
-        this._clearError();
-            if(!this._isValid){
-                this._isValid = true;
-                this._onValidChange(this._isValid);
-            }
-            return;
+        var categories = this._categories.filter(cat => cat.title === value);
+        if(categories && categories.length > 0) {
+            category = categories[0];
+        }
+        this._calendarEvent.category = category;
+        return Q.resolve(null);        
     }
 }
 
@@ -402,205 +609,131 @@ export class EditFreeFormEventControl<TOptions extends IFreeFormEventControlOpti
  * A control which allows users to add / edit days off events.
  * In addition to start/end dates, allows user to select a user (or the entire team).
 */
-export class EditCapacityEventControl<TOptions extends ICapacityEventControlOptions> extends EditEventControl<TOptions> {
-    private _$memberInput: JQuery;
+export class EditCapacityEventControl extends Controls.Control<IEventControlOptions> implements Calendar_Contracts.IDialogContent{
+
+    private _calendarEvent: Calendar_Contracts.CalendarEvent;
     private _members: WebApi_Contracts.IdentityRef[];
-    private _$iterationInput: JQuery;
     private _iterations: Work_Contracts.TeamSettingsIteration[];
-    private static EVERYONE : string = "Everyone";
+    private static EVERYONE: string = "Everyone";
+    private static height: number = 50;
+    
+    public initializeOptions(options?: any) {
+        super.initializeOptions($.extend(options, {
+            coreCssClass: "edit-capacity-control"
+        }));
+    }
     
     public initialize() {
-        this._options.getIterations().then((iterations) => {
-            this._iterations = iterations;
-            super.initialize();
+        super.initialize();
+        this._element.addClass("bowtie-style");
+        this._calendarEvent = this._options.calendarEvent;
+        this._members = [];
+        this._iterations = [];
+        this._createLayout();
+    }
+
+    public onOkClick(): any {
+        return Q.resolve({
+            iterationId: this._calendarEvent.iterationId,
+            member: this._calendarEvent.member
         });
     }
     
     public getTitle(): IPromise<string> {        
-        return Q.resolve(this._options.title || (this._options.isEdit ? "Edit Day off" : "Add Day off"));
+        return Q.resolve(this._options.isEdit ? "Edit Day off" : "Add Day off");
     }
     
-    protected _buildCalendarEventFromFields() {
-        if(!this._options.isEdit) {
-            if (this._members) {
-                var displayName = $.trim(this._$memberInput.val());
-                var eventMember : any;
-                if (displayName === EditCapacityEventControl.EVERYONE) {
-                    eventMember.displayName = displayName;
-                }
-                else {
-                    this._members.some((member: WebApi_Contracts.IdentityRef, index: number, array: WebApi_Contracts.IdentityRef[]) => {
-                        if (member.displayName === displayName) {
-                            eventMember = member;
-                            return true;
-                        }
-                        return false;
-                    });
-                }
-                this._calendarEvent.member = eventMember;
-                var memberId = eventMember.uniqueName || EditCapacityEventControl.EVERYONE;
-                this._calendarEvent.id = "daysOff." + memberId + "." + new Date(this._calendarEvent.startDate.valueOf());
-            }
-        }   
-        var iterationVal = this._$iterationInput.val();
-        var iteration = this._iterations.filter(i => i.name === iterationVal)[0];
-        if(iteration){
-            this._calendarEvent.iterationId = iteration.id;
-        }
-    }
-
-    protected _createLayout() {
-        this._$memberInput = $("<input type='text' id='fieldMember' />").addClass("field-input");
-
-        if (this._options.membersPromise) {
-            this._options.membersPromise.then((members: WebApi_Contracts.IdentityRef[]) => {
-                this._members = members;
-                var memberNames = [];
-                memberNames.push(EditCapacityEventControl.EVERYONE);
-                members.sort((a, b) => { return a.displayName.toLocaleLowerCase().localeCompare(b.displayName.toLocaleLowerCase()); });
-                members.forEach((member: WebApi_Contracts.IdentityRef, index: number, array: WebApi_Contracts.IdentityRef[]) => {
-                    memberNames.push(member.displayName);
-                });
-                
-                // Populate iterations
-                this._$iterationInput = $("<input type='text' id='fieldIteration' />").addClass("field-input")
-                    .bind("keydown", (e) => { this._checkValid() });
-                Controls.Enhancement.enhance(Controls_Combos.Combo, this._$iterationInput, {
-                    source: this._iterations.map((iteration: Work_Contracts.TeamSettingsIteration, index: number) => iteration.name),
-                    dropCount: 3
-                });
-                if(this._iterations && this._iterations.length > 0){
-                    this._$iterationInput.val(this._iterations[0].name);
-                    var iteration;
-                    if(this._calendarEvent.iterationId) {
-                         iteration = this._iterations.filter(i => i.id === this._calendarEvent.iterationId)[0];
-                    }
-                    else{                    
-                        iteration = this._getCurrentIteration(new Date(this._calendarEvent.startDate))                
-                    }
-                    if (iteration) {
-                        this._$iterationInput.val(iteration.name);
-                    }
-                }
-
-
-                Controls.Enhancement.enhance(Controls_Combos.Combo, this._$memberInput, {
-                    source: memberNames,
-                    dropCount: 3
-                });
-                this._$memberInput.val(this._calendarEvent.member.displayName || "");
-                if (this._options.isEdit) {
-                    this._$memberInput.addClass('requiredInfoLight');
-                    this._$memberInput.prop('disabled', true);
-                }
-                super._createLayout();
+    public getFields(): IPromise<Calendar_Contracts.IAddEventContent> {
+        return this._options.membersPromise.then((members: WebApi_Contracts.IdentityRef[]) => {
+            this._members = members;
+            var memberNames = [];
+            memberNames.push(EditCapacityEventControl.EVERYONE);
+            members.sort((a, b) => { return a.displayName.toLocaleLowerCase().localeCompare(b.displayName.toLocaleLowerCase()); });
+            members.forEach((member: WebApi_Contracts.IdentityRef, index: number, array: WebApi_Contracts.IdentityRef[]) => {
+                memberNames.push(member.displayName);
             });
-        }
-        else {
-            this._$memberInput.prop('disabled', true);
-            super._createLayout();
-        }
+            
+            var initialMemberValue = this._calendarEvent.member.displayName || "";
+            var disabled = false;
+            if (this._options.isEdit) {
+                disabled = true;
+            }
+            
+            return this._options.getIterations().then((iterations) => {
+                this._iterations = iterations;
+                var initialIterationValue = iterations[0].name;
+                var iteration;
+                if(this._calendarEvent.iterationId) {
+                        iteration = iterations.filter(i => i.id === this._calendarEvent.iterationId)[0];
+                }
+                else{                    
+                    iteration = this._getCurrentIteration(iterations, new Date(this._calendarEvent.startDate))                
+                }
+                if (iteration) {
+                    initialIterationValue = iteration.name;
+                }
+                return <Calendar_Contracts.IAddEventContent> {
+                    start: true,
+                    end: true,
+                    comboFields: [
+                        <Calendar_Contracts.IAddEventComboField> {
+                            label: "Team Member", 
+                            initialValue: initialMemberValue,
+                            items: memberNames,
+                            disabled: disabled,
+                            checkValid: this._checkMemberValid.bind(this),
+                            okCallback: this._memberCallback.bind(this)
+                        },
+                        <Calendar_Contracts.IAddEventComboField> {
+                            label: "Iteration",
+                            initialValue: initialIterationValue,
+                            items: iterations.map(iteration => { return iteration.name }),
+                            checkValid: this._checkIterationValid.bind(this),
+                            okCallback: this._iterationCallback.bind(this)
+                        }
+                    ]
+                };
+            });
+        });
+    }
+    
+    private _createLayout() {
+        //no op
     }
         
-    private _getCurrentIteration(date: Date): Work_Contracts.TeamSettingsIteration {
-        return this._iterations.filter((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
+    private _getCurrentIteration(iterations: Work_Contracts.TeamSettingsIteration[], date: Date): Work_Contracts.TeamSettingsIteration {
+        return iterations.filter((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
             if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date.valueOf() >= iteration.attributes.startDate.valueOf() && date.valueOf() <= iteration.attributes.finishDate.valueOf()) {
                 return true;
             }
         })[0];
     }
-
-    protected _getFormFields(): any[] {
-        var fields = [];
-
-        fields.push(["Start Date", this._$startInput]);
-        fields.push(["End Date", this._$endInput]);
-        fields.push(["Team Member", this._$memberInput]);
-        fields.push(["Iteration", this._$iterationInput]);
-        fields.push(["Description", this._$descriptionInput]);
-
-        return fields;
-    }
-
-    protected _checkValid() {
-        var validationResult = [];
-        
-        // Ensure iteration is selected
-        var iterationVal = this._$iterationInput.val();
-        var validIteration = this._iterations.filter(i => i.name === iterationVal).length > 0;
-        if(!validIteration){
-            this._clearError();
-            if(this._isValid){
-                this._isValid = false;
-                this._onValidChange(this._isValid);
-            }
-            return;
-        }
-        
-        var isValid: boolean = Controls_Validation.validateGroup('default', validationResult);
-        if (!isValid) {
-            this._setError(validationResult[0].getMessage());
-            if(this._isValid){
-                this._isValid = false;
-                this._onValidChange(this._isValid);
-            }
-            return;
-        }
-        
-        // no error
-        this._clearError();
-        if(!this._isValid){
-            this._isValid = true;
-            this._onValidChange(this._isValid);
-        }
-        return;
-    }
-}
-
-export interface ColorPickerPopupOptions {
-    category: Calendar_Contracts.IEventCategory;
-    callback: (color: string) => {};
-}
-
-export class ColorPickerPopup <ColorPickerPopupOptions> extends Controls_Popup.RichContentTooltip {
-    private _category: Calendar_Contracts.IEventCategory;
-    private _allColors: string[];
-    private _container: JQuery;
-    private _callback: (color:string) => {};
     
-    public initializeOptions(options?: any) {
-        super.initializeOptions($.extend({
-            openCloseOnHover: false
-        }, options));
+    private _iterationCallback(value: string): IPromise<any> {
+        var iteration = this._iterations.filter(i => i.name === $.trim(value))[0];
+        if (iteration) {
+            this._calendarEvent.iterationId = iteration.id;
+        }
+        return Q.resolve(null);
     }
     
-    public initialize() {
-        super.initialize();
-        this._category = this._options.category;
-        this._callback = this._options.callback;
-        this._allColors = Calendar_ColorUtils.getAllColors();
-        this._element.addClass("color-picker-tooltip");
-        this._container = this._element.find(".popup-content-container");
-        this._drawContent();
+    private _checkIterationValid(value: string): IPromise<boolean> {
+        return Q.resolve(this._iterations.filter(i => i.name === $.trim(value)).length > 0);
     }
     
-    private _drawContent() {
-        var menuItems: Controls_Menus.IMenuItemSpec[] = [];
-        for (var i = 0; i < this._allColors.length; i++){
-            var color = Utils_String.format("#{0}", this._allColors[i]);
-            var item = <Controls_Menus.IMenuItemSpec>{
-                id: i.toString(),
-                noIcon: true,
-                showText: false,
-                title: color,
-                html: Utils_String.format("<div class='category-color-choice' style='background-color:{0}'/>", color),
-                action: this._options.callback.bind(this, color)
-            };
-            menuItems.push(item);
+    private _memberCallback(value: string): IPromise<any>{
+        var member = this._members.filter(m => m.displayName === $.trim(value))[0];
+        if (member) {
+            this._calendarEvent.member = member;
         }
-        Controls.BaseControl.createIn(Controls_Menus.MenuBar, this._container, <Controls_Menus.MenuOptions> {
-            items: menuItems
-        });
+        else {
+            this._calendarEvent.member = <WebApi_Contracts.IdentityRef> { displayName: EditCapacityEventControl.EVERYONE };
+        }
+        return Q.resolve(null);
+    }
+    
+    private _checkMemberValid(value: string): IPromise<boolean> {        
+        return Q.resolve(this._members.filter(m => m.displayName === $.trim(value)).length > 0 || value === EditCapacityEventControl.EVERYONE);
     }
 }
 

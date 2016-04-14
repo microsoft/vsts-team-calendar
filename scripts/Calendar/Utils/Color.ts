@@ -70,11 +70,3 @@ export function generateBackgroundColor(name: string): string {
 
     return currentIterationColor;
 }
-
-/**
- * Lists all possible colors
- * @return all possible colors in the form of RRGGBB
- */
-export function getAllColors(): string[] {
-    return allColors;
-}

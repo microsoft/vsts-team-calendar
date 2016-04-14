@@ -88,7 +88,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
         var deferred = Q.defer<any>();
         if (this._events) {
             deferred.resolve(this._getCategoryData(this._events.slice(0), query));
-            
+
         }
         else {
             this.getEvents().then(

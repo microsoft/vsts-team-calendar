@@ -1,16 +1,161 @@
 /**
+ * Content to be rendered by the Add Event Dialog
+ */
+export interface IAddEventContent {
+    /** 
+     * Include text input for event title
+     */
+    title?: boolean;
+    
+    /**
+     * Include start date picker
+     */
+    start?: boolean;
+    
+    /**
+     * Include end date picker
+     */
+    end?: boolean;
+    
+    /**
+     * List of text input fields
+     */
+    textFields?: IAddEventTextField[]
+    
+    /**
+     * List of combo input fields
+     */
+    comboFields?: IAddEventComboField[];
+    
+    /**
+     * Error message to display if contributed content is not valid
+     */
+    validationErrorMessage?: string;
+}
+
+/**
+ * Text input field for Add Event Dialog 
+ */
+export interface IAddEventTextField {
+    /**
+     * Field Label
+     */
+    label: string;
+    
+    /**
+     * Initial value of the text input
+     */
+    initialValue?: string;
+    
+    /**
+     * Determines if the field is required to save the dialog content
+     */
+    requiredField?: boolean;
+    
+    /**
+     * Returns true if the current input for the field is valid
+     */
+    checkValid?: (value: string) => IPromise<boolean>
+    
+    /**
+     * Error message to display if field is not valid
+     */
+    validationErrorMessage?: string;
+    
+    /**
+     * Disabled state of the input
+     */
+    disabled?: boolean
+    
+    /**
+     * Property on the calendar event the input should set
+     */
+    eventProperty?: string;
+    
+    /**
+     * Executed by the Add Event Dialog on Ok click
+     */
+    okCallback?: (value: string) => IPromise<any>;
+}
+
+/**
+ * Field for Add Event Dialog to be populated by a Combo Control
+ */
+export interface IAddEventComboField {
+    /**
+     * Field label
+     */    
+    label: string;
+    
+    /**
+     * Initial value of the combo
+     */
+    initialValue?: string;
+    
+    /**
+     * Items to populate the combo
+     */
+    items: string[];
+    
+    /**
+     * Determines if the field is required to save the dialog content
+     */
+    requiredField?: boolean;
+    
+    /**
+     * Returns true if the current input for the field is valid
+     */
+    checkValid?: (value: string) => IPromise<boolean>
+    
+    /**
+     * Error message to display if field is not valid
+     */
+    validationErrorMessage?: string;
+    
+    /**
+     * Disabled state of the input
+     */
+    disabled?: boolean
+    
+    /**
+     * Property on the calendar event the input should set
+     */
+    eventProperty?: string;
+    
+    /**
+     * Executed by the Add Event Dialog on Ok click
+     */
+    okCallback?: (value: string) => IPromise<any>;
+}
+
+/**
  * Interface for Add Event dialog content
  */
 export interface IDialogContent{
     /**
      * Returns the updated calendar item
      */
-    onOkClick: () => IPromise<CalendarEvent>; 
+    onOkClick: () => IPromise<any>; 
     
     /**
      * Returns the current title of the dialog
      */
     getTitle?: () => IPromise<string>;
+    
+    /**
+     * Return height of the contributed content, defaults to 0
+     */
+    getContributedHeight?: () => IPromise<number>;
+    
+    /**
+     * Returns the fields for the Add Event dialog to display
+     */
+    getFields?: () => IPromise<IAddEventContent>;
+    
+    /**
+     * Returns true if the state of the customized contributed content is valid
+     */
+    checkValid?: () => IPromise<boolean>;
 }
 
 /**

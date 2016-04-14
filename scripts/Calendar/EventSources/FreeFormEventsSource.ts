@@ -33,9 +33,17 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
             $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
-                var start = Utils_Date.shiftToUTC(new Date(event.startDate));
-                var end = Utils_Date.shiftToUTC(new Date(event.endDate))
-                if(start.getHours() !== 0) {
+                var start = Utils_Date.shiftToUTC(new Date(Utils_Date.parseDateString(event.startDate).toISOString()));
+                var end = Utils_Date.shiftToUTC(new Date(Utils_Date.parseDateString(event.endDate).toISOString()));
+                // For now, skip events with date strngs we can't parse.
+                if(!start || !end) {
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                    var index = events.indexOf(eventInArray);
+                    if (index > -1) {
+                        events.splice(index, 1);
+                    }                    
+                }
+                else if(start.getHours() !== 0) {
                     // Set dates back to midnight                    
                     start.setHours(0);
                     end.setHours(0);

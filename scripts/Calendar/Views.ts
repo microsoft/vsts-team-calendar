@@ -400,7 +400,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
                     //Update dates
 
-                    event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), -1).toISOString();
+                    event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                     event.start = updatedEvent.startDate;
                     event.__etag = updatedEvent.__etag;
                     this._calendar.updateEvent(event);

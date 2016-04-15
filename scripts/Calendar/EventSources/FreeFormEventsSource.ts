@@ -34,12 +34,12 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
             var updatedEvents: Calendar_Contracts.CalendarEvent[] = [];
             $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
-                var start = Utils_Date.parseDateString(event.startDate);
-                var end = Utils_Date.parseDateString(event.endDate);
+                
                 // For now, skip events with date strngs we can't parse.
-                if(start && end) {
-                    start = Utils_Date.shiftToUTC(start);
-                    end = Utils_Date.shiftToUTC(end);
+                if(Date.parse(event.startDate) && Date.parse(event.endDate)) {
+                    var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                    var end = Utils_Date.shiftToUTC(new Date(event.endDate));
+                    
                     if(start.getHours() !== 0) {
                         // Set dates back to midnight                    
                         start.setHours(0);

@@ -32,15 +32,16 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+            var updatedEvents: Calendar_Contracts.CalendarEvent[] = events.slice();
             $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
                 var start = Utils_Date.parseDateString(event.startDate);
                 var end = Utils_Date.parseDateString(event.endDate);
                 // For now, skip events with date strngs we can't parse.
                 if(!start || !end) {
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === event.id; })[0];
-                    var index = events.indexOf(eventInArray);
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(updatedEvents, function (e: Calendar_Contracts.CalendarEvent) { return e.id === event.id; })[0];
+                    var index = updatedEvents.indexOf(eventInArray);
                     if (index > -1) {
-                        events.splice(index, 1);
+                        updatedEvents.splice(index, 1);
                     }                    
                 }
                 else {
@@ -54,17 +55,17 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         var updatedEvent = $.extend({}, event);
                         updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
                         updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
-                        var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
-                        var index = events.indexOf(eventInArray);
+                        var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(updatedEvents, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                        var index = updatedEvents.indexOf(eventInArray);
                         if (index > -1) {
-                            events.splice(index, 1);
+                            updatedEvents.splice(index, 1);
                         }
-                        events.push(updatedEvent);
+                        updatedEvents.push(updatedEvent);
                         this.updateEvents([updatedEvent]);
                     }
                 }
             });
-            return events;
+            return updatedEvents;
         });
     }
 

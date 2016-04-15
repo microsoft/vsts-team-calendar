@@ -32,7 +32,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
-            var updatedEvents: Calendar_Contracts.CalendarEvent[] = events.slice();
+            var updatedEvents: Calendar_Contracts.CalendarEvent[] = [];
             $.each(events, (index: number, event: Calendar_Contracts.CalendarEvent) => {
                 var start = Utils_Date.parseDateString(event.startDate);
                 var end = Utils_Date.parseDateString(event.endDate);
@@ -47,12 +47,12 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                 else {
                     start = Utils_Date.shiftToUTC(start);
                     end = Utils_Date.shiftToUTC(end);
+                    var updatedEvent = $.extend({}, event);
                     if(start.getHours() !== 0) {
                         // Set dates back to midnight                    
                         start.setHours(0);
                         end.setHours(0);
                         // update the event in the list
-                        var updatedEvent = $.extend({}, event);
                         updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
                         updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
                         var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(updatedEvents, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
@@ -60,9 +60,9 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         if (index > -1) {
                             updatedEvents.splice(index, 1);
                         }
-                        updatedEvents.push(updatedEvent);
                         this.updateEvents([updatedEvent]);
                     }
+                    updatedEvents.push(updatedEvent);
                 }
             });
             return updatedEvents;

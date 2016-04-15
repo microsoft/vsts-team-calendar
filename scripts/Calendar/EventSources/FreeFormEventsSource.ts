@@ -37,32 +37,19 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                 var start = Utils_Date.parseDateString(event.startDate);
                 var end = Utils_Date.parseDateString(event.endDate);
                 // For now, skip events with date strngs we can't parse.
-                if(!start || !end) {
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(updatedEvents, function (e: Calendar_Contracts.CalendarEvent) { return e.id === event.id; })[0];
-                    var index = updatedEvents.indexOf(eventInArray);
-                    if (index > -1) {
-                        updatedEvents.splice(index, 1);
-                    }                    
-                }
-                else {
+                if(start && end) {
                     start = Utils_Date.shiftToUTC(start);
                     end = Utils_Date.shiftToUTC(end);
-                    var updatedEvent = $.extend({}, event);
                     if(start.getHours() !== 0) {
                         // Set dates back to midnight                    
                         start.setHours(0);
                         end.setHours(0);
                         // update the event in the list
-                        updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
-                        updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
-                        var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(updatedEvents, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
-                        var index = updatedEvents.indexOf(eventInArray);
-                        if (index > -1) {
-                            updatedEvents.splice(index, 1);
-                        }
-                        this.updateEvents([updatedEvent]);
+                        event.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                        event.endDate = Utils_Date.shiftToLocal(end).toISOString();
+                        this.updateEvents([event]);
                     }
-                    updatedEvents.push(updatedEvent);
+                    updatedEvents.push(event);
                 }
             });
             return updatedEvents;

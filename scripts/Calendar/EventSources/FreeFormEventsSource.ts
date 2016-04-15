@@ -37,7 +37,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                 var end = Utils_Date.parseDateString(event.endDate);
                 // For now, skip events with date strngs we can't parse.
                 if(!start || !end) {
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === event.id; })[0];
                     var index = events.indexOf(eventInArray);
                     if (index > -1) {
                         events.splice(index, 1);

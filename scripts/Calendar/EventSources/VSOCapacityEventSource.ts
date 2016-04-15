@@ -33,22 +33,18 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     start.setHours(0);
                     end.setHours(0);
                     // update the event in the list
-                    var updatedEvent = $.extend({}, event);
-                    updatedEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
-                    updatedEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
-                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0];
+                    var newEvent = $.extend({}, event);
+                    newEvent.startDate = Utils_Date.shiftToLocal(start).toISOString();
+                    newEvent.endDate = Utils_Date.shiftToLocal(end).toISOString();
+                    var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === newEvent.id; })[0];
                     var index = events.indexOf(eventInArray);
                     if (index > -1) {
                         events.splice(index, 1);
                     }
-                    events.push(updatedEvent);
+                    events.push(newEvent);
                     
-                    //Update start date first
-                    event.startDate = Utils_Date.shiftToLocal(start).toISOString();
-                    this.updateEvents([event]).then((updatedEvents: Calendar_Contracts.CalendarEvent[]) => {                        
-                        updatedEvents[0].endDate = Utils_Date.shiftToLocal(end).toISOString();
-                        this.updateEvents([updatedEvents[0]])
-                    })
+                    // Update event
+                    this.updateEvent(event, newEvent);
                 }
             });
             return events;
@@ -186,11 +182,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             else {
                 this._getCapacity(workClient, teamContext, iterationId, memberId).then((capacity: Work_Contracts.TeamMemberCapacity) => {
                     var capacityPatch: Work_Contracts.CapacityPatch = {
-                        activities: [
-                        {
-                            "capacityPerDay": 0,
-                            "name": null
-                        }],
+                        activities: capacity.activities,
                         daysOff: capacity.daysOff
                     };
                     capacityPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
@@ -249,14 +241,13 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public updateEvent(oldEvent: Calendar_Contracts.CalendarEvent, newEvent: Calendar_Contracts.CalendarEvent): IPromise<Calendar_Contracts.CalendarEvent> {
         this._events = null;
         var deferred = Q.defer();
-        var dayOffStart = new Date(events[0].startDate);
-        var dayOffEnd = new Date(events[0].endDate);
-        var memberId = events[0].member.id;
-        var iterationId = events[0].iterationId;
-        var isTeam: boolean = events[0].member.uniqueName === undefined;
+        var dayOffStart = new Date(oldEvent.startDate);
+        var memberId = oldEvent.member.id;
+        var iterationId = oldEvent.iterationId;
+        var isTeam: boolean = oldEvent.member.uniqueName === undefined;
         var webContext = VSS.getWebContext();
         var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
         var workClient: Work_Client.WorkHttpClient = Service.VssConnection
@@ -267,17 +258,14 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
                 var updated : boolean = teamDaysOffPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
                     if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
-                        teamDaysOffPatch.daysOff[index].end = dayOffEnd;
-                        return true;
-                    }
-                    if (dateRange.end.valueOf() === dayOffEnd.valueOf()) {
-                        teamDaysOffPatch.daysOff[index].start = dayOffStart;
+                        teamDaysOffPatch.daysOff[index].start = new Date(newEvent.startDate);
+                        teamDaysOffPatch.daysOff[index].end = new Date(newEvent.endDate);
                         return true;
                     }
                     return false;
                 });
                 workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
-                    deferred.resolve(events);
+                    deferred.resolve(newEvent);
                 });
             });
         }
@@ -286,17 +274,14 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
                 capacityPatch.daysOff.some((dateRange: Work_Contracts.DateRange, index: number, array: Work_Contracts.DateRange[]) => {
                     if (dateRange.start.valueOf() === dayOffStart.valueOf()) {
-                        capacityPatch.daysOff[index].end = dayOffEnd;
-                        return true;
-                    }
-                    if (dateRange.end.valueOf() === dayOffEnd.valueOf()) {
-                        capacityPatch.daysOff[index].start = dayOffStart;
+                        capacityPatch.daysOff[index].start =new Date(newEvent.startDate);
+                        capacityPatch.daysOff[index].end = new Date(newEvent.endDate);
                         return true;
                     }
                     return false;
                 });
                 workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
-                    deferred.resolve(events);
+                    deferred.resolve(newEvent);
                 });
             });
         }

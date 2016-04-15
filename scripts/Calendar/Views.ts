@@ -245,7 +245,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         if (event.rendering !== 'background') {
             var commands = [];
 
-            if (eventSource.updateEvents) {
+            if (eventSource.updateEvent) {
                 commands.push({ rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" });
             }
             if (eventSource.removeEvents) {
@@ -384,10 +384,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
-        if (eventSource && eventSource.updateEvents) {
+        if (eventSource && eventSource.updateEvent) {
             if (eventSource.id === "freeForm") {
-                eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
-                    var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
+                eventSource.updateEvent(null, calendarEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
                     // Set underlying source to dirty so refresh picks up new changes
                     var originalEventSource = this._getCalendarEventSource(eventSource.id);
                     originalEventSource.state.dirty = true;
@@ -472,7 +471,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
         var start = new Date(<any>event.start).toISOString();
         var end = event.end ? Utils_Date.addDays(new Date(<any>event.end), -1).toISOString() : start;
-        var calendarEvent: Calendar_Contracts.CalendarEvent = {
+        var oldEvent: Calendar_Contracts.CalendarEvent = {
             startDate: start,
             endDate: end,
             title: event.title,
@@ -482,22 +481,23 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             iterationId: event.iterationId,
             __etag: event.__etag
         };
+        
+        var calendarEvent = $.extend({}, oldEvent);
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
-        if (eventSource && eventSource.updateEvents) {
+        if (eventSource && eventSource.updateEvent) {
             if (eventSource.id === "freeForm") {
                 var query = this._calendar.getViewQuery();
                 var dialogOptions : Calendar_Dialogs.IFreeFormEventDialogOptions = {
                     event: calendarEvent,
                     title: "Edit Event",
                     resizable: false,
-                    okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                        eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    okCallback: (newEvent: Calendar_Contracts.CalendarEvent) => {
+                        eventSource.updateEvent(oldEvent, newEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
                             // Set underlying source to dirty so refresh picks up new changes
                             var originalEventSource = this._getCalendarEventSource(eventSource.id);
                             originalEventSource.state.dirty = true;
-                            var updatedEvent = $.grep(calendarEvents, (e: Calendar_Contracts.CalendarEvent) => { return e.id === calendarEvent.id; })[0];
 
                             // Update title
                             event.title = updatedEvent.title;
@@ -523,17 +523,17 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     title: "Edit Days Off",
                     resizable: false,
                     isEdit: true,
-                    okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                        eventSource.updateEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    okCallback: (newEvent: Calendar_Contracts.CalendarEvent) => {
+                        eventSource.updateEvent(oldEvent, newEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
                             // Set underlying source to dirty so refresh picks up new changes
                             var originalEventSource = this._getCalendarEventSource(eventSource.id);
                             originalEventSource.state.dirty = true;
 
 
                             //Update dates
-                            var end = Utils_Date.addDays(new Date(calendarEvent.endDate), 1).toISOString();
+                            var end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                             event.end = end;
-                            event.start = calendarEvent.startDate;
+                            event.start = updatedEvent.startDate;
 
                             this._calendar.updateEvent(event);
                         });

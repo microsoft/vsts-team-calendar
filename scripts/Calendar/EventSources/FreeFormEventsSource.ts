@@ -47,7 +47,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         // update the event in the list
                         event.startDate = Utils_Date.shiftToLocal(start).toISOString();
                         event.endDate = Utils_Date.shiftToLocal(end).toISOString();
-                        this.updateEvents([event]);
+                        this.updateEvent(null, event);
                     }
                     updatedEvents.push(event);
                 }
@@ -121,10 +121,10 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
 
-    public updateEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public updateEvent(oldEvent: Calendar_Contracts.CalendarEvent, newEvent: Calendar_Contracts.CalendarEvent): IPromise<Calendar_Contracts.CalendarEvent> {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-            extensionDataService.updateDocument(this._teamId, events[0]).then(
+            extensionDataService.updateDocument(this._teamId, newEvent).then(
                 (updatedEvent: Calendar_Contracts.CalendarEvent) => {
                     var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, function (e: Calendar_Contracts.CalendarEvent) { return e.id === updatedEvent.id; })[0]; //better check here
                     var index = this._events.indexOf(eventInArray);
@@ -132,7 +132,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         this._events.splice(index, 1);
                     }
                     this._events.push(updatedEvent);
-                    deferred.resolve(this._events);
+                    deferred.resolve(updatedEvent);
                 },
                 (e: Error) => {
                     //Handle concurrency issue

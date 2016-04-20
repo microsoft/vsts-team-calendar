@@ -49,7 +49,7 @@ var currentIterationColor = "#C1E6FF"; /*dark gray*/
  * @return RGB color in the form of #RRGGBB
  */
 export function generateColor(name: string): string {
-    var id = name.slice(0).toLowerCase();
+    var id = name.slice().toLowerCase();
     if (id === "daysoff") {
         return daysOffColor;
     }

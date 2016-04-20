@@ -639,7 +639,7 @@ export class SummaryView extends Controls.BaseControl {
         var categoryPromises = [];
         // Render each section
         $.each(sources,(index: number, source: Calendar_Contracts.IEventSource) => {
-            categoryPromises.push(source.load().then((loaded: Calendar_Contracts.CalendarEvent[]) => { this._renderSection(source); }));
+            categoryPromises.push(this._renderSection(source));
         });
 
         Q.all(categoryPromises).then(() => {

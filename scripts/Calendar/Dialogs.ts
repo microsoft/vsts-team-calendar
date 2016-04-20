@@ -1,15 +1,12 @@
 /// <reference path='../../typings/VSS.d.ts' />
 
 import Calendar_Contracts = require("Calendar/Contracts");
-import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Context = require("VSS/Context");
 import Controls = require("VSS/Controls");
 import Controls_Contributions = require("VSS/Contributions/Controls");
 import Controls_Notifications = require("VSS/Controls/Notifications");
 import Controls_Combos = require("VSS/Controls/Combos");
 import Controls_Dialog = require("VSS/Controls/Dialogs");
-import Controls_Menus = require("VSS/Controls/Menus");
-import Controls_Popup = require("VSS/Controls/PopupContent");
 import Controls_Validation = require("VSS/Controls/Validation");
 import Culture = require("VSS/Utils/Culture");
 import Utils_Core = require("VSS/Utils/Core");
@@ -40,13 +37,6 @@ export interface IEventDialogOptions extends Controls_Dialog.IModalDialogOptions
     isEdit?: boolean;
 }
 
-interface IFieldValidator {
-    field?: JQuery;
-    isValid: boolean;
-    validationErrorMessage?: string;
-    checkValid?: () => IPromise<boolean>;
-}
-
 export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOptions> {
     private _$container: JQuery;
     private _calendarEvent: Calendar_Contracts.CalendarEvent;
@@ -57,9 +47,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
     
     private _eventValidationError: Controls_Notifications.MessageAreaControl;
     private _contributionsValid: boolean;
-    
-    private _validators: IFieldValidator[];
-    
+        
     private _$titleInput: JQuery;
     private _$startInput: JQuery;
     private _$endInput: JQuery;
@@ -75,7 +63,6 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
 
     public initialize() {
         super.initialize();
-        this._validators = [];
         this._calendarEvent = this._options.calendarEvent;
         this._source = this._options.source;
         this._contributionsValid = true;

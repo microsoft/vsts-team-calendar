@@ -57,7 +57,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         var end = Utils_Date.shiftToUTC(new Date(event.endDate));
                         if(start.getHours() !== 0) {
                             // Set dates back to midnight                    
-                            start.setHours(0);
+                            start.setHours(0); 
                             end.setHours(0);
                             // update the event in the list
                             event.startDate = Utils_Date.shiftToLocal(start).toISOString();

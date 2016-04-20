@@ -184,12 +184,15 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             iterationId: event.iterationId,
             category: event.category,
             editable: event.movable,
+            icons: event.icons,
+            eventData: event.eventData
         };
+
 
         if (event.__etag) {
             calEvent.__etag = event.__etag;
         }
-
+        
         if(event.member){
             calEvent.member = event.member;
         }
@@ -197,6 +200,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         calEvent.color = event.category.color;
         calEvent.backgroundColor = calEvent.color;
         calEvent.borderColor = calEvent.color;
+        calEvent.textColor = calEvent.category.textColor || "#FFFFFF";
 
         this._element.fullCalendar("renderEvent", calEvent, false );
     }
@@ -269,9 +273,11 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             category: value.category,
                             iterationId: value.iterationId,
                             member: value.member,
-                            editable: value.movable
+                            editable: value.movable,
+                            icons: value.icons,
+                            eventData: value.eventData
                         };
-
+                        
                         if (value.__etag) {
                             event.__etag = value.__etag;
                         }
@@ -280,12 +286,14 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             var color = <any>value.category.color || Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
+                            event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         if (options.rendering === "background" && value.category) {
                             var color = <any>value.category.color || Calendar_ColorUtils.generateBackgroundColor((<string>event.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
+                            event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         return event;

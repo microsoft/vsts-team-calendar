@@ -51,3 +51,19 @@ export function eventIn(event: Calendar_Contracts.CalendarEvent, query: Calendar
 
     return false;
 }
+
+/**
+ * Turns a start date and end date into a list of dates within the range, inclusive
+ * @param startDate Start date
+ * @param endDate End Date
+ * @return Date[] containing each date in the range
+ */
+export function getDatesInRange(startDate:Date, endDate: Date): Date[] {
+    var dates = [];
+    var current: Date = startDate;
+    while (current.getTime() <= endDate.getTime()) {
+        dates.push(new Date(<any>current));
+        current = Utils_Date.addDays(current, 1);
+    }
+    return dates;
+}

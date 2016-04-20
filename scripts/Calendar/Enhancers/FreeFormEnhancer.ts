@@ -7,7 +7,7 @@ import Q = require("q");
 
 export class FreeFormEnhancer implements Calendar_Contracts.IEventEnhancer {
     
-    public id: string = "freeform";    
+    public id: string = "freeForm";    
     public addDialogId: string;
         
     constructor(){

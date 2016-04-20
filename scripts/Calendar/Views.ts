@@ -89,6 +89,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _calendarEventSourceMap: { [sourceId: string]: Calendar.CalendarEventSource; } = {};
     private _iterations: Work_Contracts.TeamSettingsIteration[];
     private _currentMember: Calendar_Contracts.ICalendarMember;
+    
+    private static calendarEventFields: string[] = ["title", "__etag", "id", "category", "iterationId", "movable", "member", "description", "icons", "eventData"];
 
     constructor(options: CalendarViewOptions) {
         super(options);
@@ -241,7 +243,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             
             var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
             var start = (<Date>eventObject.start).toISOString();
-            var end = eventObject.end ? (<any>event.end): eventObject.start;
+            var end = eventObject.end ? (<any>eventObject.end): eventObject.start;
             var calendarEvent: Calendar_Contracts.CalendarEvent = {
                 startDate: start,
                 endDate: end,
@@ -252,60 +254,93 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 member: eventObject.member,
                 iterationId: eventObject.iterationId,
                 movable: eventObject.editable,
-                __etag: eventObject.__etag
+                icons: eventObject.icons,
+                eventData: eventObject.eventData
             };
-                                        
-            var commands = [];
+                                              
+            if (calendarEvent.icons) {
+                $.each(calendarEvent.icons, (index: number, icon: Calendar_Contracts.IEventIcon) => {
+                    var $image = $("<img/>").attr("src", icon.src).addClass("event-icon").prependTo(element.find('.fc-content'));
+                    if (icon.title) {
+                        $image.attr("title", icon.title);
+                    }
+                    if (eventSource.getEnhancer) {
+                        eventSource.getEnhancer().then((enhancer) => {
+                            if (icon.action) {
+                                var iconEvent = icon.linkedEvent || calendarEvent
+                                $image.bind("click", icon.action.bind(this, iconEvent));
+                            }
+                            if (icon.linkedEvent) {
+                                enhancer.canEdit(calendarEvent, this._currentMember).then((canEdit: boolean) => {
+                                        var commands = [
+                                            { rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" },
+                                            { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }
+                                        ]
+                                        this._buildContextMenu($image, <any>icon.linkedEvent, commands);
+                                        var start = icon.linkedEvent.startDate;
+                                        var end = Utils_Date.addDays(new Date(icon.linkedEvent.endDate), 1).toISOString();
+                                        var tempEvent = $.extend(<any>(icon.linkedEvent), {"start": start, "end": end, "eventType": eventSource.id });
+                                        $image.bind("click", this._editEvent.bind(this, tempEvent));
+                                });
+                            }
+                        });
+                    }
+                });
+            }
 
             if (eventSource.getEnhancer) {
                 eventSource.getEnhancer().then((enhancer) => {
                     enhancer.canEdit(calendarEvent, this._currentMember).then((canEdit: boolean) => {
-                        if(enhancer.canEdit(calendarEvent, this._currentMember )) {
-                            commands.push({ rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" });
-                            commands.push({ rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" });
+                        if(canEdit) {
+                            var commands = [
+                                { rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" },
+                                { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }];
+                            this._buildContextMenu($(element), eventObject, commands);
                         }
-
-                        if (commands.length > 0) {
-                            var menuOptions = {
-                                items: commands,
-                                executeAction: (e) => {
-                                    var command = e.get_commandName();
-
-                                    switch (command) {
-                                        case "Edit":
-                                            this._editEvent(eventObject);
-                                            break;
-                                        case "Delete":
-                                            this._deleteEvent(eventObject);
-                                            break;
-                                    }
-                                }
-                            };
-
-                            var $element = $(element);
-                            $element.on("contextmenu",(e: JQueryEventObject) => {
-                                if (this._popupMenu) {
-                                    this._popupMenu.dispose();
-                                    this._popupMenu = null;
-                                }
-                                this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
-                                    {
-                                        align: "left-bottom"
-                                    },
-                                    menuOptions,
-                                    {
-                                        items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
-                                    }));
-                                Utils_Core.delay(this, 10, () => {
-                                    this._popupMenu.popup(this._element, $element);
-                                });
-                                e.preventDefault();
-                            });
+                        else {
+                            $(element).bind("contextmenu", (e: JQueryEventObject) => { e.preventDefault(); })
                         }
                     });
                 });
             }
         }
+    }
+    
+    private _buildContextMenu($element: JQuery, eventObject: Calendar_Contracts.IExtendedCalendarEventObject, commands: any[]) {
+        var menuOptions = {
+            items: commands,
+            executeAction: (e) => {
+                var command = e.get_commandName();
+
+                switch (command) {
+                    case "Edit":
+                        this._editEvent(eventObject);
+                        break;
+                    case "Delete":
+                        this._deleteEvent(eventObject);
+                        break;
+                }
+            }
+        };
+        
+        $element.on("contextmenu",(e: JQueryEventObject) => {
+            if (this._popupMenu) {
+                this._popupMenu.dispose();
+                this._popupMenu = null;
+            }
+            this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
+                {
+                    align: "left-bottom"
+                },
+                menuOptions,
+                {
+                    items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
+                }));
+            Utils_Core.delay(this, 10, () => {
+                this._popupMenu.popup(this._element, $element);
+            });
+            e.preventDefault();
+        });        
     }
 
     private _eventAfterRender(event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
@@ -403,7 +438,17 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.View) {
-        this._editEvent(<Calendar_Contracts.IExtendedCalendarEventObject> event);
+        var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject> event;
+        var source  = this._getEventSourceFromEvent(eventObject);
+        if (source.getEnhancer) {
+            source.getEnhancer().then((enhancer) => {
+                enhancer.canEdit(<any>eventObject, this._currentMember).then((canEdit: boolean) => {
+                    if (canEdit) {
+                        this._editEvent(eventObject);
+                    }             
+                });
+            });
+        }
     }
 
     private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
@@ -417,8 +462,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             category: event.category,
             member: event.member,
             iterationId: event.iterationId,
+            __etag: event.__etag,
             movable: event.editable,
-            __etag: event.__etag
+            icons: event.icons,
+            eventData: event.eventData,
         };
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -432,22 +479,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                 // Set underlying source to dirty so refresh picks up new changes
                                 var originalEventSource = this._getCalendarEventSource(eventSource.id);
                                 originalEventSource.state.dirty = true;
-
-                                // Update title
-                                event.title = updatedEvent.title;
-
-                                // Update category
-                                event.category = updatedEvent.category;
-                                
-                                // Update color
-                                event.color = updatedEvent.category.color;
-                                
-                                // Update description
-                                event.description = updatedEvent.description;
                                                                 
                                 // Update dates
                                 event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
-                                event.start = updatedEvent.startDate;
+                                event.start = updatedEvent.startDate;                                
                                 event.__etag = updatedEvent.__etag;
                                 this._calendar.updateEvent(event);
                             });
@@ -474,7 +509,12 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 eventSource.addEvent(calendarEvent).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    this._calendar.renderEvent(addedEvent, eventSource.id);
+                    if (addedEvent) {
+                        this._calendar.renderEvent(addedEvent, eventSource.id);
+                    }
+                    else {
+                        this._calendar.refreshEvents(calendarEventSource);
+                    }
                 });
             }
         };
@@ -511,8 +551,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             category: event.category,
             member: event.member,
             iterationId: event.iterationId,
+            __etag: event.__etag,
             movable: event.editable,
-            __etag: event.__etag
+            icons: event.icons,
+            eventData: event.eventData
         };
         
         var calendarEvent = $.extend({}, oldEvent);
@@ -535,28 +577,34 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                         // Set underlying source to dirty so refresh picks up new changes
                         var originalEventSource = this._getCalendarEventSource(eventSource.id);
                         originalEventSource.state.dirty = true;
+                        
+                        if(updatedEvent) {
+                            // Update title
+                            event.title = updatedEvent.title;
 
-                        // Update title
-                        event.title = updatedEvent.title;
+                            // Update category
+                            event.category = updatedEvent.category;
+                            
+                            // Update color
+                            event.color = updatedEvent.category.color;
+                            
+                            // Update description
+                            event.description = updatedEvent.description;
+                            
+                            // Update data
+                            event.eventData = updatedEvent.eventData
 
-                        // Update category
-                        event.category = updatedEvent.category;
-                        
-                        // Update color
-                        event.color = updatedEvent.category.color;
-                        
-                        // Update description
-                        event.description = updatedEvent.description;
-
-                        //Update dates
-                        event.end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
-                        event.start = updatedEvent.startDate;
-                        
-                        event.__etag = updatedEvent.__etag;
-                        
-                        // Update iteration
-                        event.iterationId = updatedEvent.iterationId;
-                        this._calendar.updateEvent(event);
+                            //Update dates
+                            event.end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
+                            event.start = updatedEvent.startDate;
+                            event.__etag = updatedEvent.__etag; 
+                            // Update iteration
+                            event.iterationId = updatedEvent.iterationId;
+                            this._calendar.updateEvent(event);
+                        }
+                        else {
+                            this._calendar.refreshEvents(originalEventSource);
+                        }
                     });
                 }
             };
@@ -574,8 +622,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             category: event.category,
             member: event.member,
             iterationId: event.iterationId,
-            movable: event.editable,
-            __etag: event.__etag
+            __etag: event.__etag,
+            movable: event.editable
         };
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -586,9 +634,20 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     var originalEventSource = this._getCalendarEventSource(eventSource.id);
                     originalEventSource.state.dirty = true;
                     this._calendar.removeEvent(<string>event.id);
+                    if (!calendarEvents) {
+                        this._calendar.refreshEvents(originalEventSource);
+                    }
                 });
             }
         }
+    }
+    
+    private _eventObjectToCalendarEvent(eventObject: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.CalendarEvent {
+        return null;
+    }
+    
+    private _calendarEventToEventObject(calendarEvent: Calendar_Contracts.CalendarEvent): Calendar_Contracts.IExtendedCalendarEventObject {
+        return null;
     }
 
     private _getEventSourceFromEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.IEventSource {

@@ -289,14 +289,19 @@ export interface IEventCategory {
     events?: string[];
 
     /**
-     * Image url of this category
+     * Image url of the category
      */
     imageUrl?: string;
 
     /**
-     * Color of this category
+     * Color of the category
      */
     color?: string;
+    
+    /**
+     * Text color of the category
+     */
+    textColor?: string;
 }
 
 /**
@@ -319,12 +324,11 @@ export interface IEventQuery {
 * Represents a single calendar event
 */
 export interface CalendarEvent {
-
     /**
     * Title of the event
     */
     title: string;
-
+    
     __etag?: number;
 
     /**
@@ -366,6 +370,16 @@ export interface CalendarEvent {
      * A description of the event
      */
     description?: string;
+        
+    /**
+     * Icons to be displayed on the event
+     */
+    icons?: IEventIcon[];
+    
+    /**
+     * Data to be attached to the event
+     */
+    eventData?: any;
 }
 
 export interface ICalendarMember {
@@ -396,6 +410,32 @@ export interface ICalendarMember {
 }
 
 /**
+ * An icon displayed on the calendar representing an event
+ */
+export interface IEventIcon {
+    /**
+     * src url for the icon
+     */
+    src: string;
+    
+    /**
+     * tooltip for icon
+     */
+    title?: string;
+    
+    /**
+     * The action executed when the icon is clicked
+     */
+    action?: (event: CalendarEvent) => IPromise<any>;
+    
+    /**
+     * The event to edit or delete when the icon is selected
+     */
+    linkedEvent?: CalendarEvent;
+    
+}
+
+/**
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventObject {
@@ -422,7 +462,9 @@ export interface IExtendedCalendarEventObject {
     member?: ICalendarMember;
     category?: IEventCategory;
     iterationId?: string;
+    icons?: IEventIcon[];
     eventType?: string;
+    eventData?: any;
 }
 
 /**

@@ -10,6 +10,7 @@ import Controls = require("VSS/Controls");
 import Controls_Dialogs = require("VSS/Controls/Dialogs");
 import Controls_Menus = require("VSS/Controls/Menus");
 import Controls_Navigation = require("VSS/Controls/Navigation");
+import Controls_StatusIndicator = require("VSS/Controls/StatusIndicator");
 import Q = require("q");
 import Service = require("VSS/Service");
 import Tfs_Core_WebApi = require("TFS/Core/RestClient");
@@ -668,10 +669,18 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 export class SummaryView extends Controls.BaseControl {
     private _calendar: Calendar.Calendar;
     private _rendering: boolean;
+    private _statusIndicator: Controls_StatusIndicator.StatusIndicator;
 
     initialize(): void {
         super.initialize();
         this._rendering = false;
+        var $statusContainer = this._element.parent().find(".status-indicator-container");
+        this._statusIndicator = <Controls_StatusIndicator.StatusIndicator>Controls.BaseControl.createIn(Controls_StatusIndicator.StatusIndicator, $statusContainer, {
+            center: true,
+            throttleMinTime: 0,
+            imageClass: "big-status-progress"
+        });
+        this._statusIndicator.start();
         this._calendar = <Calendar.Calendar>Controls.Enhancement.getInstance(Calendar.Calendar, $(".vss-calendar"));
 
         // Attach to calendar changes to refresh summary view
@@ -703,6 +712,7 @@ export class SummaryView extends Controls.BaseControl {
 
         Q.all(categoryPromises).then(() => {
             this._rendering = false;
+            this._statusIndicator.complete();
         });
     }
 

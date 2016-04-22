@@ -27,7 +27,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     private _enhancer: Capacity_Enhancer.VSOCapacityEnhancer;
     private _events: Calendar_Contracts.CalendarEvent[];
     private _renderedEvents: Calendar_Contracts.CalendarEvent[];
-    private _categoryColor: string = "#FFFFFF";//Calendar_ColorUtils.generateColor("daysoff");
+    private _categoryColor: string = "transparent";
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
@@ -128,7 +128,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                             var regroupedEvent: Calendar_Contracts.CalendarEvent = {
                                                 startDate: date,
                                                 endDate: date,
-                                                title: this.id + "." + date,
+                                                title: "",
                                                 id: this.id + "." + date,
                                                 category: <Calendar_Contracts.IEventCategory> {
                                                     id: "",
@@ -182,7 +182,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                 var regroupedEvent: Calendar_Contracts.CalendarEvent = {
                                                     startDate: date,
                                                     endDate: date,
-                                                    title: this.id + "." + date,
+                                                    title: "",
                                                     id: this.id + "." + date,
                                                     category: <Calendar_Contracts.IEventCategory> {
                                                         id: "",
@@ -445,10 +445,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 else {
                     var category = memberMap[member.id];
                     category.events.push(event.id);
-                    category.subTitle = Utils_String.format("{0} day{1} off", events.length, events.length > 1 ? "s" : "");
-                }
-                // TODO calculate the days off
-                
+                    category.subTitle = Utils_String.format("{0} day{1} off", category.events.length, category.events.length > 1 ? "s" : "");
+                }                
             }
         });
 

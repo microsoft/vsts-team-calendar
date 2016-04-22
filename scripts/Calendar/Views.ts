@@ -281,9 +281,6 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                 { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }];
                             this._buildContextMenu($(element), eventObject, commands);
                         }
-                        else {
-                            $(element).bind("contextmenu", (e: JQueryEventObject) => { e.preventDefault(); })
-                        }
                     });
                 });
             }

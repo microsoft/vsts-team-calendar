@@ -1,11 +1,11 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.3.13",
-    "publisher": "hajohns",
+    "version": "0.3.12",
+    "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
-    "public": false,
+    "public": true,
     "icons": {
         "default": "images/calendar-logo.png"
     },

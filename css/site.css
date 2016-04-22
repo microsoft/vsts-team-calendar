@@ -155,7 +155,7 @@ th.fc-day-header {
     height: 18px;
     display: inline-block;
     float: left;
-    margin-right: 2px;
+    margin: 2px 2px 0 0;
 }
 
 #calendar-extension a.fc-event {

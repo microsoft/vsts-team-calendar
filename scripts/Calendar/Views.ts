@@ -246,7 +246,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                        
             if (calendarEvent.icons) {
                 $.each(calendarEvent.icons, (index: number, icon: Calendar_Contracts.IEventIcon) => {
-                    var $image = $("<img/>").attr("src", icon.src).addClass("event-icon").prependTo(element.find('.fc-content'));
+                    var $image = $("<img/>").attr("src", icon.src).addClass("event-icon").addClass(icon.cssClass).prependTo(element.find('.fc-content'));
                     if (icon.title) {
                         $image.attr("title", icon.title);
                     }

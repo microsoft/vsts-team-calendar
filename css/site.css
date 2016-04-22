@@ -127,6 +127,8 @@
         font-size: smaller;
         color: #999;
         margin-bottom: 3px;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
         .category .category-subtitle.c-color {

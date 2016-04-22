@@ -416,7 +416,12 @@ export interface IEventIcon {
     /**
      * src url for the icon
      */
-    src: string;
+    src?: string;
+    
+    /**
+     * css class for the icon
+     */
+    cssClass?: string;
     
     /**
      * tooltip for icon

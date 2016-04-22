@@ -187,9 +187,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                     category: <Calendar_Contracts.IEventCategory> {
                                                         id: "",
                                                         title: "Grouped Event", 
-                                                        color: this._categoryColor                                                   
-                                                    },
-                                                    icons: []
+                                                        color: this._categoryColor                                               
+                                                    }
                                                 }
                                                 eventMap[date] = regroupedEvent;
                                                 renderedEvents.push(regroupedEvent);

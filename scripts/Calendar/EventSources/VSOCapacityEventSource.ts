@@ -431,17 +431,24 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }    
     
     private _getCategoryData(events: Calendar_Contracts.CalendarEvent[], query: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {
-        var memberMap: { [id: string]: boolean } = {};
+        var memberMap: { [id: string]: Calendar_Contracts.IEventCategory } = {};
         var categories: Calendar_Contracts.IEventCategory[] = [];
         $.each(events,(index: number, event: Calendar_Contracts.CalendarEvent) => {
             if (Calendar_DateUtils.eventIn(event, query)) {
                 var member = <Work_Contracts.Member>(<any>event).member;
                 if (!memberMap[member.id]) {
-                    memberMap[member.id] = true;
+                    event.category.subTitle = new Date(event.startDate).toLocaleDateString();
+                    event.category.events = [event.id];
+                    memberMap[member.id] = event.category;
                     categories.push(event.category);
                 }
-
+                else {
+                    var category = memberMap[member.id];
+                    category.events.push(event.id);
+                    category.subTitle = Utils_String.format("{0} day{1} off", events.length, events.length > 1 ? "s" : "");
+                }
                 // TODO calculate the days off
+                
             }
         });
 

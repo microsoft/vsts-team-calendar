@@ -241,24 +241,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _eventRender(eventSource: Calendar_Contracts.IEventSource, event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
         if (event.rendering !== 'background') {
-            
             var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
-            var start = (<Date>eventObject.start).toISOString();
-            var end = eventObject.end ? (<any>eventObject.end): eventObject.start;
-            var calendarEvent: Calendar_Contracts.CalendarEvent = {
-                startDate: start,
-                endDate: end,
-                title: event.title,
-                description: eventObject.description,
-                id: eventObject.id,
-                category: eventObject.category,
-                member: eventObject.member,
-                iterationId: eventObject.iterationId,
-                movable: eventObject.editable,
-                icons: eventObject.icons,
-                eventData: eventObject.eventData
-            };
-                                              
+            var calendarEvent = this._eventObjectToCalendarEvent(eventObject);
+                                       
             if (calendarEvent.icons) {
                 $.each(calendarEvent.icons, (index: number, icon: Calendar_Contracts.IEventIcon) => {
                     var $image = $("<img/>").attr("src", icon.src).addClass("event-icon").prependTo(element.find('.fc-content'));
@@ -277,10 +262,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                             { rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" },
                                             { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }
                                         ]
-                                        this._buildContextMenu($image, <any>icon.linkedEvent, commands);
-                                        var start = icon.linkedEvent.startDate;
-                                        var end = Utils_Date.addDays(new Date(icon.linkedEvent.endDate), 1).toISOString();
-                                        var tempEvent = $.extend(<any>(icon.linkedEvent), {"start": start, "end": end, "eventType": eventSource.id });
+                                        var tempEvent = this._calendarEventToEventObject(icon.linkedEvent, eventSource)
+                                        this._buildContextMenu($image, tempEvent, commands);
                                         $image.bind("click", this._editEvent.bind(this, tempEvent));
                                 });
                             }
@@ -453,21 +436,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
-        var end = Utils_Date.addDays(new Date(<any>event.end), -1).toISOString();
-        var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: new Date(<any>event.start).toISOString(),
-            endDate: end,
-            title: event.title,
-            description: event.description,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag,
-            movable: event.editable,
-            icons: event.icons,
-            eventData: event.eventData,
-        };
+        var calendarEvent = this._eventObjectToCalendarEvent(event);
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
@@ -541,22 +510,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = new Date(<any>event.start).toISOString();
-        var end = event.end ? Utils_Date.addDays(new Date(<any>event.end), -1).toISOString() : start;
-        var oldEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: start,
-            endDate: end,
-            title: event.title,
-            description: event.description,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag,
-            movable: event.editable,
-            icons: event.icons,
-            eventData: event.eventData
-        };
+        var oldEvent = this._eventObjectToCalendarEvent(event);
         
         var calendarEvent = $.extend({}, oldEvent);
 
@@ -614,18 +568,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         }
     }
 
-    private _deleteEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = new Date(<any>event.start).toISOString();
-        var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: start,
-            title: event.title,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag,
-            movable: event.editable
-        };
+    private _deleteEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {        
+        var calendarEvent = this._eventObjectToCalendarEvent(event)
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
@@ -644,11 +588,31 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
     
     private _eventObjectToCalendarEvent(eventObject: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.CalendarEvent {
-        return null;
+        var start = new Date(<any>eventObject.start).toISOString();
+        var end = eventObject.end ? Utils_Date.addDays(new Date(<any>eventObject.end), -1).toISOString() : start;
+        var calendarEvent = {
+            startDate: start,
+            endDate: end
+        }
+        CalendarView.calendarEventFields.forEach(prop => {
+            calendarEvent[prop] = eventObject[prop];
+        });
+        
+        return <any>calendarEvent;
     }
     
-    private _calendarEventToEventObject(calendarEvent: Calendar_Contracts.CalendarEvent): Calendar_Contracts.IExtendedCalendarEventObject {
-        return null;
+    private _calendarEventToEventObject(calendarEvent: Calendar_Contracts.CalendarEvent, source: Calendar_Contracts.IEventSource): Calendar_Contracts.IExtendedCalendarEventObject {
+        var start = calendarEvent.startDate;
+        var end = calendarEvent.endDate ? Utils_Date.addDays(new Date(calendarEvent.endDate), 1).toISOString(): start;
+        var eventObject = {
+            start: start,
+            end: end,
+            eventType: source.id
+        }
+        CalendarView.calendarEventFields.forEach(prop => {
+            eventObject[prop] = calendarEvent[prop];
+        });
+        return <any>eventObject;
     }
 
     private _getEventSourceFromEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.IEventSource {

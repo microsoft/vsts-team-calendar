@@ -108,8 +108,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                         id: this.id + "." + "Everyone",
                                         title: IdentityHelper.parseUniquefiedIdentityName(event.member.displayName),
                                         imageUrl: this._buildTeamImageUrl(webContext.host.uri, teamContext.teamId),
-                                        color: this._categoryColor, 
-                                        //textColor: this._categoryColor,
+                                        color: this._categoryColor
                                     };
                                     event.id = this._buildCapacityEventId(event);
                                     event.iterationId = iteration.id;
@@ -134,8 +133,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                 category: <Calendar_Contracts.IEventCategory> {
                                                     id: "",
                                                     title: "Grouped Event", 
-                                                    color: this._categoryColor,
-                                                    //textColor: this._categoryColor,                                                    
+                                                    color: this._categoryColor,                                                  
                                                 },
                                                 icons: []
                                             }
@@ -165,8 +163,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                             id: this.id + "." + capacity.teamMember.uniqueName,
                                             title: IdentityHelper.parseUniquefiedIdentityName(event.member.displayName),
                                             imageUrl: event.member.imageUrl,
-                                            color: this._categoryColor,
-                                            textColor: this._categoryColor,
+                                            color: this._categoryColor
                                         };
                                         event.id = this._buildCapacityEventId(event);
                                         event.iterationId = iteration.id;
@@ -190,8 +187,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                     category: <Calendar_Contracts.IEventCategory> {
                                                         id: "",
                                                         title: "Grouped Event", 
-                                                        color: this._categoryColor,
-                                                        //textColor: this._categoryColor,                                                    
+                                                        color: this._categoryColor                                                   
                                                     },
                                                     icons: []
                                                 }

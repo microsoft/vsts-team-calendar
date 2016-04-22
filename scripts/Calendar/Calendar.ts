@@ -206,6 +206,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
      public updateEvent(event: FullCalendar.EventObject) {
+        event.color = (<any>event).category.color;
         event.backgroundColor = event.color;
         event.borderColor = event.color;
 

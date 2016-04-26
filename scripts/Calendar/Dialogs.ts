@@ -83,18 +83,18 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
      */
     public onOkClick(): any {
         this._buildCalendarEventFromFields().then((results) => {
-            if(this._contributedControl){
+            if(this._contributedControl) {
                 this._contributedControl.onOkClick().then((event) => {
                     this._calendarEvent = $.extend(this._calendarEvent, event);
                     this.processResult(this._calendarEvent);
                 });
             }
-            else{
+            else {
                 this.processResult(this._calendarEvent);         
             }
         });
     }
-            
+                
     private _createLayout() {
         this._$container = $(domElem('div')).addClass('edit-event-container').appendTo(this._element);
         this._$contributedContent = $(domElem('div')).addClass('contributed-content-container').appendTo(this._element);
@@ -109,7 +109,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                     validStateChangedHandler: (valid: boolean) => {
                         this._contributionsValid = valid;
                         ("blur", (e) => {                        
-                            this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                            this._validate(true);
                         });
                      },
                     membersPromise: this._options.membersPromise,
@@ -162,7 +162,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         if (this._content.title) {
             this._$titleInput = $("<input type='text' class='requiredInfoLight' id='fieldTitle'/>").val(this._calendarEvent.title)
                 .bind("blur", (e) => {                        
-                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        this._validate(true);
                     });
         }
         
@@ -173,7 +173,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         if (this._content.start) {
             this._$startInput = $("<input type='text' id='fieldStartDate' />").val(startDateString)
                 .bind("blur", (e) => {                        
-                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        this._validate(true);
                     });       
         }
         
@@ -184,7 +184,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             }
             this._$endInput = $("<input type='text' id='fieldEndDate' />")
                 .bind("blur", (e) => {                        
-                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        this._validate(true);
                     });   
             this._$endInput.val(endDateString);
         }
@@ -197,7 +197,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                 var textInput = $(Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}'/>", textField.label));
                 if (textField.checkValid) {
                     textInput.bind("blur", (e) => {                        
-                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        this._validate(true);
                     });
                 }
                 if (textField.initialValue) {
@@ -222,7 +222,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                 }
                 if (comboField.checkValid) {                    
                     comboInput.bind("blur",(e) => {
-                        this._validate().then((isValid: boolean) => { this.updateOkButton(isValid); });
+                        this._validate(true);
                     });
                 }
                 
@@ -274,7 +274,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         });      
         
         this._setupValidators();
-        this._checkValidState().then((isValid: boolean) => { this.updateOkButton(isValid); });
+        this._validate();
     }
     
     private _setupValidators() {
@@ -374,18 +374,22 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         
         return Q.all(promises);
     }
-    
-    private _validate(): IPromise<boolean> {
+        
+    private _validate(showError?: boolean) {
         if(!this._contributionsValid) {
             this._clearError();
-            return Q.resolve(false);
+            this.updateOkButton(false);
+            return;
         }
         
         var validationResult = [];
         var groupIsValid: boolean = Controls_Validation.validateGroup('default', validationResult);
         if (!groupIsValid) {
-            this._setError(validationResult[0].getMessage());
-            return Q.resolve(false);
+            if(showError) {
+                this._setError(validationResult[0].getMessage());
+            }
+            this.updateOkButton(false);
+            return;
         }
         
         var errorPromises: IPromise<string>[] = []
@@ -422,25 +426,17 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         return Q.all(errorPromises).then((results: string[]) => {
             var invalidMessages = results.filter(r => r !== "valid");
             if (invalidMessages && invalidMessages.length > 0) {
-                this._setError(invalidMessages[0]);
-                return false
+                if(showError) {
+                    this._setError(invalidMessages[0]);
+                }             
+                this.updateOkButton(false);
+                return;
             }
             this._clearError();
-            return true;
+            this.updateOkButton(true);
         })
     }
-    
-    // checks whether the content is valid without showing error messages
-    private _checkValidState(): IPromise<boolean> {
-        this._clearError();
-        if(!this._contributionsValid) {
-            return Q.resolve(false);
-        }
         
-        var validationResult = [];
-        return  Q.resolve(Controls_Validation.validateGroup('default', validationResult));
-    }
-    
     private _setupDateValidators($field: JQuery, validDateFormatMessage: string, relativeToErrorMessage?: string, $relativeToField?: JQuery, dateComparisonOptions?: DateComparisonOptions) {
         <Controls_Validation.DateValidator<Controls_Validation.DateValidatorOptions>>Controls.Enhancement.enhance(Controls_Validation.DateValidator, $field, {
             invalidCssClass: "date-invalid",

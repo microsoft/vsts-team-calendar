@@ -10,7 +10,6 @@ import Capacity_Enhancer = require("Calendar/Enhancers/VSOCapacityEnhancer");
 import Contributions_Contracts = require("VSS/Contributions/Contracts");
 import Q = require("q");
 import Service = require("VSS/Service");
-import Services_ExtensionData = require("VSS/SDK/Services/ExtensionData");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
@@ -188,7 +187,8 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                         id: "",
                                                         title: "Grouped Event", 
                                                         color: this._categoryColor                                               
-                                                    }
+                                                    },
+                                                    icons: []
                                                 }
                                                 eventMap[date] = regroupedEvent;
                                                 renderedEvents.push(regroupedEvent);
@@ -267,6 +267,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 var teamDaysOffPatch: Work_Contracts.TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
                 teamDaysOffPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
                 workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
+                    // Resolve null to tell views.js to reload the entire event source instead of re-rendering the updated event
                     deferred.resolve(null);
                 });
             });
@@ -276,6 +277,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 var capacityPatch: Work_Contracts.CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
                 capacityPatch.daysOff.push({ start: dayOffStart, end: dayOffEnd });
                 workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
+                    // Resolve null to tell views.js to reload the entire event source instead of re-rendering the updated event
                     deferred.resolve(null);
                 });
             });
@@ -306,6 +308,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     return false;
                 });
                 workClient.updateTeamDaysOff(teamDaysOffPatch, teamContext, iterationId).then((value: Work_Contracts.TeamSettingsDaysOff) => {
+                    // Resolve null to tell views.js to reload the entire event source instead removing one event
                     deferred.resolve(null);
                 });
             });
@@ -321,6 +324,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                     return false;
                 });
                 workClient.updateCapacity(capacityPatch, teamContext, iterationId, memberId).then((value: Work_Contracts.TeamMemberCapacity) => {
+                    // Resolve null to tell views.js to reload the entire event source instead removing one event
                     deferred.resolve(null);
                 });
             });

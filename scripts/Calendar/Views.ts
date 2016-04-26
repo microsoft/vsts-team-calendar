@@ -486,6 +486,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             }
         };
         
+        //Calendar_Dialogs.ExternalEventDialog.showDialog(dialogOptions);
         Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditEventDialog, dialogOptions);        
     }
     
@@ -561,6 +562,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 }
             };
             
+            //Calendar_Dialogs.ExternalEventDialog.showDialog(dialogOptions);
             Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditEventDialog, dialogOptions);
         }
     }

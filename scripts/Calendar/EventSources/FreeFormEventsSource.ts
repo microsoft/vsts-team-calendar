@@ -25,12 +25,14 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     private _enhancer: FreeForm_Enhancer.FreeFormEnhancer;
 
     private _teamId: string;
+    private _categoryId: string;
     private _events: Calendar_Contracts.CalendarEvent[];
     private _categories: Calendar_Contracts.IEventCategory[];
 
     constructor() {
         var webContext = VSS.getWebContext();
         this._teamId = webContext.team.id;
+        this._categoryId = Utils_String.format("{0}-categories", this._teamId);
     }
     
     public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
@@ -48,7 +50,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         if(!category || typeof(category) === 'string') {
                             event.category = <Calendar_Contracts.IEventCategory> {
                                 title: category || "Uncategorized",
-                                id: this.id + "." + category || "Uncategorized"
+                                id: (this.id + "." + category) || "Uncategorized"
                             }
                             this._updateCategoryForEvents([event]);
                         }
@@ -85,7 +87,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             extensionDataService.queryCollectionNames([this._teamId]).then(
                 (collections: Contributions_Contracts.ExtensionDataCollection[]) => {
                     if (collections[0] && collections[0].documents) {
-                        this._events = collections[0].documents.filter((document: any) => { return !!document.startDate; });
+                        this._events = collections[0].documents;
                     }
                     else {
                         this._events = [];
@@ -104,10 +106,10 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public getCategories(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.IEventCategory[]> {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-           extensionDataService.queryCollectionNames([this._teamId]).then((collections: Contributions_Contracts.ExtensionDataCollection[]) => {
+           extensionDataService.queryCollectionNames([this._categoryId]).then((collections: Contributions_Contracts.ExtensionDataCollection[]) => {
                this._categories = [];
                if(collections[0] && collections[0].documents) {
-                   this._categories = collections[0].documents.filter((document: any) => { return (!document.startDate && document.id.split(".")[0] === this.id); });
+                   this._categories = collections[0].documents;
                }
                deferred.resolve(this._filterCategories(query));
            }, (e: Error) => {
@@ -140,7 +142,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public addCategory(category: Calendar_Contracts.IEventCategory): IPromise<Calendar_Contracts.IEventCategory> {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-            extensionDataService.createDocument(this._teamId, category).then((addedCategory: Calendar_Contracts.IEventCategory) => {
+            extensionDataService.createDocument(this._categoryId, category).then((addedCategory: Calendar_Contracts.IEventCategory) => {
                 this._categories.push(addedCategory);
                 deferred.resolve(addedCategory);
             }, (e: Error) => {
@@ -177,7 +179,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public removeCategory(category: Calendar_Contracts.IEventCategory): IPromise<Calendar_Contracts.IEventCategory[]> {
         var deferred = Q.defer();
         VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
-           extensionDataService.deleteDocument(this._teamId, category.id).then(() => {
+           extensionDataService.deleteDocument(this._categoryId, category.id).then(() => {
                var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
                var index = this._categories.indexOf(categoryInArray);
                if(index > -1) {
@@ -249,7 +251,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                 
         // remove event from current category        
         for(var i = 0; i < events.length; i++) {
-            var event = events[i]
+            var event = events[i];
             var categoryForEvent = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => {
                 return cat.events.indexOf(event.id) > -1;
             })[0];

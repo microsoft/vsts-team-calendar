@@ -102,7 +102,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     
     public getTitleUrl(webContext: WebContext): IPromise<string> {
         var deferred = Q.defer();
-        deferred.resolve(webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations");
+        deferred.resolve(webContext.host.uri + webContext.project.name + "/_admin/_iterations");
         return deferred.promise;
     }
 

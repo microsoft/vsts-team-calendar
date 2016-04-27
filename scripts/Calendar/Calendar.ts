@@ -5,6 +5,7 @@ import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
+import Culture = require("VSS/Utils/Culture");
 import Q = require("q");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
@@ -86,7 +87,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         //  Determine optimal aspect ratio
         var aspectRatio = $('.leftPane').width() /($('.leftPane').height() - 85);
         aspectRatio = parseFloat(aspectRatio.toFixed(1));
-
+        var firstDay = Culture.getDateTimeFormat().FirstDayOfWeek;
+        
         this._element.fullCalendar($.extend({
             eventRender: this._getComposedCallback(FullCalendarCallbackType.eventRender),
             eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
@@ -113,7 +115,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             header: false,
             aspectRatio: aspectRatio,
             columnFormat: "dddd",
-            selectable: true
+            selectable: true,
+            firstDay: firstDay
         }, this._options.fullCalendarOptions));
     }
 

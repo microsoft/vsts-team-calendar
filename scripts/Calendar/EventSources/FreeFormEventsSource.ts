@@ -69,7 +69,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                         updatedEvents.push(event);
                     }
                 });
-                return events;
+                return updatedEvents;
             });
         });
     }
@@ -206,7 +206,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     if (index > -1) {
                         this._events.splice(index, 1);
                     }
-                    if (newEvent.category.id !== oldEvent.category.id) {                        
+                    if (oldEvent && newEvent.category.id !== oldEvent.category.id) {                        
                         this._updateCategoryForEvents([newEvent]).then((categories: Calendar_Contracts.IEventCategory[]) => {                            
                             this._events.push(updatedEvent);
                             deferred.resolve(updatedEvent);

@@ -1,7 +1,6 @@
 /// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/TFS.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
-/// <reference path='../../typings/moment/moment.d.ts' />
 
 import Calendar = require("Calendar/Calendar");
 import Calendar_Contracts = require("Calendar/Contracts");
@@ -11,12 +10,14 @@ import Controls = require("VSS/Controls");
 import Controls_Dialogs = require("VSS/Controls/Dialogs");
 import Controls_Menus = require("VSS/Controls/Menus");
 import Controls_Navigation = require("VSS/Controls/Navigation");
+import Controls_StatusIndicator = require("VSS/Controls/StatusIndicator");
 import Q = require("q");
 import Service = require("VSS/Service");
 import Tfs_Core_WebApi = require("TFS/Core/RestClient");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
+import Utils_String = require("VSS/Utils/String");
 import WebApi_Constants = require("VSS/WebApi/Constants");
 import WebApi_Contracts = require("VSS/WebApi/Contracts");
 import Work_Client = require("TFS/Work/RestClient");
@@ -88,6 +89,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _defaultEvents: FullCalendar.EventObject[];
     private _calendarEventSourceMap: { [sourceId: string]: Calendar.CalendarEventSource; } = {};
     private _iterations: Work_Contracts.TeamSettingsIteration[];
+    private _currentMember: Calendar_Contracts.ICalendarMember;
+    
+    private static calendarEventFields: string[] = ["title", "__etag", "id", "category", "iterationId", "movable", "member", "description", "icons", "eventData"];
 
     constructor(options: CalendarViewOptions) {
         super(options);
@@ -96,6 +100,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     public initialize() {
+        
+        var webContext: WebContext = VSS.getWebContext();
+        this._currentMember = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: webContext.user.email, url: "" };
         
         this._setupToolbar();
 
@@ -119,9 +126,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventDrop, this._eventMoved.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventResize, this._eventMoved.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.select, this._daysSelected.bind(this));
+            
+            this._toolbar.updateItems(this._createToolbarItems());
         });
 
-        var setAspectRatio = Utils_Core.throttledDelegate(this, 300, function () {
+        var setAspectRatio = Utils_Core.throttledDelegate(this, 300, () => {
             this._calendar.setOption("aspectRatio", this._getCalendarAspectRatio());
         });
         window.addEventListener("resize",() => {
@@ -129,18 +138,6 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         });
 
         this._updateTitle();
-
-        this._fetchIterationData().then((iterations: Work_Contracts.TeamSettingsIteration[]) => {
-            this._iterations = iterations;
-        });
-    }
-
-    private _isInIteration(date: Date): boolean {
-        return this._iterations.some((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (iteration.attributes.startDate !== null && iteration.attributes.finishDate !== null && date.valueOf() >= iteration.attributes.startDate.valueOf() && date.valueOf() <= iteration.attributes.finishDate.valueOf()) {
-                return true;
-            }
-        });
     }
 
     private _getCalendarAspectRatio() {
@@ -160,8 +157,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _createToolbarItems() : any {
+        var addDisabled = this._eventSources == null || this._eventSources.getAllSources().length == 0;
         return [
-            { id: "new-item", text: "New Item", title: "Add event", icon: "icon-add-small", showText: false},
+            { id: "new-item", text: "New Item", title: "Add event", icon: "icon-add-small", showText: false, disabled: addDisabled},
             { separator: true },
             { id: "refresh-items", title: "Refresh", icon: "icon-refresh", showText: false },
             { id: "move-today", text: "Today", title: "Today", noIcon: true, showText: true, cssClass: "right-align"},
@@ -206,15 +204,15 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _addEventClicked() : void {
         // Find the free form event source
-        var addEventSources: Calendar_Contracts.IEventSource[] = $.grep(this._eventSources.getAllSources(),(eventSource) => { return !!eventSource.addEvents; });
-        var now = new Date();
+        var eventSource: Calendar_Contracts.IEventSource = $.grep(this._eventSources.getAllSources(),(eventSource) => { return eventSource.id == "freeForm"; })[0];
         // Setup the event
+        var now = new Date();
         var event: Calendar_Contracts.CalendarEvent = {
             title: "",
             startDate: new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0)).toISOString() // Create date equivalent to UTC midnight on the current Date
         };
 
-        this._addEvent(event, addEventSources[0])		
+        this._addEvent(event, eventSource)		
     }
 
     private _addDefaultEventSources(): void {
@@ -243,53 +241,87 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _eventRender(eventSource: Calendar_Contracts.IEventSource, event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
         if (event.rendering !== 'background') {
-            var commands = [];
-
-            if (eventSource.updateEvent) {
-                commands.push({ rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" });
+            var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
+            var calendarEvent = this._eventObjectToCalendarEvent(eventObject);
+                                       
+            if (calendarEvent.icons) {
+                $.each(calendarEvent.icons, (index: number, icon: Calendar_Contracts.IEventIcon) => {
+                    var $image = $("<img/>").attr("src", icon.src).addClass("event-icon").addClass(icon.cssClass).prependTo(element.find('.fc-content'));
+                    if (icon.title) {
+                        $image.attr("title", icon.title);
+                    }
+                    if (eventSource.getEnhancer) {
+                        eventSource.getEnhancer().then((enhancer) => {
+                            if (icon.action) {
+                                var iconEvent = icon.linkedEvent || calendarEvent
+                                $image.bind("click", icon.action.bind(this, iconEvent));
+                            }
+                            if (icon.linkedEvent) {
+                                enhancer.canEdit(calendarEvent, this._currentMember).then((canEdit: boolean) => {
+                                        var commands = [
+                                            { rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" },
+                                            { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }
+                                        ]
+                                        var tempEvent = this._calendarEventToEventObject(icon.linkedEvent, eventSource)
+                                        this._buildContextMenu($image, tempEvent, commands);
+                                        $image.bind("click", this._editEvent.bind(this, tempEvent));
+                                });
+                            }
+                        });
+                    }
+                });
             }
-            if (eventSource.removeEvents) {
-                commands.push({ rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" });
-            }
 
-            if (commands.length > 0) {
-                var menuOptions = {
-                    items: commands,
-                    executeAction: (e) => {
-                        var command = e.get_commandName();
-
-                        switch (command) {
-                            case "Edit":
-                                this._editEvent(<Calendar_Contracts.IExtendedCalendarEventObject> event);
-                                break;
-                            case "Delete":
-                                this._deleteEvent(<Calendar_Contracts.IExtendedCalendarEventObject> event);
-                                break;
+            if (eventSource.getEnhancer) {
+                eventSource.getEnhancer().then((enhancer) => {
+                    enhancer.canEdit(calendarEvent, this._currentMember).then((canEdit: boolean) => {
+                        if(canEdit) {
+                            var commands = [
+                                { rank: 5, id: "Edit", text: "Edit", icon: "icon-edit" },
+                                { rank: 10, id: "Delete", text: "Delete", icon: "icon-delete" }];
+                            this._buildContextMenu($(element), eventObject, commands);
                         }
-                    }
-                };
-
-                var $element = $(element);
-                $element.on("contextmenu",(e: JQueryEventObject) => {
-                    if (this._popupMenu) {
-                        this._popupMenu.dispose();
-                        this._popupMenu = null;
-                    }
-                    this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
-                        {
-                            align: "left-bottom"
-                        },
-                        menuOptions,
-                        {
-                            items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
-                        }));
-                    Utils_Core.delay(this, 10, function () {
-                        this._popupMenu.popup(this._element, $element);
                     });
-                    e.preventDefault();
                 });
             }
         }
+    }
+    
+    private _buildContextMenu($element: JQuery, eventObject: Calendar_Contracts.IExtendedCalendarEventObject, commands: any[]) {
+        var menuOptions = {
+            items: commands,
+            executeAction: (e) => {
+                var command = e.get_commandName();
+
+                switch (command) {
+                    case "Edit":
+                        this._editEvent(eventObject);
+                        break;
+                    case "Delete":
+                        this._deleteEvent(eventObject);
+                        break;
+                }
+            }
+        };
+        
+        $element.on("contextmenu",(e: JQueryEventObject) => {
+            if (this._popupMenu) {
+                this._popupMenu.dispose();
+                this._popupMenu = null;
+            }
+            this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
+                {
+                    align: "left-bottom"
+                },
+                menuOptions,
+                {
+                    items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
+                }));
+            Utils_Core.delay(this, 10, () => {
+                this._popupMenu.popup(this._element, $element);
+            });
+            e.preventDefault();
+        });        
     }
 
     private _eventAfterRender(event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
@@ -312,145 +344,152 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _daysSelected(startDate: Date, endDate: Date, allDay: boolean, jsEvent: MouseEvent, view: FullCalendar.View) {
-        //This should not be hard-coded, we should instead figure out context menu commands
-        //and dialog contents dynamically from the source
-        var addEventSources: Calendar_Contracts.IEventSource[];
-        addEventSources = $.grep(this._eventSources.getAllSources(), (eventSource) => { return !!eventSource.addEvents; });
-        var start = new Date(<any>startDate).toISOString();
-        var end = Utils_Date.addDays(new Date(<any>endDate), -1).toISOString();
-        if (addEventSources.length > 0) {
-            var event: Calendar_Contracts.CalendarEvent = {
-                title: "",
-                startDate: start,
-                endDate: end
-            };
-
-
-            var commands = [];
-
-            commands.push({ rank: 5, id: "addEvent", text: "Add event", icon: "icon-add" });
-            commands.push({ rank: 10, id: "addDayOff", text: "Add day off", icon: "icon-tfs-build-reason-schedule", disabled: !this._isInIteration(new Date(event.startDate)) || !this._isInIteration(new Date(event.endDate)) });
-            var menuOptions = {
-                items: commands,
-                executeAction: (e) => {
-                    var command = e.get_commandName();
-
-                    switch (command) {
-                        case "addEvent":
-                            this._addEvent(event, addEventSources[0]);
-                            break;
-                        case "addDayOff":
-                            this._addDayOff(event, addEventSources[1]);
-                            break;
-                    }
-                }
-            };
-
-            var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(event.endDate)), "yyyy-MM-dd"); //2015-04-19
-            var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
-            if (this._popupMenu) {
-                this._popupMenu.dispose();
-                this._popupMenu = null;
+        if(this._eventSources != null && this._eventSources.getAllSources().length > 0 ) {
+            var addEventSources: Calendar_Contracts.IEventSource[];
+            addEventSources = $.grep(this._eventSources.getAllSources(), (eventSource) => { return !!eventSource.addEvent; });
+            var start = new Date(<any>startDate).toISOString();
+            var end = Utils_Date.addDays(new Date(<any>endDate), -1).toISOString();
+            var event: Calendar_Contracts.CalendarEvent;
+            
+            if (addEventSources.length > 0) {
+                event =  {
+                    title: "",
+                    startDate: start,
+                    endDate: end
+                };
             }
-            this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
-                menuOptions,
-                {
-                    align: "left-bottom",
-                    items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
+            var commandsPromise = this._getAddCommands(addEventSources, event, start, end);
+            
+            commandsPromise.then((commands) => {
+                var menuOptions = {
+                    items: commands
+                };
 
-                }));
-            Utils_Core.delay(this, 10, function () {
-                this._popupMenu.popup(this._element, $element);
+                var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(event.endDate)), "yyyy-MM-dd"); //2015-04-19
+                var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
+                if (this._popupMenu) {
+                    this._popupMenu.dispose();
+                    this._popupMenu = null;
+                }
+                this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(Controls_Menus.PopupMenu, this._element, $.extend(
+                    menuOptions,
+                    {
+                        align: "left-bottom",
+                        items: [{ childItems: Controls_Menus.sortMenuItems(commands) }]
+
+                    }));
+                Utils_Core.delay(this, 10, () => {
+                    this._popupMenu.popup(this._element, $element);
+                });
+            });
+        }
+    }
+    
+    private _getAddCommands(addEventSources: Calendar_Contracts.IEventSource[], event: Calendar_Contracts.CalendarEvent, start: string, end: string): IPromise<any[]>{
+        var commandPromises: IPromise<any>[] = [];
+        for(var i = 0; i < addEventSources.length; i++) {
+            ((source: Calendar_Contracts.IEventSource) => {
+                if(source.getEnhancer) {
+                    commandPromises.push(source.getEnhancer().then((enhancer) => {
+                        return enhancer.canAdd(event, this._currentMember).then((canAdd: boolean) => {
+                            return <Controls_Menus.IMenuItemSpec>{
+                                rank: source.order || i,
+                                id: event.id,
+                                text: Utils_String.format("Add {0}", source.name.toLocaleLowerCase()),
+                                icon: enhancer.icon || "icon-add",
+                                disabled: !canAdd,
+                                action: this._addEvent.bind(this, event, source)
+                            }                            
+                        });
+                    }));
+                }
+                else{
+                    commandPromises.push(Q.resolve(<Controls_Menus.IMenuItemSpec>{
+                        rank: source.order || i,
+                        id: event.id,
+                        text: Utils_String.format("Add {0}", source.name.toLocaleLowerCase()),
+                        icon: "icon-add",
+                        disabled: false, 
+                        action: this._addEvent.bind(this, event, source)                       
+                    }))
+                }
+            })(addEventSources[i]);
+        }
+        return Q.all(commandPromises);   
+    }
+
+    private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.View) {
+        var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject> event;
+        var source  = this._getEventSourceFromEvent(eventObject);
+        if (source.getEnhancer) {
+            source.getEnhancer().then((enhancer) => {
+                enhancer.canEdit(<any>eventObject, this._currentMember).then((canEdit: boolean) => {
+                    if (canEdit) {
+                        this._editEvent(eventObject);
+                    }             
+                });
             });
         }
     }
 
-    private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.View) {
-        this._editEvent(<Calendar_Contracts.IExtendedCalendarEventObject> event);
-    }
-
     private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
-        var end = Utils_Date.addDays(new Date(<any>event.end), -1).toISOString();
-        var calendarEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: new Date(<any>event.start).toISOString(),
-            endDate: end,
-            title: event.title,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag
-        };
+        var calendarEvent = this._eventObjectToCalendarEvent(event);
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
         if (eventSource && eventSource.updateEvent) {
-            if (eventSource.id === "freeForm") {
-                eventSource.updateEvent(null, calendarEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
-                    // Set underlying source to dirty so refresh picks up new changes
-                    var originalEventSource = this._getCalendarEventSource(eventSource.id);
-                    originalEventSource.state.dirty = true;
-
-                    // Update title
-                    event.title = updatedEvent.title;
-
-                    // Update category
-                    event.category = updatedEvent.category;
-
-                    //Update dates
-
-                    event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
-                    event.start = updatedEvent.startDate;
-                    event.__etag = updatedEvent.__etag;
-                    this._calendar.updateEvent(event);
+            if (eventSource.getEnhancer) {
+                eventSource.getEnhancer().then((enhancer) => {
+                    enhancer.canEdit(calendarEvent, this._currentMember).then((canEdit: boolean) => {
+                        if(canEdit) {
+                            eventSource.updateEvent(null, calendarEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
+                                // Set underlying source to dirty so refresh picks up new changes
+                                var originalEventSource = this._getCalendarEventSource(eventSource.id);
+                                originalEventSource.state.dirty = true;
+                                                                
+                                // Update dates
+                                event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
+                                event.start = updatedEvent.startDate;                                
+                                event.__etag = updatedEvent.__etag;
+                                this._calendar.updateEvent(event);
+                            });
+                        }
+                    });
                 });
             }
         }
     }
-
-    private _addEvent(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
+    
+    private _addEvent(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource){
         var query = this._calendar.getViewQuery();
+        event.member = this._currentMember;
+        var membersPromise = this._getTeamMembers();
         
-        var dialogOptions : Calendar_Dialogs.IFreeFormEventDialogOptions = {
-            event: event,
-            title: "Add Event",
-            resizable: false,
+        var dialogOptions : Calendar_Dialogs.IEventDialogOptions = {
+            calendarEvent: event,
+            resizable: true,
+            source: eventSource,
+            membersPromise: membersPromise,
+            query: query,
+            bowtieVersion: 2,
             okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
+                eventSource.addEvent(calendarEvent).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
                     var calendarEventSource = this._getCalendarEventSource(eventSource.id);
                     calendarEventSource.state.dirty = true;
-                    this._calendar.renderEvent(addedEvent, eventSource.id);
+                    if (addedEvent) {
+                        this._calendar.renderEvent(addedEvent, eventSource.id);
+                    }
+                    else {
+                        this._calendar.refreshEvents(calendarEventSource);
+                    }
                 });
-            },
-            categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
+            }
         };
         
-        Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
+        //Calendar_Dialogs.ExternalEventDialog.showDialog(dialogOptions);
+        Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditEventDialog, dialogOptions);        
     }
-
-    private _addDayOff(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource) {
-        var webContext: WebContext = VSS.getWebContext();
-        event.member = { displayName: webContext.user.name, id: webContext.user.id, imageUrl: "", uniqueName: webContext.user.email, url: "" };
-        
-        var dialogOptions: Calendar_Dialogs.ICapacityEventDialogOptions = {
-            event: event,
-            title: "Add Days Off",
-            resizable: false,
-            okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
-                eventSource.addEvents([calendarEvent]).then((addedEvent: Calendar_Contracts.CalendarEvent) => {
-                    var calendarEventSource = this._getCalendarEventSource(eventSource.id);
-                    calendarEventSource.state.dirty = true;
-                    addedEvent.category = "DaysOff";
-                    addedEvent.id = Calendar_Utils_Guid.newGuid();
-                    this._calendar.renderEvent(addedEvent, eventSource.id);
-                });
-            },
-            membersPromise: this._getTeamMembers()
-        };
-        
-        Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, dialogOptions);
-    }
-
+    
     private _getTeamMembers(): IPromise<WebApi_Contracts.IdentityRef[]> {
         var deferred = Q.defer<WebApi_Contracts.IdentityRef[]>();
 
@@ -469,103 +508,110 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = new Date(<any>event.start).toISOString();
-        var end = event.end ? Utils_Date.addDays(new Date(<any>event.end), -1).toISOString() : start;
-        var oldEvent: Calendar_Contracts.CalendarEvent = {
-            startDate: start,
-            endDate: end,
-            title: event.title,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag
-        };
+        var oldEvent = this._eventObjectToCalendarEvent(event);
         
         var calendarEvent = $.extend({}, oldEvent);
 
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
         if (eventSource && eventSource.updateEvent) {
-            if (eventSource.id === "freeForm") {
-                var query = this._calendar.getViewQuery();
-                var dialogOptions : Calendar_Dialogs.IFreeFormEventDialogOptions = {
-                    event: calendarEvent,
-                    title: "Edit Event",
-                    resizable: false,
-                    okCallback: (newEvent: Calendar_Contracts.CalendarEvent) => {
-                        eventSource.updateEvent(oldEvent, newEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
-                            // Set underlying source to dirty so refresh picks up new changes
-                            var originalEventSource = this._getCalendarEventSource(eventSource.id);
-                            originalEventSource.state.dirty = true;
-
+            var query = this._calendar.getViewQuery();
+            
+            var dialogOptions : Calendar_Dialogs.IEventDialogOptions = {
+                calendarEvent: calendarEvent,
+                source: eventSource,
+                resizable: true,
+                isEdit: true,
+                membersPromise: this._getTeamMembers(),
+                query: query,
+                bowtieVersion: 2,
+                okCallback: (calendarEvent: Calendar_Contracts.CalendarEvent) => {
+                    eventSource.updateEvent(oldEvent, calendarEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
+                        // Set underlying source to dirty so refresh picks up new changes
+                        var originalEventSource = this._getCalendarEventSource(eventSource.id);
+                        originalEventSource.state.dirty = true;
+                        
+                        if(updatedEvent) {
                             // Update title
                             event.title = updatedEvent.title;
 
                             // Update category
                             event.category = updatedEvent.category;
+                            
+                            // Update color
+                            event.color = updatedEvent.category.color;
+                            
+                            // Update description
+                            event.description = updatedEvent.description;
+                            
+                            // Update data
+                            event.eventData = updatedEvent.eventData
 
                             //Update dates
                             event.end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                             event.start = updatedEvent.startDate;
-                            event.__etag = updatedEvent.__etag;
+                            event.__etag = updatedEvent.__etag; 
+                            // Update iteration
+                            event.iterationId = updatedEvent.iterationId;
                             this._calendar.updateEvent(event);
-                        });
-                    },
-                    categories: this._eventSources.getById("freeForm").getCategories(query).then(categories => categories.map(category => category.title))
-                };
-                
-                Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditFreeFormEventDialog, dialogOptions);
-            }
-            else if (eventSource.id === "daysOff") {
-                Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditCapacityEventDialog, {
-                    event: calendarEvent,
-                    title: "Edit Days Off",
-                    resizable: false,
-                    isEdit: true,
-                    okCallback: (newEvent: Calendar_Contracts.CalendarEvent) => {
-                        eventSource.updateEvent(oldEvent, newEvent).then((updatedEvent: Calendar_Contracts.CalendarEvent) => {
-                            // Set underlying source to dirty so refresh picks up new changes
-                            var originalEventSource = this._getCalendarEventSource(eventSource.id);
-                            originalEventSource.state.dirty = true;
+                        }
+                        else {
+                            this._calendar.refreshEvents(originalEventSource);
+                        }
+                    });
+                }
+            };
+            
+            //Calendar_Dialogs.ExternalEventDialog.showDialog(dialogOptions);
+            Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditEventDialog, dialogOptions);
+        }
+    }
 
+    private _deleteEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {        
+        var calendarEvent = this._eventObjectToCalendarEvent(event)
 
-                            //Update dates
-                            var end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
-                            event.end = end;
-                            event.start = updatedEvent.startDate;
+        var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
 
-                            this._calendar.updateEvent(event);
-                        });
-                    },
+        if (eventSource && eventSource.removeEvent) {
+            if (confirm("Are you sure you want to delete the event?")) {
+                eventSource.removeEvent(calendarEvent).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
+                    var originalEventSource = this._getCalendarEventSource(eventSource.id);
+                    originalEventSource.state.dirty = true;
+                    this._calendar.removeEvent(<string>event.id);
+                    if (!calendarEvents) {
+                        this._calendar.refreshEvents(originalEventSource);
+                    }
                 });
             }
         }
     }
-
-    private _deleteEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
-        var start = new Date(<any>event.start).toISOString();
-        var calendarEvent: Calendar_Contracts.CalendarEvent = {
+    
+    private _eventObjectToCalendarEvent(eventObject: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.CalendarEvent {
+        var start = new Date(<any>eventObject.start).toISOString();
+        var end = eventObject.end ? Utils_Date.addDays(new Date(<any>eventObject.end), -1).toISOString() : start;
+        var calendarEvent = {
             startDate: start,
-            title: event.title,
-            id: event.id,
-            category: event.category,
-            member: event.member,
-            iterationId: event.iterationId,
-            __etag: event.__etag
-        };
-
-        var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
-
-        if (eventSource && eventSource.removeEvents) {
-            if (confirm("Are you sure you want to delete the event?")) {
-                eventSource.removeEvents([calendarEvent]).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
-                    var originalEventSource = this._getCalendarEventSource(eventSource.id);
-                    originalEventSource.state.dirty = true;
-                    this._calendar.removeEvent(<string>event.id);
-                });
-            }
+            endDate: end
         }
+        CalendarView.calendarEventFields.forEach(prop => {
+            calendarEvent[prop] = eventObject[prop];
+        });
+        
+        return <any>calendarEvent;
+    }
+    
+    private _calendarEventToEventObject(calendarEvent: Calendar_Contracts.CalendarEvent, source: Calendar_Contracts.IEventSource): Calendar_Contracts.IExtendedCalendarEventObject {
+        var start = calendarEvent.startDate;
+        var end = calendarEvent.endDate ? Utils_Date.addDays(new Date(calendarEvent.endDate), 1).toISOString(): start;
+        var eventObject = {
+            start: start,
+            end: end,
+            eventType: source.id
+        }
+        CalendarView.calendarEventFields.forEach(prop => {
+            eventObject[prop] = calendarEvent[prop];
+        });
+        return <any>eventObject;
     }
 
     private _getEventSourceFromEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.IEventSource {
@@ -581,43 +627,23 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         }
         return eventSource;
     }
-
-    private _fetchIterationData(): IPromise<Work_Contracts.TeamSettingsIteration[]> {
-        var deferred = Q.defer<Work_Contracts.TeamSettingsIteration[]>();
-        var iterationPath: string;
-        var iterationPromises: IPromise<Work_Contracts.TeamSettingsIteration>[] = [];
-        var result : Work_Contracts.TeamSettingsIteration[] = [];
-
-        var webContext = VSS.getWebContext();
-        var teamContext: TFS_Core_Contracts.TeamContext = { projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: "" };
-        var workClient: Work_Client.WorkHttpClient = Service.VssConnection
-            .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-
-        workClient.getTeamIterations(teamContext).then(
-            (iterations: Work_Contracts.TeamSettingsIteration[]) => {
-                iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-                    result.push(iteration);
-                });
-
-
-                deferred.resolve(result);
-
-            },
-            (e: Error) => {
-                deferred.reject(e);
-            });
-        return deferred.promise;
-    }
 }
 
 export class SummaryView extends Controls.BaseControl {
     private _calendar: Calendar.Calendar;
     private _rendering: boolean;
+    private _statusIndicator: Controls_StatusIndicator.StatusIndicator;
 
     initialize(): void {
         super.initialize();
         this._rendering = false;
+        var $statusContainer = this._element.parent().find(".status-indicator-container");
+        this._statusIndicator = <Controls_StatusIndicator.StatusIndicator>Controls.BaseControl.createIn(Controls_StatusIndicator.StatusIndicator, $statusContainer, {
+            center: true,
+            throttleMinTime: 0,
+            imageClass: "big-status-progress"
+        });
+        this._statusIndicator.start();
         this._calendar = <Calendar.Calendar>Controls.Enhancement.getInstance(Calendar.Calendar, $(".vss-calendar"));
 
         // Attach to calendar changes to refresh summary view
@@ -649,6 +675,7 @@ export class SummaryView extends Controls.BaseControl {
 
         Q.all(categoryPromises).then(() => {
             this._rendering = false;
+            this._statusIndicator.complete();
         });
     }
 
@@ -675,8 +702,13 @@ export class SummaryView extends Controls.BaseControl {
                                 if (category.imageUrl) {
                                     newElement("img", "category-icon").attr("src", category.imageUrl).appendTo($titleContainer);
                                 }
-                                if (category.color) {
-                                    newElement("div", "category-color").css("background-color", category.color).appendTo($titleContainer);
+                                else if (category.color) {
+                                    var $newElem = newElement("div", "category-color").css("background-color", category.color).appendTo($titleContainer);
+                                    if(source.getEnhancer) {
+                                        source.getEnhancer().then((enhancer) => {
+                                            $newElem.bind("click", () => {});
+                                        });
+                                    }
                                 }
                                 newElement("span", "category-titletext", category.title).appendTo($titleContainer);
                                 newElement("div", ["category-subtitle", (category.color ? "c-color" : ""), (category.imageUrl ? "c-icon" : "")].join(" "), category.subTitle).appendTo($sectionContainer);

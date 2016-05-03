@@ -26,6 +26,14 @@
         left: 75%;
         overflow: auto;
     }
+        
+        #calendar-extension > .splitter > .rightPane > .status-indicator-container {
+            position: absolute;
+            top: 43%;
+            left: 0;
+            height: 10%;
+            width: 100%;
+        }
 
     #calendar-extension .calendar-view {        
         padding-top: 0px;
@@ -75,9 +83,10 @@
 
         .event-edit-control > table td.label:first-child {
             width: 100px;
+            vertical-align: top;
+            padding-top: 5px;
         }
-
-
+        
 .category {
     margin: 5px 5px 5px 10px;
 }
@@ -118,6 +127,8 @@
         font-size: smaller;
         color: #999;
         margin-bottom: 3px;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
         .category .category-subtitle.c-color {
@@ -141,6 +152,14 @@ th.fc-day-header {
     padding-bottom: 2px;
 }
 
+.fc-content .event-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    float: left;
+    margin: 2px 2px 0 0;
+}
+
 #calendar-extension a.fc-event {
     border-radius: inherit;
 }
@@ -150,5 +169,21 @@ th.fc-day-header {
     font-size: 12px;
     margin: 5px 5px 5px 10px;
 }
+
+/* Contributed dialog content style */
+
+.edit-freeform-control > table, .edit-capacity-control > table {
+    width: 90%;
+}
+
+    .edit-freeform-control > table td, .edit-capacity-control > table td {
+        padding: 3px;
+    }
+
+        .edit-freeform-control > table td.label:first-child, .edit-capacity-control > table td.label:first-child {
+            width: 100px;
+            vertical-align: top;
+            padding-top: 5px;
+        }
 
 /*# sourceMappingURL=site.css.map */

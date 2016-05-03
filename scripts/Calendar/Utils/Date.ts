@@ -52,47 +52,18 @@ export function eventIn(event: Calendar_Contracts.CalendarEvent, query: Calendar
     return false;
 }
 
-var _iterations: Work_Contracts.TeamSettingsIteration[];
-var _iterationsDeferred: Q.Deferred<any> = Q.defer<any>();
-var _iterationsLoaded = _iterationsDeferred.promise;
-
-export function getIterationId(dayOff: Date): IPromise<string> {
-    var deferred = Q.defer<string>();
-    if (!_iterations) {
-        loadIterations();
+/**
+ * Turns a start date and end date into a list of dates within the range, inclusive
+ * @param startDate Start date
+ * @param endDate End Date
+ * @return Date[] containing each date in the range
+ */
+export function getDatesInRange(startDate:Date, endDate: Date): Date[] {
+    var dates = [];
+    var current: Date = startDate;
+    while (current.getTime() <= endDate.getTime()) {
+        dates.push(new Date(<any>current));
+        current = Utils_Date.addDays(current, 1);
     }
-    _iterationsLoaded.then(() => {
-        _iterations.some((value: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-            if (value && value.attributes && value.attributes.startDate && value.attributes.finishDate) {
-                if (dayOff.valueOf() >= value.attributes.startDate.valueOf() && dayOff.valueOf() <= value.attributes.finishDate.valueOf()) {
-                    deferred.resolve(value.id);
-                    return true;
-                }
-            }
-            return false;
-        });
-    });
-    return deferred.promise;
-}
-
-function loadIterations(): void {
-    _iterations = [];
-    var webContext = VSS.getWebContext();
-    var teamContext: TFS_Core_Contracts.TeamContext = {projectId: webContext.project.id, teamId: webContext.team.id, project: "", team: ""};
-    var workClient: Work_Client.WorkHttpClient = Service.VssConnection
-        .getConnection()
-        .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
-    
-    workClient.getTeamIterations(teamContext).then(
-        (iterations: Work_Contracts.TeamSettingsIteration[]) => {
-            iterations.forEach((iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-                _iterations.push(iteration);
-            });
-
-            _iterationsDeferred.resolve([]);
-
-        },
-        (e: Error) => {
-            _iterationsDeferred.resolve([]);
-        });
+    return dates;
 }

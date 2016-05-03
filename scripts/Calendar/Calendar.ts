@@ -5,6 +5,7 @@ import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
+import Culture = require("VSS/Utils/Culture");
 import Q = require("q");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
@@ -86,7 +87,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         //  Determine optimal aspect ratio
         var aspectRatio = $('.leftPane').width() /($('.leftPane').height() - 85);
         aspectRatio = parseFloat(aspectRatio.toFixed(1));
-
+        var firstDay = Culture.getDateTimeFormat().FirstDayOfWeek;
+        
         this._element.fullCalendar($.extend({
             eventRender: this._getComposedCallback(FullCalendarCallbackType.eventRender),
             eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
@@ -113,7 +115,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             header: false,
             aspectRatio: aspectRatio,
             columnFormat: "dddd",
-            selectable: true
+            selectable: true,
+            firstDay: firstDay
         }, this._options.fullCalendarOptions));
     }
 
@@ -176,35 +179,39 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         var calEvent: any  = {
             id: event.id,
             title: event.title,
+            description: event.description,
             allDay: true,
             start: event.startDate,
             end: end,
             eventType: eventType,
             iterationId: event.iterationId,
-            editable: eventType === "freeForm",
-            category: event.category
+            category: event.category,
+            editable: event.movable,
+            icons: event.icons,
+            eventData: event.eventData
         };
+
 
         if (event.__etag) {
             calEvent.__etag = event.__etag;
         }
-
-        if(eventType === 'daysOff'){
+        
+        if(event.member){
             calEvent.member = event.member;
-            calEvent.title = event.member.displayName + " Day Off";
         }
 
-        var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());
-        calEvent.backgroundColor = color;
-        calEvent.borderColor = color;
+        calEvent.color = event.category.color;
+        calEvent.backgroundColor = calEvent.color;
+        calEvent.borderColor = calEvent.color;
+        calEvent.textColor = calEvent.category.textColor || "#FFFFFF";
 
         this._element.fullCalendar("renderEvent", calEvent, false );
     }
 
      public updateEvent(event: FullCalendar.EventObject) {
-        var color = Calendar_ColorUtils.generateColor(((<any>event).category || "uncategorized").toLowerCase());
-        event.backgroundColor = color;
-        event.borderColor = color;
+        event.color = (<any>event).category.color;
+        event.backgroundColor = event.color;
+        event.borderColor = event.color;
 
         this._element.fullCalendar("updateEvent", event);
     }
@@ -261,6 +268,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                         var event: any = {
                             id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
+                            description: value.description,
                             allDay: true,
                             start: start,
                             end: end,
@@ -269,23 +277,27 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             category: value.category,
                             iterationId: value.iterationId,
                             member: value.member,
-                            editable: source.id === "freeForm"
+                            editable: value.movable,
+                            icons: value.icons,
+                            eventData: value.eventData
                         };
-
+                        
                         if (value.__etag) {
                             event.__etag = value.__etag;
                         }
 
-                        if ($.isFunction(source.addEvents)) {
-                            var color = Calendar_ColorUtils.generateColor((<string>event.category || "uncategorized").toLowerCase());
+                        if ($.isFunction(source.addEvent) && value.category) {
+                            var color = <any>value.category.color || Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
+                            event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         if (options.rendering === "background" && value.category) {
-                            var color = Calendar_ColorUtils.generateBackgroundColor((<string>event.category || "uncategorized").toLowerCase());
+                            var color = <any>value.category.color || Calendar_ColorUtils.generateBackgroundColor((<string>event.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
+                            event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         return event;

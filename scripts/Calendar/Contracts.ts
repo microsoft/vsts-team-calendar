@@ -1,4 +1,202 @@
 /**
+ * Content to be rendered by the Add Event Dialog
+ */
+export interface IAddEventContent {
+    /** 
+     * Include text input for event title
+     */
+    title?: boolean;
+    
+    /**
+     * Include start date picker
+     */
+    start?: boolean;
+    
+    /**
+     * Include end date picker
+     */
+    end?: boolean;
+    
+    /**
+     * List of text input fields
+     */
+    textFields?: IAddEventTextField[]
+    
+    /**
+     * List of combo input fields
+     */
+    comboFields?: IAddEventComboField[];
+    
+    /**
+     * Error message to display if contributed content is not valid
+     */
+    validationErrorMessage?: string;
+}
+
+/**
+ * Text input field for Add Event Dialog 
+ */
+export interface IAddEventTextField {
+    /**
+     * Field Label
+     */
+    label: string;
+    
+    /**
+     * Initial value of the text input
+     */
+    initialValue?: string;
+    
+    /**
+     * Determines if the field is required to save the dialog content
+     */
+    requiredField?: boolean;
+    
+    /**
+     * Returns true if the current input for the field is valid
+     */
+    checkValid?: (value: string) => IPromise<boolean>
+    
+    /**
+     * Error message to display if field is not valid
+     */
+    validationErrorMessage?: string;
+    
+    /**
+     * Disabled state of the input
+     */
+    disabled?: boolean
+    
+    /**
+     * Property on the calendar event the input should set
+     */
+    eventProperty?: string;
+    
+    /**
+     * Executed by the Add Event Dialog on Ok click
+     */
+    okCallback?: (value: string) => IPromise<any>;
+}
+
+/**
+ * Field for Add Event Dialog to be populated by a Combo Control
+ */
+export interface IAddEventComboField {
+    /**
+     * Field label
+     */    
+    label: string;
+    
+    /**
+     * Initial value of the combo
+     */
+    initialValue?: string;
+    
+    /**
+     * Items to populate the combo
+     */
+    items: string[];
+    
+    /**
+     * Determines if the field is required to save the dialog content
+     */
+    requiredField?: boolean;
+    
+    /**
+     * Returns true if the current input for the field is valid
+     */
+    checkValid?: (value: string) => IPromise<boolean>
+    
+    /**
+     * Error message to display if field is not valid
+     */
+    validationErrorMessage?: string;
+    
+    /**
+     * Disabled state of the input
+     */
+    disabled?: boolean
+    
+    /**
+     * Property on the calendar event the input should set
+     */
+    eventProperty?: string;
+    
+    /**
+     * Executed by the Add Event Dialog on Ok click
+     */
+    okCallback?: (value: string) => IPromise<any>;
+}
+
+/**
+ * Interface for Add Event dialog content
+ */
+export interface IDialogContent{
+    /**
+     * Returns the updated calendar item
+     */
+    onOkClick: () => IPromise<any>; 
+    
+    /**
+     * Returns the current title of the dialog
+     */
+    getTitle?: () => IPromise<string>;
+    
+    /**
+     * Return height of the contributed content, defaults to 0
+     */
+    getContributedHeight?: () => IPromise<number>;
+    
+    /**
+     * Returns the fields for the Add Event dialog to display
+     */
+    getFields?: () => IPromise<IAddEventContent>;
+    
+    /**
+     * Returns true if the state of the customized contributed content is valid
+     */
+    checkValid?: () => IPromise<boolean>;
+}
+
+/**
+* Interface for a calendar event provider view
+*/
+export interface IEventEnhancer {
+    
+    /**
+    * Unique id of the enhancer
+    */
+    id: string;
+
+    /**
+    * Unique id of the add dialog content control
+    */
+    addDialogId?: string;
+    
+    /**
+    * Unique id of the side panel control
+    */
+    sidePanelId?: string;
+    
+    /**
+    * optional customizable add-icon for context menu
+    */
+    icon?: string;
+    
+    /**
+    * Determines whether an event is editable in the current context
+    *
+    * @param event
+    */
+    canEdit: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+
+    /**
+     * Determines whether an event can be added
+     */
+    canAdd: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+}
+
+/**
 * Interface for a calendar event provider
 */
 export interface IEventSource {
@@ -17,6 +215,11 @@ export interface IEventSource {
     * Order used in sorting the event sources
     */
     order: number;
+
+    /**
+     * Returns the UI enhancer for the event source
+     */
+    getEnhancer?: () => IPromise<IEventEnhancer>;
 
     /**
     * Set to true if events from this source should be rendered in the background.
@@ -38,17 +241,17 @@ export interface IEventSource {
     /**
      * Get the event categories that match a certain criteria
      */
-    getCategories(query: IEventQuery): IPromise<IEventCategory[]>;
+    getCategories(query?: IEventQuery): IPromise<IEventCategory[]>;
 
     /**
     * Optional method to add events to a given source
     */
-    addEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent>;
+    addEvent?: (events: CalendarEvent) => IPromise<CalendarEvent>;
 
     /**
     * Optional method to remove events from this event source
     */
-    removeEvents?: (events: CalendarEvent[]) => IPromise<CalendarEvent[]>;
+    removeEvent?: (events: CalendarEvent) => IPromise<CalendarEvent[]>;
 
     /**
     * Optional method to update an event in this event source
@@ -66,6 +269,11 @@ export interface IEventSource {
  */
 export interface IEventCategory {
     /**
+     * Unique id of the category
+     * {source id}.{category title}
+     */
+    id: string;
+    /**
      * Title of the event category
      */
     title: string;
@@ -74,16 +282,26 @@ export interface IEventCategory {
      * Sub title of the event category
      */
     subTitle?: string;
+    
+    /**
+     * Ids of the events in the category
+     */
+    events?: string[];
 
     /**
-     * Image url of this category
+     * Image url of the category
      */
     imageUrl?: string;
 
     /**
-     * Color of this category
+     * Color of the category
      */
     color?: string;
+    
+    /**
+     * Text color of the category
+     */
+    textColor?: string;
 }
 
 /**
@@ -106,12 +324,11 @@ export interface IEventQuery {
 * Represents a single calendar event
 */
 export interface CalendarEvent {
-
     /**
     * Title of the event
     */
     title: string;
-
+    
     __etag?: number;
 
     /**
@@ -130,19 +347,39 @@ export interface CalendarEvent {
     id?: string;
     
     /**
-     * Id of the iteration with which the event is associated
-     */
-    iterationId?: string;
-
-    /**
      * Category of the service
      */
-    category?: string;
+    category?: IEventCategory;
+    
+    /**
+     * Id of the iteration to which the event is linked
+     */
+    iterationId?: string;
+    
+    /**
+     * Whether the event is movable on the calendar
+     */
+    movable?: boolean;
 
     /**
      * The member associated with this event
      */
     member?: ICalendarMember;
+    
+    /**
+     * A description of the event
+     */
+    description?: string;
+        
+    /**
+     * Icons to be displayed on the event
+     */
+    icons?: IEventIcon[];
+    
+    /**
+     * Data to be attached to the event
+     */
+    eventData?: any;
 }
 
 export interface ICalendarMember {
@@ -173,10 +410,40 @@ export interface ICalendarMember {
 }
 
 /**
+ * An icon displayed on the calendar representing an event
+ */
+export interface IEventIcon {
+    /**
+     * src url for the icon
+     */
+    src?: string;
+    
+    /**
+     * css class for the icon
+     */
+    cssClass?: string;
+    
+    /**
+     * tooltip for icon
+     */
+    title?: string;
+    
+    /**
+     * The action executed when the icon is clicked
+     */
+    action?: (event: CalendarEvent) => IPromise<any>;
+    
+    /**
+     * The event to edit or delete when the icon is selected
+     */
+    linkedEvent?: CalendarEvent;
+    
+}
+
+/**
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventObject {
-
     color?: string;
     backgroundColor?: string;
     borderColor?: string;
@@ -191,15 +458,18 @@ export interface IExtendedCalendarEventObject {
     id?: string;
     __etag?: number;
     title: string;
+    description?: string;
     allDay?: boolean;
     start: Date|string;
     end?: Date|string;
     url?: string;
     source?: any | IExtendedCalendarEventSource;
     member?: ICalendarMember;
-    category?: string;
+    category?: IEventCategory;
     iterationId?: string;
+    icons?: IEventIcon[];
     eventType?: string;
+    eventData?: any;
 }
 
 /**

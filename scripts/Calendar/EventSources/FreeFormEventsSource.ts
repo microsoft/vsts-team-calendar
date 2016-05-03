@@ -198,7 +198,6 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             // update category for event
             newEvent.category.id = this.id + "." + newEvent.category.title;
-            this._updateCategoryForEvents([newEvent]);
             
             extensionDataService.updateDocument(this._teamId, newEvent).then(
                 (updatedEvent: Calendar_Contracts.CalendarEvent) => {
@@ -207,8 +206,16 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     if (index > -1) {
                         this._events.splice(index, 1);
                     }
-                    this._events.push(updatedEvent);
-                    deferred.resolve(updatedEvent);
+                    if (newEvent.category.id !== oldEvent.category.id) {                        
+                        this._updateCategoryForEvents([newEvent]).then((categories: Calendar_Contracts.IEventCategory[]) => {                            
+                            this._events.push(updatedEvent);
+                            deferred.resolve(updatedEvent);
+                        });
+                    }
+                    else {
+                        this._events.push(updatedEvent);
+                        deferred.resolve(updatedEvent);
+                    }
                 },
                 (e: Error) => {
                     //Handle concurrency issue
@@ -226,15 +233,23 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return VSS.getService("ms.vss-web.data-service").then((extensionDataService: Services_ExtensionData.ExtensionDataService) => {
             var updatedCategoriesPromises: IPromise<Calendar_Contracts.IEventCategory>[] = [];
             $.each(categories, (index: number, category: Calendar_Contracts.IEventCategory) => {
-                updatedCategoriesPromises.push(extensionDataService.updateDocument(this._teamId, categories[index]).then((updatedCategory: Calendar_Contracts.IEventCategory) => {
-                    var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
-                    var index = this._categories.indexOf(categoryInArray);
-                    if(index > -1) {
-                        this._categories.splice(index, 1);
-                    }
-                    this._categories.push(updatedCategory);
-                    return updatedCategory;
-                }));
+                if (category.events.length === 0) {
+                    updatedCategoriesPromises.push(this.removeCategory(category)[0]);
+                }
+                else if (this._categories.filter(cat => cat.id === category.id).length ===0) {
+                    updatedCategoriesPromises.push(this.addCategory(category));
+                }
+                else {
+                    updatedCategoriesPromises.push(extensionDataService.updateDocument(this._teamId, categories[index]).then((updatedCategory: Calendar_Contracts.IEventCategory) => {
+                        var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
+                        var index = this._categories.indexOf(categoryInArray);
+                        if(index > -1) {
+                            this._categories.splice(index, 1);
+                        }
+                        this._categories.push(updatedCategory);
+                        return updatedCategory;
+                    }));
+                }
             });
             return Q.all(updatedCategoriesPromises);
         });
@@ -246,7 +261,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
         return deferred.promise;
     }
     
-    private _updateCategoryForEvents(events: Calendar_Contracts.CalendarEvent[]) {
+    private _updateCategoryForEvents(events: Calendar_Contracts.CalendarEvent[]): IPromise<Calendar_Contracts.IEventCategory[]> {
+        var categoryMap: { [id: string]: boolean } = {};
         var updatedCategories = [];
                 
         // remove event from current category        
@@ -265,10 +281,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                 categoryForEvent.events.splice(index, 1);
                 var count = categoryForEvent.events.length
                 categoryForEvent.subTitle = Utils_String.format("{0} event{1}", count, count > 1 ? "s" : "");
-                if(categoryForEvent.events.length === 0){
-                    this.removeCategory(categoryForEvent);
-                }
-                else {
+                if(!categoryMap[categoryForEvent.id]) {
+                    categoryMap[categoryForEvent.id] = true;
                     updatedCategories.push(categoryForEvent);
                 }
             }
@@ -283,20 +297,22 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     var count = newCategory.events.length
                     newCategory.subTitle = Utils_String.format("{0} event{1}", count, count > 1 ? "s" : "");
                     event.category = newCategory;
-                    updatedCategories.push(newCategory);
                 }
                 else {
                 // category doesn't exist yet
-                var newCategory = event.category;
+                    newCategory = event.category;
                     newCategory.events = [event.id];
                     newCategory.subTitle = event.title;
                     newCategory.color = Calendar_ColorUtils.generateColor(event.category.title);
-                    this.addCategory(newCategory);
+                }
+                if (!categoryMap[newCategory.id]) {
+                    categoryMap[newCategory.id] = true;
+                    updatedCategories.push(newCategory);                    
                 }
             }
         }
         // update categories
-        this.updateCategories(updatedCategories);
+        return this.updateCategories(updatedCategories);
     }
     
     private _filterCategories(query?: Calendar_Contracts.IEventQuery): Calendar_Contracts.IEventCategory[] {

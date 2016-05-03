@@ -240,7 +240,7 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     updatedCategoriesPromises.push(this.addCategory(category));
                 }
                 else {
-                    updatedCategoriesPromises.push(extensionDataService.updateDocument(this._teamId, categories[index]).then((updatedCategory: Calendar_Contracts.IEventCategory) => {
+                    updatedCategoriesPromises.push(extensionDataService.updateDocument(this._categoryId, categories[index]).then((updatedCategory: Calendar_Contracts.IEventCategory) => {
                         var categoryInArray: Calendar_Contracts.IEventCategory = $.grep(this._categories, (cat: Calendar_Contracts.IEventCategory) => { return cat.id === category.id})[0];
                         var index = this._categories.indexOf(categoryInArray);
                         if(index > -1) {

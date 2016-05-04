@@ -440,20 +440,37 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             if (Calendar_DateUtils.eventIn(event, query)) {
                 var member = <Work_Contracts.Member>(<any>event).member;
                 if (!memberMap[member.id]) {
-                    event.category.subTitle = new Date(event.startDate).toLocaleDateString();
                     event.category.events = [event.id];
+                    event.category.subTitle = this._getCategorySubTitle(event.category, events);
                     memberMap[member.id] = event.category;
                     categories.push(event.category);
                 }
                 else {
                     var category = memberMap[member.id];
                     category.events.push(event.id);
-                    category.subTitle = Utils_String.format("{0} day{1} off", category.events.length, category.events.length > 1 ? "s" : "");
+                    category.subTitle = this._getCategorySubTitle(category, events);
                 }                
             }
         });
 
         return categories;
+    }
+    
+    private _getCategorySubTitle(category: Calendar_Contracts.IEventCategory, events: Calendar_Contracts.CalendarEvent[]): string {
+        if (category.events.length == 1) {
+            var event = events.filter(e => e.id === category.events[0])[0];
+            if(event && (new Date(event.startDate)).valueOf() === (new Date(event.endDate)).valueOf()) {
+                return new Date(event.startDate).toDateString();
+            }
+        }
+        var daysOffCount = 0;
+        category.events.forEach(e => {
+            var event = events.filter(e => e.id === category.events[0])[0];
+            if(event) {
+                daysOffCount += Utils_Date.daysBetweenDates(new Date(event.endDate), new Date(event.startDate));
+            }
+        });
+        return Utils_String.format("{0} days off", daysOffCount)
     }
 
     private _buildTeamImageUrl(hostUri: string, id: string): string {

@@ -10,7 +10,7 @@
             explicitNotifyLoaded: true,
             moduleLoaderConfig: {
                 paths: {
-                    "Calendar": "built/Calendar"
+                    "Calendar": "built/min/Calendar",
                 }
             }
         });
@@ -18,30 +18,30 @@
             "Calendar/EventSources/FreeFormEventsSource",
             "Calendar/EventSources/VSOCapacityEventSource",
             "Calendar/EventSources/VSOIterationEventSource"
-        ], function (FreeFormEventsSource, VSOCapacityEventSource, VSOIterationEventSource) {
+        ], function (FreeForm, Capacity, Iterations) {
 
             // Register the eventSource contributions using the fully qualified contributionId
             VSS.register("ms-devlabs.team-calendar.freeForm", function (context) {
-                return new FreeFormEventsSource.FreeFormEventsSource();
+                return new FreeForm.FreeFormEventsSource();
             });
             VSS.register("ms-devlabs.team-calendar.daysOff", function (context) {
-                return new VSOCapacityEventSource.VSOCapacityEventSource();
+                return new Capacity.VSOCapacityEventSource();
             });
             VSS.register("ms-devlabs.team-calendar.iterations", function (context) {
-                return new VSOIterationEventSource.VSOIterationEventSource();
+                return new Iterations.VSOIterationEventSource();
             });
 
             // Deprecated form of contribution registration using the short Id for back-compat.
             // DO NOT register this form any longer, use the fully qualified contributionId
             //  unless you have previous shipped dependencies on the short Id's
             VSS.register("freeForm", function (context) {
-                return new FreeFormEventsSource.FreeFormEventsSource();
+                return new FreeForm.FreeFormEventsSource();
             });
             VSS.register("daysOff", function (context) {
-                return new VSOCapacityEventSource.VSOCapacityEventSource();
+                return new Capacity.VSOCapacityEventSource();
             });
             VSS.register("iterations", function (context) {
-                return new VSOIterationEventSource.VSOIterationEventSource();
+                return new Iterations.VSOIterationEventSource();
             });
 
             VSS.notifyLoadSucceeded();

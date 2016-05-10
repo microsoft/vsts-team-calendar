@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.3.17",
+    "version": "0.3.18",
     "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",

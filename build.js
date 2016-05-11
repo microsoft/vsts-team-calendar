@@ -16,14 +16,6 @@
          {
              name: "Calendar/Dialogs"
          },
-        //  {
-        //      name: "Calendar/EventSources",
-        //      include: [
-        //          "Calendar/EventSources/FreeFormEventsSource",
-        //          "Calendar/EventSources/VSOCapacityEventSource",
-        //          "Calendar/EventSources/VSOIterationEventSource"
-        //      ]
-        //  }
          {
              name: "Calendar/EventSources/FreeFormEventsSource"
          },

@@ -128,7 +128,7 @@ var XDM;
             }
         };
         return XdmDeferred;
-    })();
+    }());
     var smallestRandom = parseInt("10000000000", 36);
     var maxSafeInteger = Number.MAX_SAFE_INTEGER || 9007199254740991;
     /**
@@ -175,7 +175,7 @@ var XDM;
             }
         };
         return XDMObjectRegistry;
-    })();
+    }());
     XDM.XDMObjectRegistry = XDMObjectRegistry;
     ;
     /**
@@ -348,8 +348,15 @@ var XDM;
             /// Determines whether the current message belongs to this channel or not
             var rpcMessage = data;
             if (this._postToWindow === source) {
+                // For messages coming from sandboxed iframes the origin will be set to the string "null".  This is 
+                // how onprem works.  If it is not a sandboxed iFrame we will get the origin as expected.
                 if (this._targetOrigin) {
-                    return this._targetOrigin.toLowerCase().indexOf(origin.toLowerCase()) === 0;
+                    if (origin) {
+                        return origin.toLowerCase() === "null" || this._targetOrigin.toLowerCase().indexOf(origin.toLowerCase()) === 0;
+                    }
+                    else {
+                        return false;
+                    }
                 }
                 else {
                     if (rpcMessage.handshakeToken && rpcMessage.handshakeToken === this._handshakeToken) {
@@ -359,6 +366,10 @@ var XDM;
                 }
             }
             return false;
+        };
+        XDMChannel.prototype.error = function (data, errorObj) {
+            var rpcMessage = data;
+            this._error(rpcMessage, errorObj, rpcMessage.handshakeToken);
         };
         XDMChannel.prototype._error = function (messageObj, errorObj, handshakeToken) {
             // Post back a response as an error which look like this -
@@ -384,7 +395,7 @@ var XDM;
         };
         XDMChannel.prototype._sendRpcMessage = function (message) {
             var messageString = JSON.stringify(message);
-            this._postToWindow.postMessage(messageString, this._targetOrigin || "*");
+            this._postToWindow.postMessage(messageString, "*");
         };
         XDMChannel.prototype._shouldSkipSerialization = function (obj) {
             for (var i = 0, l = XDMChannel.WINDOW_TYPES_TO_SKIP_SERIALIZATION.length; i < l; i++) {
@@ -574,7 +585,7 @@ var XDM;
             "jQuery"
         ];
         return XDMChannel;
-    })();
+    }());
     XDM.XDMChannel = XDMChannel;
     /**
     * Registry of XDM channels kept per target frame/window
@@ -604,19 +615,34 @@ var XDM;
         XDMChannelManager.prototype._handleMessageReceived = function (event) {
             // get channel and dispatch to it
             var i, len, channel;
-            var rpcMessage = JSON.parse(event.data);
-            var handled = false, channelOwnerFound = false;
-            for (i = 0, len = this._channels.length; i < len; i++) {
-                channel = this._channels[i];
-                if (channel.owns(event.source, event.origin, rpcMessage)) {
-                    // event belongs to this channel. Dispatch the message
-                    channelOwnerFound = true;
-                    handled = channel.onMessage(rpcMessage, event.origin) || handled;
+            var rpcMessage;
+            if (typeof event.data === "string") {
+                try {
+                    rpcMessage = JSON.parse(event.data);
+                }
+                catch (error) {
                 }
             }
-            if (channelOwnerFound && !handled) {
-                if (window.console) {
-                    console.error("No handler found on any channel for message: " + JSON.stringify(rpcMessage));
+            if (rpcMessage) {
+                var handled = false;
+                var channelOwner;
+                for (i = 0, len = this._channels.length; i < len; i++) {
+                    channel = this._channels[i];
+                    if (channel.owns(event.source, event.origin, rpcMessage)) {
+                        // keep a reference to the channel owner found. 
+                        channelOwner = channel;
+                        handled = channel.onMessage(rpcMessage, event.origin) || handled;
+                    }
+                }
+                if (!!channelOwner && !handled) {
+                    if (window.console) {
+                        console.error("No handler found on any channel for message: " + JSON.stringify(rpcMessage));
+                    }
+                    // for instance based proxies, send an error on the channel owning the message to resolve any control creation promises
+                    // on the host frame. 
+                    if (rpcMessage.instanceId) {
+                        channelOwner.error(rpcMessage, "The registered object " + rpcMessage.instanceId + " could not be found.");
+                    }
                 }
             }
         };
@@ -635,13 +661,13 @@ var XDM;
             }
         };
         return XDMChannelManager;
-    })();
+    }());
     XDM.XDMChannelManager = XDMChannelManager;
 })(XDM || (XDM = {}));
 var VSS;
 (function (VSS) {
     VSS.VssSDKVersion = 0.1;
-    VSS.VssSDKRestVersion = "2.1";
+    VSS.VssSDKRestVersion = "2.2";
     var bodyElement;
     var webContext;
     var hostPageContext;
@@ -714,7 +740,7 @@ var VSS;
      *
      * Usage:
      *
-     * VSS.require(["VSS/Controls", "VSS/Controls/Grids", function(Controls, Grids) {
+     * VSS.require(["VSS/Controls", "VSS/Controls/Grids"], function(Controls, Grids) {
      *    ...
      * });
      *
@@ -735,7 +761,7 @@ var VSS;
         }
         if (loaderConfigured) {
             // Loader already configured, just issue require
-            window.require(modulesArray, callback);
+            issueVssRequire(modulesArray, callback);
         }
         else {
             if (!initOptions) {
@@ -751,11 +777,21 @@ var VSS;
                 }
             }
             ready(function () {
-                window.require(modulesArray, callback);
+                issueVssRequire(modulesArray, callback);
             });
         }
     }
     VSS.require = require;
+    function issueVssRequire(modules, callback) {
+        if (hostPageContext.diagnostics.bundlingEnabled) {
+            window.require(["VSS/Bundling"], function (VSS_Bundling) {
+                VSS_Bundling.requireModules(modules, callback);
+            });
+        }
+        else {
+            window.require(modules, callback);
+        }
+    }
     /**
     * Register a callback that gets called once the initial setup/handshake has completed.
     * If the initial setup is already completed, the callback is invoked at the end of the current call stack.
@@ -821,16 +857,16 @@ var VSS;
     * @param context Optional context information to use when obtaining the service instance
     */
     function getService(contributionId, context) {
-        if (!context) {
-            context = {};
-        }
-        if (!context["webContext"]) {
-            context["webContext"] = getWebContext();
-        }
-        if (!context["extensionContext"]) {
-            context["extensionContext"] = getExtensionContext();
-        }
         return getServiceContribution(contributionId).then(function (serviceContribution) {
+            if (!context) {
+                context = {};
+            }
+            if (!context["webContext"]) {
+                context["webContext"] = getWebContext();
+            }
+            if (!context["extensionContext"]) {
+                context["extensionContext"] = getExtensionContext();
+            }
             return serviceContribution.getInstance(serviceContribution.id, context);
         });
     }
@@ -990,6 +1026,9 @@ var VSS;
                 // we are free to add core bundle. otherwise, load core scripts individually.
                 scripts = [{ source: getAbsoluteUrl(hostPageContext.coreReferences.coreScriptsBundle.url, hostRootUri) }];
             }
+            if (hostPageContext.coreReferences.extensionCoreReferences) {
+                scripts.push({ source: getAbsoluteUrl(hostPageContext.coreReferences.extensionCoreReferences.url, hostRootUri) });
+            }
         }
         // Define a new config for extension loader
         var newConfig = {
@@ -1018,7 +1057,13 @@ var VSS;
                 for (var p in contributionPaths) {
                     if (contributionPaths.hasOwnProperty(p) && !newConfig.paths[p]) {
                         // Add the contribution path
-                        newConfig.paths[p] = hostRootUri + contributionPaths[p].value;
+                        var contributionPathValue = contributionPaths[p].value;
+                        if (!contributionPathValue.match("^https?://")) {
+                            newConfig.paths[p] = hostRootUri + contributionPathValue;
+                        }
+                        else {
+                            newConfig.paths[p] = contributionPathValue;
+                        }
                         // Look for other path mappings that fall under the contribution path (e.g. "bundles")
                         var configPaths = hostPageContext.moduleLoaderConfig.paths;
                         if (configPaths) {
@@ -1170,3 +1215,4 @@ var VSS;
         }
     }
 })(VSS || (VSS = {}));
+//dependencies=

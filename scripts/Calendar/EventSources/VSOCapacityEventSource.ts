@@ -460,7 +460,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         if (category.events.length == 1) {
             var event = events.filter(e => e.id === category.events[0])[0];
             if(event && (new Date(event.startDate)).valueOf() === (new Date(event.endDate)).valueOf()) {
-                return new Date(event.startDate).toDateString();
+                return Utils_Date.shiftToUTC(new Date(event.startDate)).toDateString();
             }
         }
         var daysOffCount = 0;

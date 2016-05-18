@@ -18,14 +18,19 @@ To learn more about Extensions, see the [overview of extensions](https://www.vis
 
 ## Developing
  
-Team Calendar is designed to compile as optimized, minified packages. It compiles using tsproject, requirejs, and gulp.
-To compiled Team Calendar as an optimized project:
+Team Calendar compiles as optimized, minified packages using tsproject, requirejs, and gulp.
+To compile Team Calendar the first time:
 
 ```
 npm i -g tsproject
 npm i -g gulp
 npm i -g gulp-shell
 npm update
+gulp build
+```
+
+Once all build task dependencies have been installed (tsproject, gulp, gulp-shell), only the last command is needed to compile:
+```
 gulp build
 ```
 

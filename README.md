@@ -17,20 +17,21 @@ Extensions enable you to create first-class integration experiences within Visua
 To learn more about Extensions, see the [overview of extensions](https://www.visualstudio.com/en-us/integrate/extensions/overview).
 
 ## Developing
+ 
+Team Calendar is designed to compile as optimized, minified packages. It compiles using tsproject, and compiles using requirejs and gulp.
+To compiled Team Calendar as an optimized project:
 
-Team Calendar contains TypeScript. To compile, run `tsc`.
+```
+npm i -g tsproject
+npm i -g gulp
+npm i -g gulp-shell
+npm update
+gulp build
+```
 
 To package so you can test in your Visual Studio Team Services account, use the [Team Services CLI](https://github.com/Microsoft/tfs-cli) and run:
 
 `tfx extension create --publisher myPublisherId`
-
-You can also build using Grunt:
-
-```
-npm i -g grunt-cli
-npm update
-grunt
-```
 
 ## How to add custom event sources
 

@@ -3,12 +3,11 @@ var gulp = require('gulp');
 var rjs = require('requirejs');
 
 gulp.task('compile', function () {
-    tsproject.src('./')
-        .pipe(gulp.dest('./'));
+    return tsproject.src('./').pipe(gulp.dest('./'));
 });
 
-gulp.task('bundle', function () {
-   rjs.optimize({
+gulp.task('bundle', [ 'compile' ], function () {
+   return rjs.optimize({
         appDir: 'built/debug',
         baseUrl: './',
         dir: 'built/min',
@@ -38,7 +37,4 @@ gulp.task('bundle', function () {
     });
 });
 
-gulp.task('build', [
-    'compile',
-    'bundle'
-]);
+gulp.task('build', ['bundle']);

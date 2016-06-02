@@ -19,24 +19,26 @@ To learn more about Extensions, see the [overview of extensions](https://www.vis
 ## Developing
  
 Team Calendar compiles as optimized, minified packages using tsproject, requirejs, and gulp.
-To compile Team Calendar the first time:
+
+To setup:
 
 ```
 npm i -g tsproject
 npm i -g gulp
-npm i -g gulp-shell
 npm update
+```
+
+Then to compile and bundle, run:
+
+```
 gulp build
 ```
 
-Once all build task dependencies have been installed (tsproject, gulp, gulp-shell), only the last command is needed to compile:
-```
-gulp build
-```
+To package so you can test in your Visual Studio Team Services account, install the [Team Services CLI](https://github.com/Microsoft/tfs-cli) and run:
 
-To package so you can test in your Visual Studio Team Services account, use the [Team Services CLI](https://github.com/Microsoft/tfs-cli) and run:
-
-`tfx extension create --publisher myPublisherId`
+```
+tfx extension create --publisher myPublisherId
+```
 
 ## How to add custom event sources
 

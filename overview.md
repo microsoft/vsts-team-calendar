@@ -44,6 +44,11 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
    ![aed](images/add-event-dialog.png)
 
+## Known issues
+
+1. Auth-related HTTP errors when running Team Calendar on TFS 2015 Update 2. Upgrade to 2015 2.1.
+2. Changing a user's profile image (avatar) is not reflected in the calendar due to 12 hour image caching. Check back after 12 hours.
+
 ## Learn more
 
 The [source](https://github.com/microsoft/vso-team-calendar) for this extension is on GitHub. Take, fork, and extend. 

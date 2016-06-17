@@ -44,5 +44,5 @@ tfx extension create --publisher myPublisherId
 
 The Team Calendar extension is designed to be extended by other extensions. Other extensions can contribute new "event sources", which will be pulled from when the Team Calendar is rendered. Once you develop your extension, install it in the account that you installed the Team Calendar extension into.
 
-See the [public-events sample](https://github.com/Microsoft/vso-extension-samples/tree/master/public-events) for an example of an extension that contributes to the Team Calendar.
+See the [public-events sample](https://github.com/Microsoft/vsts-extension-samples/tree/master/calendar-public-events) for an example of an extension that contributes to the Team Calendar.
 

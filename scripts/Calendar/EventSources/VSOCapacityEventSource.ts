@@ -462,12 +462,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         category.events.forEach(e => {
             var event = events.filter(event => event.id === e)[0];
             if (event) {
-                if ((new Date(event.startDate)).valueOf() === (new Date(event.endDate)).valueOf()) {
-                    daysOffCount += 1;
-                }
-                else {
-                    daysOffCount += Utils_Date.daysBetweenDates(new Date(event.endDate), new Date(event.startDate));
-                }
+                daysOffCount += Utils_Date.daysBetweenDates(new Date(event.endDate), new Date(event.startDate));
             }
         });
         

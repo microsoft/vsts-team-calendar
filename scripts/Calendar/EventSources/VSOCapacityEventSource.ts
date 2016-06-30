@@ -457,19 +457,20 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }
     
     private _getCategorySubTitle(category: Calendar_Contracts.IEventCategory, events: Calendar_Contracts.CalendarEvent[]): string {
-        if (category.events.length == 1) {
-            var event = events.filter(e => e.id === category.events[0])[0];
-            if(event && (new Date(event.startDate)).valueOf() === (new Date(event.endDate)).valueOf()) {
-                return Utils_Date.shiftToUTC(new Date(event.startDate)).toDateString();
-            }
-        }
+        // add up days off per person
         var daysOffCount = 0;
         category.events.forEach(e => {
-            var event = events.filter(e => e.id === category.events[0])[0];
-            if(event) {
+            var event = events.filter(event => event.id === e)[0];
+            if (event) {
                 daysOffCount += Utils_Date.daysBetweenDates(new Date(event.endDate), new Date(event.startDate));
             }
         });
+        
+        // if user has only one day off, return that date
+        if(daysOffCount == 1){
+             return Utils_Date.shiftToUTC(new Date(events[0].startDate)).toDateString();
+        }
+        // else return total number of days off
         return Utils_String.format("{0} days off", daysOffCount)
     }
 

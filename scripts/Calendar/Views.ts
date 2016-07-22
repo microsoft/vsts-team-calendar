@@ -1,16 +1,21 @@
 /// <reference path='../../typings/VSS.d.ts' />
 /// <reference path='../../typings/TFS.d.ts' />
+/// <reference path='../../typings/Notifications.d.ts' />
 /// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
 
 import Calendar = require("Calendar/Calendar");
 import Calendar_Contracts = require("Calendar/Contracts");
 import Calendar_Dialogs = require("Calendar/Dialogs");
+import Calendar_DateUtils = require("Calendar/Utils/Date");
 import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
 import Controls = require("VSS/Controls");
 import Controls_Dialogs = require("VSS/Controls/Dialogs");
 import Controls_Menus = require("VSS/Controls/Menus");
 import Controls_Navigation = require("VSS/Controls/Navigation");
 import Controls_StatusIndicator = require("VSS/Controls/StatusIndicator");
+import Culture = require("VSS/Utils/Culture");
+import Notifications_Client = require("Notifications/RestClient");
+import Notifications_Contracts = require("Notifications/Contracts");
 import Q = require("q");
 import Service = require("VSS/Service");
 import Tfs_Core_WebApi = require("TFS/Core/RestClient");
@@ -461,6 +466,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
     
     private _addEvent(event: Calendar_Contracts.CalendarEvent, eventSource: Calendar_Contracts.IEventSource){
+        var webContext: WebContext = VSS.getWebContext();
         var query = this._calendar.getViewQuery();
         event.member = this._currentMember;
         var membersPromise = this._getTeamMembers();
@@ -482,11 +488,34 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     else {
                         this._calendar.refreshEvents(calendarEventSource);
                     }
+                    
+                    // send notification of new event
+                    var notificationsClient = Service.getClient(Notifications_Client.NotificationHttpClient);
+                    // add all team members to actors list
+                    var actors = [];
+                    membersPromise.then((teamMembers: WebApi_Contracts.IdentityRef[]) => {
+                        teamMembers.forEach(member => actors.push(<WebApi_Contracts.EventActor>{
+                            role: "member",
+                            id: member.id
+                        }));
+                        
+                        var notification = <WebApi_Contracts.VssNotificationEvent> {
+                            eventType: "ms-devlabs.team-calendar.calendar-event-created-event",
+                            actors: actors,
+                            data: <CalendarEventCreatedEvent> {
+                                calendarEvent: calendarEvent,
+                                teamProjectName: webContext.project.name,
+                                calendarUrl: webContext.host.uri + webContext.project.name + "/_apps/hub/ms-devlabs.team-calendar.calendar",
+                                startDateString: Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(calendarEvent.startDate)), Culture.getDateTimeFormat().ShortDatePattern, true),
+                                endDateString: Utils_Date.localeFormat(Utils_Date.shiftToUTC(new Date(calendarEvent.endDate)), Culture.getDateTimeFormat().ShortDatePattern, true)
+                            }
+                        }
+                        notificationsClient.publishEvent(notification);
+                    })
                 });
             }
         };
         
-        //Calendar_Dialogs.ExternalEventDialog.showDialog(dialogOptions);
         Controls_Dialogs.Dialog.show(Calendar_Dialogs.EditEventDialog, dialogOptions);        
     }
     
@@ -626,6 +655,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             eventSource = this._eventSources.getById(event.eventType);
         }
         return eventSource;
+
     }
 }
 
@@ -723,5 +753,13 @@ export class SummaryView extends Controls.BaseControl {
             });
         return deferred.promise;
     }
+}
+
+interface CalendarEventCreatedEvent {
+    calendarEvent: Calendar_Contracts.CalendarEvent;
+    teamProjectName: string;
+    calendarUrl: string;
+    startDateString: string;
+    endDateString: string;
 }
 

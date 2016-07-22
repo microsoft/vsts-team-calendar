@@ -15,7 +15,8 @@ gulp.task('bundle', [ 'compile' ], function () {
             'VSS': 'empty:',
             'q': 'empty:',
             'jQuery': 'empty:',
-            'TFS': 'empty:'
+            'TFS': 'empty:',
+            "Notifications": 'empty:',
         },
         modules: [
             {

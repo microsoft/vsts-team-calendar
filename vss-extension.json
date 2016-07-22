@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
@@ -22,7 +22,8 @@
         }  
     ],
     "scopes": [
-        "vso.work_write"  
+        "vso.work_write",
+        "vso.notification_publish"
     ],
     "categories": [
         "Plan and track"
@@ -68,7 +69,7 @@
         {
             "path": "built/min",
             "addressable": true
-        },              
+        },                
         {
             "path": "sdk",
             "addressable": true
@@ -154,7 +155,88 @@
             "properties": {
                 "uri": "calendarServices.html"
             }
-        }
+        },
+        {
+            "id": "calendar-event-created-event",
+            "type": "ms.vss-notifications.event-type",
+            "targets": [ ".team-calendar-event-publisher" ],
+            "properties": {
+                "name": "Team Calendar event",
+                "description": "Triggered when a new event is created in Team Calendar"
+            }
+        },
+        {
+            "id": "team-calendar-event-publisher",
+            "type": "ms.vss-notifications.event-publisher",
+            "targets": [ "ms.vss-notifications.events-publishers" ],
+            "visibleTo": [
+                "ms"
+            ],
+            "properties": {
+                "serviceInstanceType": "00025394-6065-48CA-87D9-7F5672854EF7"
+            }
+        },  
+        {
+            "id": "calendar-event-created-subscription",
+            "type": "ms.vss-notifications.subscription",
+            "targets": [ "ms.vss-notifications.default-subscription-collection" ],
+            "properties": {
+                "description": "Default subscription to notify team members when a new event has been aded to the Team Calendar",
+                "filter": {
+                    "type": "Actor",
+                    "eventType": "ms-devlabs.team-calendar.calendar-event-created-event",
+                    "inclusions": [
+                        "member"
+                    ],
+                    "exclusions": [ ],
+                    "criteria": { }
+                }
+            }
+        },
+        {
+            "id": "calendar-event-created-email-template",
+            "type": "ms.vss-notifications.email-template",
+            "targets": [ ".calendar-event-created-event" ],
+            "includes": [
+                "ms.vss-notifications.alert-email-template",
+                ".calendar-event-details-section"
+            ],
+            "properties": {
+                "format": "handlebars",
+                "sourceTemplate": "ms.vss-notifications.alert-email-template",
+                "inputs": {
+                    "section-templates": [
+                        "ms-devlabs.team-calendar.calendar-event-details-section"
+                    ],
+                    "email-subject": "New event on your Team Calendar",
+                    "title": "New Team Calendar event created",
+                    "action-notice": {
+                        "isInfo": "true",
+                        "message": "New notification"
+                    },
+                    "message": "A new event has been added to the team project <b>'{{ event.teamProjectName }}'</b>",
+                    "alert-button": {
+                        "title": "View calendar",
+                        "url": "{{ event.calendarUrl }}"
+                    },
+                    "reason": "You are receiving this notification because you are a team member."
+                }
+            }
+        },
+        {
+            "id": "calendar-event-details-section",
+            "type": "ms.vss-notifications.template",
+            "includes": [ "ms.vss-notifications.promo-without-cta" ],
+            "properties": {
+                "sourceTemplate": "ms.vss-notifications.promo-without-cta",
+                "inputs": {
+                    "title": "{{ event.calendarEvent.title }}",
+                    "sub-title": "Created by {{ event.calendarEvent.member.displayName }}",
+                    "content": "<p>Start date: {{ event.startDateString }} </p><p>End date: {{ event.endDateString }}</p>{{#if event.calendarEvent.description }}<p>Description: {{ event.calendarEvent.description }}</p>{{/if}}",
+                    "imageSrc": "http://ms-devlabs.gallery.assets.tfsallin.net:8680/_apis/public/gallery/publisher/ms-devlabs/extension/team-calendar/0.4.11/assetbyname/Microsoft.VisualStudio.Services.Icons.Default"
+                }
+            }
+        } 
     ],
     "contributionTypes": [
         {

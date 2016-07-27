@@ -50,10 +50,6 @@
             "addressable": true
         },
         {
-            "path": "html",
-            "addressable": true
-        },
-        {
             "path": "built/min",
             "addressable": true
         },

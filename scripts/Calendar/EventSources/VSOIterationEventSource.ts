@@ -17,7 +17,7 @@ import Work_Client = require("TFS/Work/RestClient");
 import Work_Contracts = require("TFS/Work/Contracts");
 
 export class VSOIterationEventSource implements Calendar_Contracts.IEventSource {
-
+utils
     public id = "iterations";
     public name = "Iterations";
     public order = 20;

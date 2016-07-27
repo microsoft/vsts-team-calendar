@@ -331,4 +331,29 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             });
         });
     }
+
+    
+    public getTodaysEvents(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+        var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
+
+        this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+            var today = Utils_Date.stripTimeFromDate(new Date());
+            
+            console.log("today: " + today);
+
+            var todaysEvents = events.filter((event: Calendar_Contracts.CalendarEvent) => {
+                var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                var end = Utils_Date.shiftToUTC(new Date(event.endDate));
+
+                console.log("t: " + today.getTime() +", s: " + start.getTime() + ", e: " + end.getTime());
+
+                return Calendar_DateUtils.isBetween(today, start, end);
+            });
+
+            deferred.resolve(todaysEvents);
+
+        });
+
+        return deferred.promise;
+    }
 }

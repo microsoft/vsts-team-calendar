@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="sdk/scripts/VSS.SDK.js"></script>
+
+    <style>
+        .widget .events-today-details,
+        .widget .members-today-details {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-weight: bold;
+        }
+        
+        .widget .off-today-title,
+        .widget .events-today-title {
+            font-weight: bold;
+        }
+        
+        .widget .member-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        VSS.init({                        
+            explicitNotifyLoaded: true,
+            usePlatformStyles: true,
+             moduleLoaderConfig: {
+                paths: {
+                    "Calendar": "built/min/Calendar",
+                }
+            }
+        });
+
+        VSS.require([
+            "TFS/Dashboards/WidgetHelpers",
+            "Calendar/EventSources/VSOCapacityEventSource",
+            "Calendar/EventSources/FreeFormEventsSource"], 
+            function (WidgetHelpers, CapacityEventSource, FreeFormEventsSource) {
+            
+            WidgetHelpers.IncludeWidgetStyles();
+            
+            VSS.register("today-widget", function () {                
+                return {
+                    load: function (widgetSettings) {
+                        // Shows days off
+                        var capacityEventSource = new CapacityEventSource.VSOCapacityEventSource();
+                        
+                        capacityEventSource.findMembersOffToday().then(function(members) {
+                            var title = "";
+
+                            if (members.length > 0) {
+                                members.forEach(function(m) {
+                                    var memberImage = $("<img/>").attr("src", m.imageUrl).addClass("member-icon").appendTo(".off-today-details");
+                                    memberImage.attr("title", m.displayName);
+                                });
+
+                                if (members.length == 1) {
+                                    title = "1 person is out today"
+                                } else {
+                                    title = members.length + " people are out today"
+                                }
+
+                            } else {    
+                                title = "Everybody is here today!";
+                            }
+
+                             $(".off-today-title").html(title);
+                        });
+
+                        // Show any free form events
+                        var eventSource = new FreeFormEventsSource.FreeFormEventsSource();
+
+                        eventSource.getTodaysEvents().then(function(events) {
+                            var title = "No events today";
+                            var details = "";
+                        
+                            if (events.length == 1) {
+                                title = "1 event today";
+                                details = events[0].title;
+                            } else if (events.length > 1) {
+                                title = events.length + " events today";
+                                events.forEach(function(event, index) {
+                                    details += event.title + (index < events.length - 1 ? ", " : "");
+                                });
+                            }
+
+                            $(".events-today-title").html(details);
+                            //$(".events-today-details").html(details);
+                        });
+
+                        // Attach onclick 
+                        $(".widget").click(function() {
+                            var vsoContext = VSS.getWebContext();
+                            var extensionContext = VSS.getExtensionContext();
+
+                            var calendarHubUrl = vsoContext.host.uri
+                                + vsoContext.project.name
+                                + "/" 
+                                + vsoContext.team.name
+                                + "/_apps/hub/" 
+                                + extensionContext.publisherId
+                                + "."
+                                + extensionContext.extensionId
+                                + "."
+                                + "calendar";
+
+                            window.parent.location.href = calendarHubUrl;
+                        });
+
+                        return WidgetHelpers.WidgetStatusHelper.Success();
+                    }
+                }
+            });
+
+            VSS.notifyLoadSucceeded();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="widget">
+        <h2 class="title">Happening Today</h2>
+
+        <div class="events-today">
+            <h3 class="events-today-title"></h3>
+            <span class="events-today-details"></span>
+        </div>
+
+        <div class="off-today">
+            <h3 class="off-today-title"></h3>
+            <span class="off-today-details"></span>
+        </div>
+    </div>
+</body>
+
+</html>

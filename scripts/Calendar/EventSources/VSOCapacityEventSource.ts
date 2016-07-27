@@ -480,8 +480,38 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     
     private _buildCapacityEventId(event: Calendar_Contracts.CalendarEvent): string {
         return Utils_String.format("{0}.{1}.{2}", this.id, event.title, event.startDate);
+    }    
+
+    public findMembersOffToday() : IPromise<Calendar_Contracts.ICalendarMember[]> {
+        var deferred = Q.defer<Calendar_Contracts.ICalendarMember[]>();
+
+        this.getEvents({}).then((r: Calendar_Contracts.CalendarEvent[]) => {
+            var today = Utils_Date.stripTimeFromDate(new Date());
+            console.log("today: " + today);
+            var query = <Calendar_Contracts.IEventQuery>{startDate: today, endDate: today};
+            var members: { [id: string]: Calendar_Contracts.ICalendarMember } = {};
+
+            this._events.forEach(event => {         
+console.log("event: " + event.startDate + ", " + event.endDate + ": " + event.title);
+
+                var start = Utils_Date.shiftToUTC(new Date(event.startDate));
+                var end = Utils_Date.shiftToUTC(new Date(event.endDate));
+
+
+                if (Calendar_DateUtils.isBetween(today, start, end)) {
+                    if (!members[event.member.id]) {
+                        members[event.member.id] = event.member;
+                    } 
+                }
+            }); 
+
+            deferred.resolve(Object.keys(members).map(key => { return members[key] }));
+        });
+
+        return deferred.promise;
     }
 }
+
 
 export class IdentityHelper {
     public static IDENTITY_UNIQUEFIEDNAME_SEPERATOR_START = "<";

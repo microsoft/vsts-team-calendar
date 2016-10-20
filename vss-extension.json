@@ -35,6 +35,17 @@
             "path": "LICENSE.txt"
         }
     },
+    "links": {
+        "support": {
+            "uri": "https://github.com/Microsoft/vsts-team-calendar/issues"
+        },
+        "source": {
+            "uri": "https://github.com/Microsoft/vsts-team-calendar"
+        },
+        "github": {
+            "uri": "https://github.com/Microsoft/vsts-team-calendar"
+        }
+    },
     "screenshots": [
         {
             "path": "images/calendar-screen-shot.png"

@@ -53,13 +53,17 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
                         }
                         
                         event.title = iteration.name;
+                        var start = new Date(event.startDate);
+                        var end = new Date(event.endDate);
+                        var startAsUtc = new Date(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate(), start.getUTCHours(), start.getUTCMinutes(), start.getUTCSeconds());
+                        var endAsUtc = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate(), end.getUTCHours(), end.getUTCMinutes(), end.getUTCSeconds());
                         
                         event.category = <Calendar_Contracts.IEventCategory> {
                             id: this.id + "." + iteration.name,
                             title: iteration.name,
                             subTitle: Utils_String.format("{0} - {1}",
-                                Utils_Date.format(new Date(event.startDate), "M"),
-                                Utils_Date.format(new Date(event.endDate), "M")),                          
+                                Utils_Date.format(startAsUtc, "M"),
+                                Utils_Date.format(endAsUtc, "M")),                          
                         }
                         if (this._isCurrentIteration(event)) {
                             event.category.color = Calendar_ColorUtils.generateBackgroundColor(event.title)

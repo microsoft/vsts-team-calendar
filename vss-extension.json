@@ -77,7 +77,7 @@
             "addressable": true  
         },                
         {
-            "path": "built/debug",
+            "path": "built/min",
             "addressable": true
         },              
         {

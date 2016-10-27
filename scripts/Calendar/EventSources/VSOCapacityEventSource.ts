@@ -8,6 +8,7 @@ import Calendar_DateUtils = require("Calendar/Utils/Date");
 import Calendar_ColorUtils = require("Calendar/Utils/Color");
 import Capacity_Enhancer = require("Calendar/Enhancers/VSOCapacityEnhancer");
 import Contributions_Contracts = require("VSS/Contributions/Contracts");
+import Culture = require("VSS/Utils/Culture")
 import Q = require("q");
 import Service = require("VSS/Service");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
@@ -441,14 +442,14 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                 var member = <Work_Contracts.Member>(<any>event).member;
                 if (!memberMap[member.id]) {
                     event.category.events = [event.id];
-                    event.category.subTitle = this._getCategorySubTitle(event.category, events);
+                    event.category.subTitle = this._getCategorySubTitle(event.category, events, query);
                     memberMap[member.id] = event.category;
                     categories.push(event.category);
                 }
                 else {
                     var category = memberMap[member.id];
                     category.events.push(event.id);
-                    category.subTitle = this._getCategorySubTitle(category, events);
+                    category.subTitle = this._getCategorySubTitle(category, events, query);
                 }                
             }
         });
@@ -456,22 +457,28 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         return categories;
     }
     
-    private _getCategorySubTitle(category: Calendar_Contracts.IEventCategory, events: Calendar_Contracts.CalendarEvent[]): string {
+    private _getCategorySubTitle(category: Calendar_Contracts.IEventCategory, events: Calendar_Contracts.CalendarEvent[], query: Calendar_Contracts.IEventQuery): string {
         // add up days off per person
-        var daysOffCount = 0;
+        var daysOffInRange: Date[] = [];
+        var queryStartInUtc = new Date(query.startDate.getUTCFullYear(), query.startDate.getUTCMonth(), query.startDate.getUTCDate(), query.startDate.getUTCHours(), query.startDate.getUTCMinutes(), query.startDate.getUTCSeconds());
+        var queryEndInUtc = new Date(query.endDate.getUTCFullYear(), query.endDate.getUTCMonth(), query.endDate.getUTCDate(), query.endDate.getUTCHours(), query.endDate.getUTCMinutes(), query.endDate.getUTCSeconds());
         category.events.forEach(e => {
             var event = events.filter(event => event.id === e)[0];
-            if (event) {
-                daysOffCount += Utils_Date.daysBetweenDates(new Date(event.endDate), new Date(event.startDate));
-            }
+            var datesInRange = Calendar_DateUtils.getDatesInRange(Utils_Date.shiftToUTC(new Date(event.startDate)), Utils_Date.shiftToUTC(new Date(event.endDate)));
+            datesInRange.forEach((dateToCheck: Date, index: number, array: Date[]) => {
+                var dateToCheckInUtc = new Date(dateToCheck.getUTCFullYear(), dateToCheck.getUTCMonth(), dateToCheck.getUTCDate(), dateToCheck.getUTCHours(), dateToCheck.getUTCMinutes(), dateToCheck.getUTCSeconds());
+               if (Calendar_DateUtils.isBetween(dateToCheckInUtc, queryStartInUtc, queryEndInUtc)) {
+                   daysOffInRange.push(dateToCheck);
+               } 
+            });
         });
         
         // if user has only one day off, return that date
-        if(daysOffCount == 1){
-             return Utils_Date.shiftToUTC(new Date(events[0].startDate)).toDateString();
+        if(daysOffInRange.length === 1) {
+             return Utils_Date.localeFormat(daysOffInRange[0], Culture.getDateTimeFormat().ShortDatePattern, true);
         }
         // else return total number of days off
-        return Utils_String.format("{0} days off", daysOffCount)
+        return Utils_String.format("{0} days off", daysOffInRange.length)
     }
 
     private _buildTeamImageUrl(hostUri: string, id: string): string {

@@ -1,6 +1,4 @@
-﻿/// <reference path='../../../typings/VSS.d.ts' />
-
-import Utils_String = require("VSS/Utils/String");
+﻿import Utils_String = require("VSS/Utils/String");
 
 var allColors = [
     "0072C6",

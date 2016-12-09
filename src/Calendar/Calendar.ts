@@ -1,15 +1,14 @@
-﻿/// <reference path='../../typings/VSS.d.ts' />
-/// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
-
-import Calendar_ColorUtils = require("Calendar/Utils/Color");
-import Calendar_Contracts = require("Calendar/Contracts");
-import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
+﻿import Calendar_ColorUtils = require("./Utils/Color");
+import Calendar_Contracts = require("./Contracts");
+import Calendar_Utils_Guid = require("./Utils/Guid");
 import Controls = require("VSS/Controls");
 import Culture = require("VSS/Utils/Culture");
 import Q = require("q");
 import Utils_Core = require("VSS/Utils/Core");
 import Utils_Date = require("VSS/Utils/Date");
 import Utils_String = require("VSS/Utils/String");
+
+import FullCalendar = require("fullCalendar");
 
 export interface CalendarOptions {
     fullCalendarOptions: IDictionaryStringTo<any>;
@@ -18,13 +17,13 @@ export interface CalendarOptions {
 
 export interface SourceAndOptions {
     source: Calendar_Contracts.IEventSource;
-    options?: FullCalendar.EventSourceOptions;
+    options?: FullCalendar.Options;
     callbacks?: { [callbackType: number]: Function };
 }
 
 export interface CalendarEventSource {
 
-    (source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions): void;
+    (source: Calendar_Contracts.IEventSource, options: FullCalendar.Options): void;
 
     eventSource: Calendar_Contracts.IEventSource;
     state?: CalendarEventSourceState;
@@ -94,7 +93,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
             eventAfterAllRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterAllRender),
             eventDestroy: this._getComposedCallback(FullCalendarCallbackType.eventDestroy),
-            viewRender: (view: FullCalendar.View, element: JQuery) => this._viewRender(view, element),
+            viewRender: (view: FullCalendar.ViewObject, element: JQuery) => this._viewRender(view, element),
             viewDestroy: this._getComposedCallback(FullCalendarCallbackType.viewDestroy),
             dayRender: this._getComposedCallback(FullCalendarCallbackType.dayRender),
             windowResize: this._getComposedCallback(FullCalendarCallbackType.windowResize),
@@ -120,7 +119,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         }, this._options.fullCalendarOptions));
     }
 
-    public addEventSource(source: Calendar_Contracts.IEventSource, options?: FullCalendar.EventSourceOptions, callbacks?: { [callbackType: number]: Function }) {
+    public addEventSource(source: Calendar_Contracts.IEventSource, options?: FullCalendar.Options, callbacks?: { [callbackType: number]: Function }) {
         this.addEventSources([{ source: source, options: options, callbacks: callbacks }]);
     }
 
@@ -236,19 +235,19 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             this._element.fullCalendar("removeEvents", id );
         }
     }
-    private _viewRender(view: FullCalendar.View, element: JQuery) {
+    private _viewRender(view: FullCalendar.ViewObject, element: JQuery) {
         view["renderId"] = Math.random();
     }
 
-    private _createFilteredCallback(original: (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) => any, filter: (event: FullCalendar.EventObject) => boolean): Function {
-        return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) => {
+    private _createFilteredCallback(original: (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) => any, filter: (event: FullCalendar.EventObject) => boolean): Function {
+        return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) => {
             if (filter(event)) {
                 return original(event, element, view);
             }
         };
     }
 
-    private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.EventSourceOptions): CalendarEventSource {
+    private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.Options): CalendarEventSource {
         var state: CalendarEventSourceState = {};
 
         var getEventsMethod = (start: Date, end: Date, timezone: string|boolean, callback: (events: FullCalendar.EventSource) => void) => {
@@ -273,7 +272,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             start: start,
                             end: end,
                             eventType: source.id,
-                            rendering: options.rendering || '',
+                            rendering: (<any>options).rendering || '',
                             category: value.category,
                             iterationId: value.iterationId,
                             member: value.member,
@@ -293,7 +292,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
-                        if (options.rendering === "background" && value.category) {
+                        if ((<any>options).rendering === "background" && value.category) {
                             var color = <any>value.category.color || Calendar_ColorUtils.generateBackgroundColor((<string>event.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
@@ -329,7 +328,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
 
     private _getComposedCallback(callbackType: FullCalendarCallbackType) {
         var args = arguments;
-        return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View): JQuery | boolean => {
+        return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject): JQuery | boolean => {
             var fns = this._callbacks[callbackType];
             if (!fns) {
                 return undefined;

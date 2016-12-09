@@ -1,11 +1,7 @@
-/// <reference path='../../typings/VSS.d.ts' />
-/// <reference path='../../typings/TFS.d.ts' />
-/// <reference path='../../typings/fullCalendar/fullCalendar.d.ts' />
-
-import Calendar = require("Calendar/Calendar");
-import Calendar_Contracts = require("Calendar/Contracts");
-import Calendar_Dialogs = require("Calendar/Dialogs");
-import Calendar_Utils_Guid = require("Calendar/Utils/Guid");
+import Calendar = require("./Calendar");
+import Calendar_Contracts = require("./Contracts");
+import Calendar_Dialogs = require("./Dialogs");
+import Calendar_Utils_Guid = require("./Utils/Guid");
 import Controls = require("VSS/Controls");
 import Controls_Dialogs = require("VSS/Controls/Dialogs");
 import Controls_Menus = require("VSS/Controls/Menus");
@@ -22,6 +18,8 @@ import WebApi_Constants = require("VSS/WebApi/Constants");
 import WebApi_Contracts = require("VSS/WebApi/Contracts");
 import Work_Client = require("TFS/Work/RestClient");
 import Work_Contracts = require("TFS/Work/Contracts");
+
+import FullCalendar = require("fullcalendar");
 
 function newElement(tag: string, className?: string, text?: string): JQuery {
     return $("<" + tag + "/>")
@@ -224,7 +222,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             };
             sourceAndOptions.callbacks[Calendar.FullCalendarCallbackType.eventRender] = this._eventRender.bind(this, eventSource);
             if (eventSource.background) {
-                sourceAndOptions.options = { rendering: "background" };
+                sourceAndOptions.options = <any>{ rendering: "background" };
             }
             return sourceAndOptions;
         });
@@ -239,7 +237,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         return this._calendarEventSourceMap[eventSourceId];
     }
 
-    private _eventRender(eventSource: Calendar_Contracts.IEventSource, event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
+    private _eventRender(eventSource: Calendar_Contracts.IEventSource, event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) {
         if (event.rendering !== 'background') {
             var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
             var calendarEvent = this._eventObjectToCalendarEvent(eventObject);
@@ -324,7 +322,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         });        
     }
 
-    private _eventAfterRender(event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.View) {
+    private _eventAfterRender(event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) {
         if (event.rendering === "background") {
             element.addClass("sprint-event");
             element.data("event", event);
@@ -343,7 +341,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         }
     }
 
-    private _daysSelected(startDate: Date, endDate: Date, allDay: boolean, jsEvent: MouseEvent, view: FullCalendar.View) {
+    private _daysSelected(startDate: Date, endDate: Date, allDay: boolean, jsEvent: MouseEvent, view: FullCalendar.ViewObject) {
         if(this._eventSources != null && this._eventSources.getAllSources().length > 0 ) {
             var addEventSources: Calendar_Contracts.IEventSource[];
             addEventSources = $.grep(this._eventSources.getAllSources(), (eventSource) => { return !!eventSource.addEvent; });
@@ -366,7 +364,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 };
 
                 var dataDate = Utils_Date.format(Utils_Date.shiftToUTC(new Date(event.endDate)), "yyyy-MM-dd"); //2015-04-19
-                var $element = $("td.fc-day-number[data-date='" + dataDate + "']");
+                var $element = $("td.fc-day-top[data-date='" + dataDate + "']");
                 if (this._popupMenu) {
                     this._popupMenu.dispose();
                     this._popupMenu = null;
@@ -418,7 +416,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         return Q.all(commandPromises);   
     }
 
-    private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.View) {
+    private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.ViewObject) {
         var eventObject = <Calendar_Contracts.IExtendedCalendarEventObject> event;
         var source  = this._getEventSourceFromEvent(eventObject);
         if (source.getEnhancer) {
@@ -432,7 +430,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         }
     }
 
-    private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.View) {
+    private _eventMoved(event: Calendar_Contracts.IExtendedCalendarEventObject, dayDelta: number, minuteDelta: number, revertFunc: Function, jsEvent: Event, ui: any, view: FullCalendar.ViewObject) {
         var calendarEvent = this._eventObjectToCalendarEvent(event);
         
         var eventSource: Calendar_Contracts.IEventSource = this._getEventSourceFromEvent(event);
@@ -451,7 +449,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                 event.end =  Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                                 event.start = updatedEvent.startDate;                                
                                 event.__etag = updatedEvent.__etag;
-                                this._calendar.updateEvent(event);
+                                this._calendar.updateEvent(<any>event);
                             });
                         }
                     });
@@ -553,7 +551,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             event.__etag = updatedEvent.__etag; 
                             // Update iteration
                             event.iterationId = updatedEvent.iterationId;
-                            this._calendar.updateEvent(event);
+                            this._calendar.updateEvent(<any>event);
                         }
                         else {
                             this._calendar.refreshEvents(originalEventSource);

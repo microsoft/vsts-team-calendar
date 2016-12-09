@@ -1,8 +1,4 @@
-/// <reference path='../../../typings/VSS.d.ts' />
-/// <reference path='../../../typings/q.d.ts' />
-/// <reference path='../../../typings/jquery.d.ts' />
-
-import Calendar_Contracts = require("Calendar/Contracts");
+import Calendar_Contracts = require("../Contracts");
 import Q = require("q");
 
 export class FreeFormEnhancer implements Calendar_Contracts.IEventEnhancer {

@@ -1,4 +1,4 @@
-import Calendar_Views = require("Calendar/Views");
+import Calendar_Views = require("./Views");
 
 $(() => {
     Calendar_Views.CalendarView.enhance(Calendar_Views.CalendarView, $(".calendar-view"));

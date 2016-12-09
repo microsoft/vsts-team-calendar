@@ -1,12 +1,7 @@
-/// <reference path='../../../typings/VSS.d.ts' />
-/// <reference path='../../../typings/TFS.d.ts' />
-/// <reference path='../../../typings/q.d.ts' />
-/// <reference path='../../../typings/jquery.d.ts' />
-
-import Calendar_Contracts = require("Calendar/Contracts");
-import Calendar_DateUtils = require("Calendar/Utils/Date");
-import Calendar_ColorUtils = require("Calendar/Utils/Color");
-import Capacity_Enhancer = require("Calendar/Enhancers/VSOCapacityEnhancer");
+import Calendar_Contracts = require("../Contracts");
+import Calendar_DateUtils = require("../Utils/Date");
+import Calendar_ColorUtils = require("../Utils/Color");
+import Capacity_Enhancer = require("../Enhancers/VSOCapacityEnhancer");
 import Contributions_Contracts = require("VSS/Contributions/Contracts");
 import Culture = require("VSS/Utils/Culture")
 import Q = require("q");

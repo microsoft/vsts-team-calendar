@@ -1,3 +1,5 @@
+import FullCalendar = require("FullCalendar");
+
 /**
  * Content to be rendered by the Add Event Dialog
  */
@@ -444,32 +446,32 @@ export interface IEventIcon {
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventObject {
-    color?: string;
+    __etag?: number;
+    allDay?: boolean;
     backgroundColor?: string;
     borderColor?: string;
-    textColor?: string;
-    className?: string|string[];
-    editable?: boolean;
-    startEditable?: boolean;
-    durationEditable?: boolean;
-    rendering?: string;
-    overlap?: boolean;
-    constraint?: string;
-    id?: string;
-    __etag?: number;
-    title: string;
-    description?: string;
-    allDay?: boolean;
-    start: Date|string;
-    end?: Date|string;
-    url?: string;
-    source?: any | IExtendedCalendarEventSource;
-    member?: ICalendarMember;
     category?: IEventCategory;
-    iterationId?: string;
-    icons?: IEventIcon[];
-    eventType?: string;
+    className?: string|string[];
+    color?: string;
+    constraint?: string | FullCalendar.Timespan | FullCalendar.BusinessHours;
+    description?: string;
+    durationEditable?: boolean;
+    editable?: boolean;
+    end?: Date|string;
     eventData?: any;
+    eventType?: string;
+    icons?: IEventIcon[];
+    id?: string;
+    iterationId?: string;
+    member?: ICalendarMember;
+    overlap?: boolean;
+    rendering?: string;
+    source?: any | IExtendedCalendarEventSource;
+    start: Date|string;
+    startEditable?: boolean;
+    textColor?: string;
+    title: string;
+    url?: string;
 }
 
 /**

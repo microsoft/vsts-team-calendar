@@ -1,14 +1,17 @@
 {
     "compilerOptions": {
         "module": "amd",
+        "moduleResolution": "node",
         "target": "es5",
-        "removeComments": true,
-        "sourceMap": false,
-        "rootDir": "scripts",
-        "outDir": "built/debug"
+        "outDir": "dist/",
+        "types": [
+            "vss-web-extension-sdk",
+            "fullcalendar",
+            "jquery",
+            "q"
+        ]
     },
-    "exclude": [
-        "node_modules",
-        "typings"
+    "include": [
+        "src/**/*.ts"
     ]
 }

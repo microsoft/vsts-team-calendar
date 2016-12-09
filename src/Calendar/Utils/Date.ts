@@ -1,7 +1,4 @@
-﻿/// <reference path='../../../typings/VSS.d.ts' />
-/// <reference path='../../../typings/TFS.d.ts' />
-
-import Calendar_Contracts = require("Calendar/Contracts");
+﻿import Calendar_Contracts = require("../Contracts");
 import Q = require("q");
 import Service = require("VSS/Service");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");

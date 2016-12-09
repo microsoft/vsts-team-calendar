@@ -1,6 +1,4 @@
-/// <reference path='../../typings/VSS.d.ts' />
-
-import Calendar_Contracts = require("Calendar/Contracts");
+import Calendar_Contracts = require("./Contracts");
 import Context = require("VSS/Context");
 import Controls = require("VSS/Controls");
 import Controls_Contributions = require("VSS/Contributions/Controls");
@@ -108,7 +106,9 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                     categoriesPromise: this._source.getCategories.bind(this, this._options.query),
                     validStateChangedHandler: (valid: boolean) => {
                         this._contributionsValid = valid;
-                        ("blur", (e) => {                        
+
+                        // Erhm...
+                        ((e) => {                        
                             this._validate(true);
                         });
                      },
@@ -760,7 +760,7 @@ class DateRelativeToValidator extends Controls_Validation.BaseValidator<DateRela
             return true;
         }
 
-        if ((fieldDate instanceof Date) && !isNaN(fieldDate) && relativeToFieldDate instanceof Date && !isNaN(relativeToFieldDate)) {
+        if ((fieldDate instanceof Date) && !isNaN(fieldDate.getTime()) && relativeToFieldDate instanceof Date && !isNaN(relativeToFieldDate.getTime())) {
             if (this._options.comparison === DateComparisonOptions.GREATER_OR_EQUAL) {
                 result = fieldDate >= relativeToFieldDate;
             }

@@ -1,20 +1,19 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.4.4",
+    "version": "0.4.7",
     "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
     "public": true,
     "icons": {
-        "default": "images/calendar-logo.png"
+        "default": "static/images/calendar-logo.png"
     },
     "tags": [
         "plan",
         "time",
         "calendar",
-        "capacity",
-        "awesomeness"
+        "capacity"
     ],
     "targets": [
         {
@@ -48,41 +47,24 @@
     },
     "screenshots": [
         {
-            "path": "images/calendar-screen-shot.png"
+            "path": "static/images/calendar-screen-shot.png"
         }              
     ],
     "files": [
         {
-            "path": "images",
-            "addressable": true
-        },
-        {
-            "path": "css",
-            "addressable": true
-        },  
-        {
-            "path": "calendar.html",
-            "addressable": true
-        },              
-        {
-            "path": "calendarServices.html",
-            "addressable": true
-        },
-        {
-            "path": "freeFormControls.html",
-            "addressable": true  
-        },
-        {
-            "path": "daysOffControls.html",
-            "addressable": true  
+            "path": "static",
+            "addressable": true,
+            "packagePath": "/"  
         },                
         {
-            "path": "built/min",
-            "addressable": true
+            "path": "dist",
+            "addressable": true,
+            "packagePath": "scripts"
         },              
         {
-            "path": "sdk",
-            "addressable": true
+            "path": "node_modules/vss-web-extension-sdk/lib",
+            "addressable": true,
+            "packagePath": "lib"
         }
     ],
     "branding": {

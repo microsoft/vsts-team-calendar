@@ -52,6 +52,6 @@
     "@types/jquery": "^2.0.34",
     "@types/q": "0.0.32",
     "fullcalendar": "^3.1.0",
-    "vss-web-extension-sdk": "^1.109.0"
+    "vss-web-extension-sdk": "^2.109.0"
   }
 }

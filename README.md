@@ -1,5 +1,3 @@
-![build](https://mseng.visualstudio.com/DefaultCollection/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge?branchName=master)
-
 # Team Calendar Extension 
 # for Visual Studio Team Services and Team Foundation Server
 

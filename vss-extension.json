@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.4.7",
+    "version": "0.5.0",
     "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
@@ -18,17 +18,17 @@
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
-        }  
+        }
     ],
     "scopes": [
-        "vso.work_write"  
+        "vso.work_write"
     ],
     "categories": [
         "Plan and track"
     ],
     "content": {
         "details": {
-            "path": "overview.md"   
+            "path": "overview.md"
         },
         "license": {
             "path": "LICENSE.txt"
@@ -37,30 +37,26 @@
     "links": {
         "support": {
             "uri": "https://github.com/Microsoft/vsts-team-calendar/issues"
-        },
-        "source": {
-            "uri": "https://github.com/Microsoft/vsts-team-calendar"
-        },
-        "github": {
-            "uri": "https://github.com/Microsoft/vsts-team-calendar"
         }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Microsoft/vsts-team-calendar"
     },
     "screenshots": [
         {
             "path": "static/images/calendar-screen-shot.png"
-        }              
+        }
     ],
     "files": [
         {
             "path": "static",
-            "addressable": true,
-            "packagePath": "/"  
-        },                
+            "addressable": true
+        },
         {
             "path": "dist",
-            "addressable": true,
-            "packagePath": "scripts"
-        },              
+            "addressable": true
+        },
         {
             "path": "node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
@@ -82,7 +78,7 @@
             "properties": {
                 "name": "Calendar",
                 "order": 22,
-                "uri": "calendar.html"
+                "uri": "static/calendar.html"
             }
         },
         {
@@ -101,7 +97,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "static/calendarServices.html"
             }
         },
         {
@@ -112,7 +108,7 @@
                 ".calendar"
             ],
             "properties": {
-                "uri": "freeFormControls.html"
+                "uri": "static/freeFormControls.html"
             }
         },
         {
@@ -123,7 +119,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "static/calendarServices.html"
             }
         },
         {
@@ -134,7 +130,7 @@
                 ".calendar"
             ],
             "properties": {
-                "uri": "daysOffControls.html"
+                "uri": "static/daysOffControls.html"
             }
         },
         {
@@ -145,7 +141,7 @@
                 ".calendar-event-sources"
             ],
             "properties": {
-                "uri": "calendarServices.html"
+                "uri": "static/calendarServices.html"
             }
         }
     ],
@@ -166,5 +162,6 @@
                     "required": true
                 }
             }
-        }]
+        }
+    ]
 }

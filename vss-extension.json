@@ -43,6 +43,13 @@
         "type": "git",
         "url": "https://github.com/Microsoft/vsts-team-calendar"
     },
+    "badges": [
+        {
+            "href": "https://github.com/Microsoft/vsts-team-calendar",
+            "uri": "https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge",
+            "description": "Team Calendar CI build status"
+        }
+    ],
     "screenshots": [
         {
             "path": "static/images/calendar-screen-shot.png"

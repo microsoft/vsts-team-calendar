@@ -60,7 +60,7 @@
         {
             "path": "node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
-            "packagePath": "lib"
+            "packagePath": "dist/vss-web-extension-sdk"
         }
     ],
     "branding": {

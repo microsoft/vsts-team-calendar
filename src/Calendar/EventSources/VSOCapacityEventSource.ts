@@ -123,6 +123,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                             var regroupedEvent: Calendar_Contracts.CalendarEvent = {
                                                 startDate: date,
                                                 endDate: date,
+                                                member: event.member,
                                                 title: "",
                                                 id: this.id + "." + date,
                                                 category: <Calendar_Contracts.IEventCategory> {
@@ -177,6 +178,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                                                 var regroupedEvent: Calendar_Contracts.CalendarEvent = {
                                                     startDate: date,
                                                     endDate: date,
+                                                    member: event.member,
                                                     title: "",
                                                     id: this.id + "." + date,
                                                     category: <Calendar_Contracts.IEventCategory> {

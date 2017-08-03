@@ -9,6 +9,7 @@ import Controls_Navigation = require("VSS/Controls/Navigation");
 import Controls_StatusIndicator = require("VSS/Controls/StatusIndicator");
 import Q = require("q");
 import Service = require("VSS/Service");
+import Services_Navigation = require("VSS/SDK/Services/Navigation");
 import Tfs_Core_WebApi = require("TFS/Core/RestClient");
 import TFS_Core_Contracts = require("TFS/Core/Contracts");
 import Utils_Core = require("VSS/Utils/Core");
@@ -688,9 +689,19 @@ export class SummaryView extends Controls.BaseControl {
                     var $sectionContainer = newElement("div", "category").appendTo(this.getElement());
                     var summaryTitle = source.name;
                     source.getTitleUrl(VSS.getWebContext()).then((titleUrl) => {
-                        if (titleUrl) {
-                            $("<h3>").html("<a target='_blank' href='" + titleUrl + "'>" + summaryTitle + "</a>").appendTo($sectionContainer);  
-                        }
+                    if (titleUrl) {
+                        var $link = newElement("a", "", summaryTitle);
+                        $link.on('click', (eventObject) => { 
+                            VSS.getService(VSS.ServiceIds.Navigation).then((navigationService: Services_Navigation.HostNavigationService) => {
+                                // Get current hash value from host url
+                                navigationService.openNewWindow(titleUrl, "");
+                            });
+                        });
+
+                        var $title = $("<h3>");
+                        $link.appendTo($title);
+                        $title.appendTo($sectionContainer);
+                    }
                         else {
                             newElement("h3", "", summaryTitle).appendTo($sectionContainer);                            
                         }

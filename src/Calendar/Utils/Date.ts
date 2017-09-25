@@ -55,7 +55,7 @@ export function eventIn(event: Calendar_Contracts.CalendarEvent, query: Calendar
  * @param endDate End Date
  * @return Date[] containing each date in the range
  */
-export function getDatesInRange(startDate:Date, endDate: Date): Date[] {
+export function getDatesInRange(startDate: Date, endDate: Date): Date[] {
     var dates = [];
     var current: Date = startDate;
     while (current.getTime() <= endDate.getTime()) {

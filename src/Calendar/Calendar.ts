@@ -21,8 +21,7 @@ export interface SourceAndOptions {
     callbacks?: { [callbackType: number]: Function };
 }
 
-export interface CalendarEventSource {
-
+export interface CalendarEventSource extends FullCalendar.EventSource {
     (source: Calendar_Contracts.IEventSource, options: FullCalendar.Options): void;
 
     eventSource: Calendar_Contracts.IEventSource;
@@ -63,12 +62,10 @@ export enum FullCalendarCallbackType {
     eventResizeStop,
     eventResize,
     drop,
-    eventReceive
+    eventReceive,
 }
 
-export enum FullCalendarEventRenderingCallbackType {
-
-}
+export enum FullCalendarEventRenderingCallbackType {}
 
 export class Calendar extends Controls.Control<CalendarOptions> {
     private _callbacks: { [callbackType: number]: Function[] };
@@ -84,48 +81,56 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         super.initialize();
 
         //  Determine optimal aspect ratio
-        var aspectRatio = $('.leftPane').width() /($('.leftPane').height() - 85);
+        var aspectRatio = $(".leftPane").width() / ($(".leftPane").height() - 85);
         aspectRatio = parseFloat(aspectRatio.toFixed(1));
         var firstDay = Culture.getDateTimeFormat().FirstDayOfWeek;
-        
-        this._element.fullCalendar($.extend({
-            eventRender: this._getComposedCallback(FullCalendarCallbackType.eventRender),
-            eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
-            eventAfterAllRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterAllRender),
-            eventDestroy: this._getComposedCallback(FullCalendarCallbackType.eventDestroy),
-            viewRender: (view: FullCalendar.ViewObject, element: JQuery) => this._viewRender(view, element),
-            viewDestroy: this._getComposedCallback(FullCalendarCallbackType.viewDestroy),
-            dayRender: this._getComposedCallback(FullCalendarCallbackType.dayRender),
-            windowResize: this._getComposedCallback(FullCalendarCallbackType.windowResize),
-            dayClick: this._getComposedCallback(FullCalendarCallbackType.dayClick),
-            eventClick: this._getComposedCallback(FullCalendarCallbackType.eventClick),
-            eventMouseover: this._getComposedCallback(FullCalendarCallbackType.eventMouseover),
-            eventMouseout: this._getComposedCallback(FullCalendarCallbackType.eventMouseout),
-            select: this._getComposedCallback(FullCalendarCallbackType.select),
-            unselect: this._getComposedCallback(FullCalendarCallbackType.unselect),
-            eventDragStart: this._getComposedCallback(FullCalendarCallbackType.eventDragStart),
-            eventDragStop: this._getComposedCallback(FullCalendarCallbackType.eventDragStop),
-            eventDrop: this._getComposedCallback(FullCalendarCallbackType.eventDrop),
-            eventResizeStart: this._getComposedCallback(FullCalendarCallbackType.eventResizeStart),
-            eventResizeStop: this._getComposedCallback(FullCalendarCallbackType.eventResizeStop),
-            eventResize: this._getComposedCallback(FullCalendarCallbackType.eventResize),
-            drop: this._getComposedCallback(FullCalendarCallbackType.drop),
-            eventReceive: this._getComposedCallback(FullCalendarCallbackType.eventReceive),
-            header: false,
-            aspectRatio: aspectRatio,
-            columnFormat: "dddd",
-            selectable: true,
-            firstDay: firstDay
-        }, this._options.fullCalendarOptions));
+
+        this._element.fullCalendar(
+            $.extend(
+                {
+                    eventRender: this._getComposedCallback(FullCalendarCallbackType.eventRender),
+                    eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
+                    eventAfterAllRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterAllRender),
+                    eventDestroy: this._getComposedCallback(FullCalendarCallbackType.eventDestroy),
+                    viewRender: (view: FullCalendar.ViewObject, element: JQuery) => this._viewRender(view, element),
+                    viewDestroy: this._getComposedCallback(FullCalendarCallbackType.viewDestroy),
+                    dayRender: this._getComposedCallback(FullCalendarCallbackType.dayRender),
+                    windowResize: this._getComposedCallback(FullCalendarCallbackType.windowResize),
+                    dayClick: this._getComposedCallback(FullCalendarCallbackType.dayClick),
+                    eventClick: this._getComposedCallback(FullCalendarCallbackType.eventClick),
+                    eventMouseover: this._getComposedCallback(FullCalendarCallbackType.eventMouseover),
+                    eventMouseout: this._getComposedCallback(FullCalendarCallbackType.eventMouseout),
+                    select: this._getComposedCallback(FullCalendarCallbackType.select),
+                    unselect: this._getComposedCallback(FullCalendarCallbackType.unselect),
+                    eventDragStart: this._getComposedCallback(FullCalendarCallbackType.eventDragStart),
+                    eventDragStop: this._getComposedCallback(FullCalendarCallbackType.eventDragStop),
+                    eventDrop: this._getComposedCallback(FullCalendarCallbackType.eventDrop),
+                    eventResizeStart: this._getComposedCallback(FullCalendarCallbackType.eventResizeStart),
+                    eventResizeStop: this._getComposedCallback(FullCalendarCallbackType.eventResizeStop),
+                    eventResize: this._getComposedCallback(FullCalendarCallbackType.eventResize),
+                    drop: this._getComposedCallback(FullCalendarCallbackType.drop),
+                    eventReceive: this._getComposedCallback(FullCalendarCallbackType.eventReceive),
+                    header: false,
+                    aspectRatio: aspectRatio,
+                    columnFormat: "dddd",
+                    selectable: true,
+                    firstDay: firstDay,
+                },
+                this._options.fullCalendarOptions,
+            ),
+        );
     }
 
-    public addEventSource(source: Calendar_Contracts.IEventSource, options?: FullCalendar.Options, callbacks?: { [callbackType: number]: Function }) {
+    public addEventSource(
+        source: Calendar_Contracts.IEventSource,
+        options?: FullCalendar.Options,
+        callbacks?: { [callbackType: number]: Function },
+    ) {
         this.addEventSources([{ source: source, options: options, callbacks: callbacks }]);
     }
 
     public addEventSources(sources: SourceAndOptions[]): CalendarEventSource[] {
-
-        sources.forEach((source) => {
+        sources.forEach(source => {
             var calendarSource = this._createEventSource(source.source, source.options || {});
             this._calendarSources.push(calendarSource);
             this._element.fullCalendar("addEventSource", calendarSource);
@@ -138,7 +143,10 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                         // This callback doesn't make sense for individual events.
                         continue;
                     }
-                    this.addCallback(callbackType, this._createFilteredCallback(source.callbacks[callbackTypes[i]],(event) => event["eventType"] === source.source.id));
+                    this.addCallback(
+                        callbackType,
+                        this._createFilteredCallback(source.callbacks[callbackTypes[i]], event => event["eventType"] === source.source.id),
+                    );
                 }
             }
         });
@@ -151,31 +159,30 @@ export class Calendar extends Controls.Control<CalendarOptions> {
 
         return {
             startDate: Utils_Date.shiftToUTC(new Date(view.start.valueOf())),
-            endDate: Utils_Date.shiftToUTC(new Date(view.end.valueOf()))
+            endDate: Utils_Date.shiftToUTC(new Date(view.end.valueOf())),
         };
     }
 
-
-    public next() : void {
+    public next(): void {
         this._element.fullCalendar("next");
     }
 
-    public prev() : void {
+    public prev(): void {
         this._element.fullCalendar("prev");
     }
 
-    public showToday() : void {
+    public showToday(): void {
         this._element.fullCalendar("today");
     }
 
-    public getFormattedDate(format: string) : string{
-        var currentDate : any = this._element.fullCalendar("getDate");
+    public getFormattedDate(format: string): string {
+        var currentDate: any = this._element.fullCalendar("getDate");
         return currentDate.format(format);
     }
 
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
-        var end = Utils_Date.addDays(new Date(<any>(event.endDate)), 1).toISOString();
-        var calEvent: any  = {
+        var end = Utils_Date.addDays(new Date(<any>event.endDate), 1).toISOString();
+        var calEvent: any = {
             id: event.id,
             title: event.title,
             description: event.description,
@@ -187,15 +194,14 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             category: event.category,
             editable: event.movable,
             icons: event.icons,
-            eventData: event.eventData
+            eventData: event.eventData,
         };
-
 
         if (event.__etag) {
             calEvent.__etag = event.__etag;
         }
-        
-        if(event.member){
+
+        if (event.member) {
             calEvent.member = event.member;
         }
 
@@ -204,10 +210,10 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         calEvent.borderColor = calEvent.color;
         calEvent.textColor = calEvent.category.textColor || "#FFFFFF";
 
-        this._element.fullCalendar("renderEvent", calEvent, false );
+        this._element.fullCalendar("renderEvent", calEvent, false);
     }
 
-     public updateEvent(event: FullCalendar.EventObject) {
+    public updateEvent(event: FullCalendar.EventObject) {
         event.color = (<any>event).category.color;
         event.backgroundColor = event.color;
         event.borderColor = event.color;
@@ -215,31 +221,33 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         this._element.fullCalendar("updateEvent", event);
     }
 
-     public setOption(key: string, value: any) {
+    public setOption(key: string, value: any) {
         this._element.fullCalendar("option", key, value);
     }
-     
+
     public refreshEvents(eventSource?: FullCalendar.EventSource) {
         if (!eventSource) {
-            $('.sprint-label').remove();
+            $(".sprint-label").remove();
             this._element.fullCalendar("refetchEvents");
-        }
-        else {
+        } else {
             this._element.fullCalendar("removeEventSource", eventSource);
             this._element.fullCalendar("addEventSource", eventSource);
         }
     }
 
     public removeEvent(id: string) {
-        if(id){
-            this._element.fullCalendar("removeEvents", id );
+        if (id) {
+            this._element.fullCalendar("removeEvents", id);
         }
     }
     private _viewRender(view: FullCalendar.ViewObject, element: JQuery) {
         view["renderId"] = Math.random();
     }
 
-    private _createFilteredCallback(original: (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) => any, filter: (event: FullCalendar.EventObject) => boolean): Function {
+    private _createFilteredCallback(
+        original: (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) => any,
+        filter: (event: FullCalendar.EventObject) => boolean,
+    ): Function {
         return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject) => {
             if (filter(event)) {
                 return original(event, element, view);
@@ -250,16 +258,19 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.Options): CalendarEventSource {
         var state: CalendarEventSourceState = {};
 
-        var getEventsMethod = (start: Date, end: Date, timezone: string|boolean, callback: (events: FullCalendar.EventSource) => void) => {
-
+        var getEventsMethod = (
+            start: Date,
+            end: Date,
+            timezone: string | boolean,
+            callback: (events: FullCalendar.EventObject[]) => void,
+        ) => {
             if (!state.dirty && state.cachedEvents) {
                 callback(state.cachedEvents);
                 return;
             }
-            var loadSourcePromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>> source.load();
-            Q.timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.")
-                .then(
-                (results) => {
+            var loadSourcePromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>>source.load();
+            Q.timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.").then(
+                results => {
                     var calendarEvents = results.map((value, index) => {
                         //var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         var start = value.startDate;
@@ -272,28 +283,34 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                             start: start,
                             end: end,
                             eventType: source.id,
-                            rendering: (<any>options).rendering || '',
+                            rendering: (<any>options).rendering || "",
                             category: value.category,
                             iterationId: value.iterationId,
                             member: value.member,
                             editable: value.movable,
                             icons: value.icons,
-                            eventData: value.eventData
+                            eventData: value.eventData,
                         };
-                        
+
                         if (value.__etag) {
                             event.__etag = value.__etag;
                         }
 
                         if ($.isFunction(source.addEvent) && value.category) {
-                            var color = <any>value.category.color || Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
+                            var color =
+                                <any>value.category.color ||
+                                Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
                             event.backgroundColor = color;
                             event.borderColor = color;
                             event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         if ((<any>options).rendering === "background" && value.category) {
-                            var color = <any>value.category.color || Calendar_ColorUtils.generateBackgroundColor((<string>event.category.title || "uncategorized").toLowerCase());
+                            var color =
+                                <any>value.category.color ||
+                                Calendar_ColorUtils.generateBackgroundColor(
+                                    (<string>event.category.title || "uncategorized").toLowerCase(),
+                                );
                             event.backgroundColor = color;
                             event.borderColor = color;
                             event.textColor = value.category.textColor || "#FFFFFF";
@@ -305,11 +322,12 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     state.dirty = false;
                     state.cachedEvents = calendarEvents;
                     callback(calendarEvents);
-
-                },(reason) => {
+                },
+                reason => {
                     console.error(Utils_String.format("Error getting event data.\nEvent source: {0}\nReason: {1}", source.name, reason));
                     callback([]);
-                });
+                },
+            );
         };
 
         var calendarEventSource: CalendarEventSource = <any>getEventsMethod;
@@ -360,7 +378,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
      * @param FullCalendar.EventObject[] Array of events to add.
      */
     public addEvents(events: FullCalendar.EventObject[]) {
-        events.forEach((event) => {
+        events.forEach(event => {
             this._element.fullCalendar("renderEvent", event, true);
         });
     }
@@ -370,12 +388,12 @@ export class Calendar extends Controls.Control<CalendarOptions> {
      * @param Array of event IDs to remove, or a filter function, accepting an event, returing true if it is to be removed, false if it is to be kept. Leave null to remove all events.
      * @return EventObject[] - events that were removed.
      */
-    public removeEvents(filter: any[]|((event: FullCalendar.EventObject) => boolean)): FullCalendar.EventObject[] {
+    public removeEvents(filter: any[] | ((event: FullCalendar.EventObject) => boolean)): FullCalendar.EventObject[] {
         var clientEvents = this._element.fullCalendar("clientEvents", filter);
         this._element.fullCalendar("removeEvents", filter);
         return clientEvents;
-    }    
-    
+    }
+
     /**
      * Gets the current date of the calendar
      @ return Date

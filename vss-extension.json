@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.5.6",
+    "version": "0.5.14",
     "publisher": "ms-devlabs",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
@@ -21,7 +21,8 @@
         }
     ],
     "scopes": [
-        "vso.work_write"
+        "vso.work_write",
+        "vso.notification_publish"
     ],
     "categories": [
         "Plan and track"
@@ -149,6 +150,78 @@
             ],
             "properties": {
                 "uri": "static/calendarServices.html"
+            }
+        },
+        {
+            "id": "calendar-notification-event",
+            "type": "ms.vss-notifications.event-type",
+            "description": "Calendar event source for sprints/iterations.",
+            "targets": [
+                "ms.vss-extmgmt-web.extensions-event-publisher",
+                "ms.vss-extmgmt-web.extensions-event-category"
+            ],
+            "properties": {
+                "name": "Calendar event updated",
+                "description": "Triggered when a Team Calendar event is updated (created, modified, or deleted).",
+                "customSubscriptionsAllowed": true,
+                "hasInitiator": true,
+                "icon": "bowtie-calendar",
+                "supportedScopes": [ 
+                    "project", 
+                    "collection"
+                ],
+                "roles": [
+                    {
+                        "id": "initiator",
+                        "name": "Initiator"
+                    },
+                    {
+                        "id": "team",
+                        "name": "Team"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "calendar-event-email-template",
+            "type": "ms.vss-notifications.email-template",
+            "targets": [
+                ".calendar-notification-event"
+            ],
+            "includes": [
+                "ms.vss-notifications.standard-email-template"
+            ],
+            "properties": {
+                "sourceTemplate": "ms.vss-notifications.standard-email-template",
+                "inputs": {
+                    "email-subject": "Team Calendar event {{{ event.action }}}: {{{ event.calendarEvent.title }}}",
+                    "summary": "{{ event.calendarEvent.member.displayName }} {{ event.action }} calendar event {{ event.calendarEvent.title }}",
+                    "hero": {
+                        "title": "\"{{ event.calendarEvent.title }}\" {{ event.action }} by {{ event.calendarEvent.member.displayName }}",
+                        "message": "{{#if event.calendarEvent.description}}<p>Description: {{ event.calendarEvent.description }}</p>{{/if}}<p>Start Date: {{event.calendarEvent.startDate}}</p><p>End Date: {{event.calendarEvent.endDate}}</p>",
+                        "action": {
+                            "title": "Open team calendar",
+                            "url": "{{{ event.links.eventPage }}}"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "calendar-event-updated-subscription",
+            "type": "ms.vss-notifications.subscription",
+            "targets": [
+                "ms.vss-notifications.default-subscription-collection"
+            ],
+            "properties": {
+                "description": "A team calendar event was modified",
+                "filter": {
+                    "type": "Actor",
+                    "eventType": "ms-devlabs.team-calendar.calendar-notification-event",
+                    "inclusions": [ "team" ],
+                    "exclusions": [ "initiator" ],
+                    "criteria": {}
+                }
             }
         }
     ],

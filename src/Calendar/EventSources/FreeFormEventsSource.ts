@@ -1,6 +1,7 @@
 import Calendar_Contracts = require("../Contracts");
 import Calendar_DateUtils = require("../Utils/Date");
 import Calendar_ColorUtils = require("../Utils/Color");
+import Calendar_NotificationUtils = require("../Utils/Notifications");
 import Contracts_Platform = require("VSS/Common/Contracts/Platform");
 import Contributions_Contracts = require("VSS/Contributions/Contracts");
 import ExtensionManagement_RestClient = require("VSS/ExtensionManagement/RestClient");
@@ -127,6 +128,8 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     // add event
                     this._events.push(addedEvent);
                     deferred.resolve(addedEvent);
+
+                    Calendar_NotificationUtils.publishCalendarEvent(addedEvent, "added");
                 },
                 (e: Error) => {
                     deferred.reject(e);
@@ -162,6 +165,9 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
                     if (index > -1) {
                         this._events.splice(index, 1);
                     }
+
+                    Calendar_NotificationUtils.publishCalendarEvent(event, "deleted");
+
                     deferred.resolve(this._events);
                 },
                 (e: Error) => {
@@ -197,6 +203,9 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
             
             extensionDataService.updateDocument(this._teamId, newEvent).then(
                 (updatedEvent: Calendar_Contracts.CalendarEvent) => {
+
+                    Calendar_NotificationUtils.publishCalendarEvent(newEvent, "updated");
+
                     var eventInArray: Calendar_Contracts.CalendarEvent = $.grep(this._events, (e: Calendar_Contracts.CalendarEvent) => { return e.id === updatedEvent.id; })[0]; //better check here
                     var index = this._events.indexOf(eventInArray);
                     if (index > -1) {

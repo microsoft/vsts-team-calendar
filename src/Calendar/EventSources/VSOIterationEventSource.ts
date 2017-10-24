@@ -1,15 +1,13 @@
-import Calendar_Contracts = require("../Contracts");
-import Calendar_ColorUtils = require("../Utils/Color");
-import Calendar_DateUtils = require("../Utils/Date");
-import Q = require("q");
-import Service = require("VSS/Service");
-import TFS_Core_Contracts = require("TFS/Core/Contracts");
-import Utils_Core = require("VSS/Utils/Core");
-import Utils_Date = require("VSS/Utils/Date");
-import Utils_String = require("VSS/Utils/String");
-import WebApi_Constants = require("VSS/WebApi/Constants");
-import Work_Client = require("TFS/Work/RestClient");
-import Work_Contracts = require("TFS/Work/Contracts");
+import * as Calendar_Contracts from "../Contracts";
+import * as Calendar_ColorUtils from "../Utils/Color";
+import * as Calendar_DateUtils from "../Utils/Date";
+import * as Service from "VSS/Service";
+import * as TFS_Core_Contracts from "TFS/Core/Contracts";
+import * as Utils_Date from "VSS/Utils/Date";
+import * as Utils_String from "VSS/Utils/String";
+import * as WebApi_Constants from "VSS/WebApi/Constants";
+import * as Work_Client from "TFS/Work/RestClient";
+import * as Work_Contracts from "TFS/Work/Contracts";
 
 export class VSOIterationEventSource implements Calendar_Contracts.IEventSource {
     public id = "iterations";
@@ -19,114 +17,101 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     private _events: Calendar_Contracts.CalendarEvent[];
     private _categories: Calendar_Contracts.IEventCategory[];
 
-    public load(): IPromise<Calendar_Contracts.CalendarEvent[]> {
+    public load(): PromiseLike<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents();
     }
 
-    public getEvents(query?: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.CalendarEvent[]> {
-        var result: Calendar_Contracts.CalendarEvent[] = [];
-        var deferred = Q.defer<Calendar_Contracts.CalendarEvent[]>();
+    public getEvents(query?: Calendar_Contracts.IEventQuery): PromiseLike<Calendar_Contracts.CalendarEvent[]> {
+        const result: Calendar_Contracts.CalendarEvent[] = [];
         this._events = null;
 
-        var webContext = VSS.getWebContext();
-        var teamContext: TFS_Core_Contracts.TeamContext = {
+        const webContext = VSS.getWebContext();
+        const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
             teamId: webContext.team.id,
             project: "",
             team: "",
         };
-        var workClient: Work_Client.WorkHttpClient = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient = Service.VssConnection
             .getConnection()
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         // fetch the wit events
-        workClient.getTeamIterations(teamContext).then(
-            (iterations: Work_Contracts.TeamSettingsIteration[]) => {
-                iterations.forEach(
-                    (iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
-                        if (iteration && iteration.attributes && iteration.attributes.startDate) {
-                            var event: any = {};
-                            event.startDate = iteration.attributes.startDate.toISOString();
-                            if (iteration.attributes.finishDate) {
-                                event.endDate = iteration.attributes.finishDate.toISOString();
-                            }
+        return workClient.getTeamIterations(teamContext).then(iterations => {
+            for (const iteration of iterations) {
+                if (iteration && iteration.attributes && iteration.attributes.startDate) {
+                    const event: any = {};
+                    event.startDate = iteration.attributes.startDate.toISOString();
+                    if (iteration.attributes.finishDate) {
+                        event.endDate = iteration.attributes.finishDate.toISOString();
+                    }
 
-                            event.title = iteration.name;
-                            var start = new Date(event.startDate);
-                            var end = new Date(event.endDate);
-                            var startAsUtc = new Date(
-                                start.getUTCFullYear(),
-                                start.getUTCMonth(),
-                                start.getUTCDate(),
-                                start.getUTCHours(),
-                                start.getUTCMinutes(),
-                                start.getUTCSeconds(),
-                            );
-                            var endAsUtc = new Date(
-                                end.getUTCFullYear(),
-                                end.getUTCMonth(),
-                                end.getUTCDate(),
-                                end.getUTCHours(),
-                                end.getUTCMinutes(),
-                                end.getUTCSeconds(),
-                            );
+                    event.title = iteration.name;
+                    const start = new Date(event.startDate);
+                    const end = new Date(event.endDate);
+                    const startAsUtc = new Date(
+                        start.getUTCFullYear(),
+                        start.getUTCMonth(),
+                        start.getUTCDate(),
+                        start.getUTCHours(),
+                        start.getUTCMinutes(),
+                        start.getUTCSeconds(),
+                    );
+                    const endAsUtc = new Date(
+                        end.getUTCFullYear(),
+                        end.getUTCMonth(),
+                        end.getUTCDate(),
+                        end.getUTCHours(),
+                        end.getUTCMinutes(),
+                        end.getUTCSeconds(),
+                    );
 
-                            event.category = <Calendar_Contracts.IEventCategory>{
-                                id: this.id + "." + iteration.name,
-                                title: iteration.name,
-                                subTitle: Utils_String.format(
-                                    "{0} - {1}",
-                                    Utils_Date.format(startAsUtc, "M"),
-                                    Utils_Date.format(endAsUtc, "M"),
-                                ),
-                            };
-                            if (this._isCurrentIteration(event)) {
-                                event.category.color = Calendar_ColorUtils.generateBackgroundColor(event.title);
-                            } else {
-                                event.category.color = "#FFFFFF";
-                            }
+                    event.category = <Calendar_Contracts.IEventCategory>{
+                        id: this.id + "." + iteration.name,
+                        title: iteration.name,
+                        subTitle: Utils_String.format(
+                            "{0} - {1}",
+                            Utils_Date.format(startAsUtc, "M"),
+                            Utils_Date.format(endAsUtc, "M"),
+                        ),
+                    };
+                    if (this._isCurrentIteration(event)) {
+                        event.category.color = Calendar_ColorUtils.generateBackgroundColor(event.title);
+                    } else {
+                        event.category.color = "#FFFFFF";
+                    }
 
-                            result.push(event);
-                        }
-                    },
-                );
+                    result.push(event);
+                }
+            }
 
-                result.sort((a, b) => {
-                    return new Date(a.startDate).valueOf() - new Date(b.startDate).valueOf();
-                });
-                this._events = result;
-                deferred.resolve(result);
-            },
-            (e: Error) => {
-                deferred.reject(e);
-            },
-        );
-
-        return deferred.promise;
+            result.sort((a, b) => {
+                return new Date(a.startDate).valueOf() - new Date(b.startDate).valueOf();
+            });
+            this._events = result;
+            return result;
+        });
     }
 
-    public getCategories(query: Calendar_Contracts.IEventQuery): IPromise<Calendar_Contracts.IEventCategory[]> {
-        var deferred = Q.defer<any>();
+    public getCategories(query: Calendar_Contracts.IEventQuery): PromiseLike<Calendar_Contracts.IEventCategory[]> {
         if (this._events) {
-            deferred.resolve(this._getCategoryData(this._events.slice(0), query));
+            return Promise.resolve(this._getCategoryData(this._events.slice(0), query));
         } else {
-            this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
-                deferred.resolve(this._getCategoryData(events, query));
+            return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
+                return this._getCategoryData(events, query);
             });
         }
-
-        return deferred.promise;
     }
 
-    public getTitleUrl(webContext: WebContext): IPromise<string> {
-        return Q.resolve(webContext.host.uri + webContext.project.name + "/_admin/_iterations");
+    public getTitleUrl(webContext: WebContext): PromiseLike<string> {
+        return Promise.resolve(webContext.host.uri + webContext.project.name + "/_admin/_iterations");
     }
 
     private _getCategoryData(
         events: Calendar_Contracts.CalendarEvent[],
         query: Calendar_Contracts.IEventQuery,
     ): Calendar_Contracts.IEventCategory[] {
-        var categories: Calendar_Contracts.IEventCategory[] = [];
+        const categories: Calendar_Contracts.IEventCategory[] = [];
 
         $.each(
             events.splice(0).sort((e1: Calendar_Contracts.CalendarEvent, e2: Calendar_Contracts.CalendarEvent) => {
@@ -148,8 +133,8 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
 
     private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {
         if (event.startDate && event.endDate) {
-            var now = new Date();
-            var today: number = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0)).valueOf();
+            const now = new Date();
+            const today: number = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0)).valueOf();
             return today >= new Date(event.startDate).valueOf() && today <= new Date(event.endDate).valueOf();
         }
         return false;

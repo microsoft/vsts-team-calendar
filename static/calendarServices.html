@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Calendar built-in services</title>
-    <script src="../dist/vss-web-extension-sdk/VSS.SDK.js"></script>
+    <script src="../sdk/VSS.SDK.js"></script>
 </head>
 <body>
     <script type="text/javascript">
@@ -10,41 +10,12 @@
             explicitNotifyLoaded: true,
             moduleLoaderConfig: {
                 paths: {
-                    "Calendar": "dist/Calendar"
+                    "Calendar": "js"
                 }
             }
         });
-        VSS.require([
-            "Calendar/EventSources/FreeFormEventsSource",
-            "Calendar/EventSources/VSOCapacityEventSource",
-            "Calendar/EventSources/VSOIterationEventSource"
-        ], function (FreeFormEventsSource, VSOCapacityEventSource, VSOIterationEventSource) {
-
-            // Register the eventSource contributions using the fully qualified contributionId
-            var context = VSS.getExtensionContext();
-            VSS.register(context.publisherId + "." + context.extensionId + "." + "freeForm", function (context) {
-                return new FreeFormEventsSource.FreeFormEventsSource();
-            });
-            VSS.register(context.publisherId + "." + context.extensionId + "." + "daysOff", function (context) {
-                return new VSOCapacityEventSource.VSOCapacityEventSource();
-            });
-            VSS.register(context.publisherId + "." + context.extensionId + "." + "iterations", function (context) {
-                return new VSOIterationEventSource.VSOIterationEventSource();
-            });
-
-            // Deprecated form of contribution registration using the short Id for back-compat.
-            // DO NOT register this form any longer, use the fully qualified contributionId
-            //  unless you have previous shipped dependencies on the short Id's
-            VSS.register("freeForm", function (context) {
-                return new FreeFormEventsSource.FreeFormEventsSource();
-            });
-            VSS.register("daysOff", function (context) {
-                return new VSOCapacityEventSource.VSOCapacityEventSource();
-            });
-            VSS.register("iterations", function (context) {
-                return new VSOIterationEventSource.VSOIterationEventSource();
-            });
-
+        
+        VSS.require(["Calendar/calendarServices"], function (FreeFormEventsSource, VSOCapacityEventSource, VSOIterationEventSource) {
             VSS.notifyLoadSucceeded();
         });
     </script>

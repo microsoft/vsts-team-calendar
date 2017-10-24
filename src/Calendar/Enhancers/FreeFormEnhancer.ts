@@ -1,20 +1,19 @@
-import Calendar_Contracts = require("../Contracts");
-import Q = require("q");
+import * as Calendar_Contracts from "../Contracts";
 
 export class FreeFormEnhancer implements Calendar_Contracts.IEventEnhancer {
     public id: string = "freeForm";
     public addDialogId: string;
 
     constructor() {
-        var extensionContext = VSS.getExtensionContext();
+        const extensionContext = VSS.getExtensionContext();
         this.addDialogId = extensionContext.publisherId + "." + extensionContext.extensionId + ".add-freeform-control";
     }
 
-    public canEdit(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): IPromise<boolean> {
-        return Q.resolve(true);
+    public canEdit(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): Promise<boolean> {
+        return Promise.resolve(true);
     }
 
-    public canAdd(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): IPromise<boolean> {
-        return Q.resolve(true);
+    public canAdd(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): Promise<boolean> {
+        return Promise.resolve(true);
     }
 }

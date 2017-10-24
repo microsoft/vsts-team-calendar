@@ -4,13 +4,19 @@
         "moduleResolution": "node",
         "target": "es5",
         "outDir": "dist/",
+        "lib": [
+            "es5",
+            "dom",
+            "es2015.promise"
+        ],
+        "importHelpers": true,
+        "noEmitHelpers": true,
         "rootDir": "src/",
         "skipLibCheck": true,
         "types": [
             "vss-web-extension-sdk",
             "fullcalendar",
-            "jquery",
-            "q"
+            "jquery"
         ]
     },
     "include": [

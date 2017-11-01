@@ -1,6 +1,6 @@
 # Team Calendar Extension for Visual Studio Team Services
 
-![buildstatus](https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge)
+![buildstatus](https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/5979/badge)
 
 Team Calendar helps busy teams stay on track and informed about important deadlines, sprint schedules, and upcoming milestones. It is the one place to see and manage the date important to your teams, including sprint schedule, days off (for individuals or the team), and custom events.
 

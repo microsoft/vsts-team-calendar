@@ -1,8 +1,13 @@
 const path = require("path");
 const webpack = require("webpack");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const extractSass = new ExtractTextPlugin({
+    filename: path.relative(process.cwd(), path.join(__dirname, "dist", "css", "style.css")),
+    /* disable: process.env.NODE_ENV !== "production", */
+});
 
 module.exports = env => {
-    const plugins = [];
+    const plugins = [extractSass];
     if (env && env.substring(0, 4) === "prod") {
         plugins.push(
             new webpack.optimize.UglifyJsPlugin({
@@ -12,17 +17,17 @@ module.exports = env => {
                 output: {
                     comments: false,
                 },
-            })
+            }),
         );
     }
     return {
         entry: {
-            "main": "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Extension.ts")),
-            "calendarServices": "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "CalendarServices.ts")),
-            "dialogs": "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Dialogs.ts"))
+            main: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Extension.tsx")),
+            calendarServices: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "CalendarServices.ts")),
+            dialogs: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Dialogs.ts")),
         },
         output: {
-            filename: path.relative(process.cwd(), path.join(__dirname, "dist", "[name].js")),
+            filename: path.relative(process.cwd(), path.join(__dirname, "dist", "js", "[name].js")),
             libraryTarget: "amd",
         },
         externals: [
@@ -35,10 +40,34 @@ module.exports = env => {
         ],
         resolve: {
             alias: { OfficeFabric: "../node_modules/office-ui-fabric-react/lib-amd" },
-            extensions: [".ts", "tsx", ".js"],
+            extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ test: /\.tsx?$/, loader: "ts-loader" }, { test: /\.css$/, loader: "style-loader!css-loader" }],
+            rules: [
+                { test: /\.tsx?$/, loader: "ts-loader" },
+                {
+                    test: /\.scss$/,
+                    use: extractSass.extract({
+                        use: [
+                            {
+                                loader: "css-loader",
+                                options: { importLoaders: 1 },
+                            },
+                            {
+                                loader: "sass-loader",
+                            },
+                            {
+                                loader: "postcss-loader",
+                            },
+                        ],
+                        fallback: "style-loader",
+                    }),
+                },
+                {
+                    test: /\.css$/,
+                    use: ["style-loader", "css-loader"]
+                }
+            ],
         },
         plugins: plugins,
     };

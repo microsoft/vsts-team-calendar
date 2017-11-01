@@ -171,6 +171,10 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         this._element.fullCalendar("prev");
     }
 
+    public goTo(date: Date) {
+        this._element.fullCalendar("gotoDate", date);
+    }
+
     public showToday(): void {
         this._element.fullCalendar("today");
     }

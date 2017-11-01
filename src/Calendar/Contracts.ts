@@ -463,7 +463,7 @@ export interface IExtendedCalendarEventObject {
     member?: ICalendarMember;
     overlap?: boolean;
     rendering?: string;
-    source?: any | IExtendedCalendarEventSource;
+    source?: IExtendedCalendarEventSource;
     start: Date | string;
     startEditable?: boolean;
     textColor?: string;
@@ -475,5 +475,5 @@ export interface IExtendedCalendarEventObject {
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventSource {
-    events?: IExtendedCalendarEventObject[] | IEventSource;
+    func?: IExtendedCalendarEventObject[] | IEventSource;
 }

@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import * as Calendar from "./Calendar";
 import * as Calendar_Contracts from "./Contracts";
 import * as Calendar_Dialogs from "./Dialogs";
@@ -13,10 +15,40 @@ import * as Tfs_Core_WebApi from "TFS/Core/RestClient";
 import * as Utils_Core from "VSS/Utils/Core";
 import * as Utils_Date from "VSS/Utils/Date";
 import * as Utils_String from "VSS/Utils/String";
+import { Hub } from "vss-ui/Hub";
+import { HubHeader, IHubBreadcrumbItem } from "vss-ui/HubHeader";
+import { HubViewState } from "vss-ui/Utilities/HubViewState";
+import { ObservableValue } from "vss-ui/Utilities/Observable";
 import * as WebApi_Constants from "VSS/WebApi/Constants";
 import * as WebApi_Contracts from "VSS/WebApi/Contracts";
 import * as Work_Contracts from "TFS/Work/Contracts";
 import * as FullCalendar from "fullcalendar";
+
+import { BaseComponent, IBaseProps, IContextualMenuItem } from "office-ui-fabric-react";
+import { PivotBarItem } from "vss-ui/PivotBar";
+
+const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
+
+// Polyfill Math.trunc...
+(Math as any).trunc =
+    (Math as any).trunc ||
+    function(x) {
+        var n = x - x % 1;
+        return n === 0 && (x < 0 || (x === 0 && 1 / x !== 1 / 0)) ? -0 : n;
+    };
 
 function newElement(tag: string, className?: string, text?: string): JQuery {
     return $("<" + tag + "/>")
@@ -73,12 +105,191 @@ export interface CalendarViewOptions extends Calendar.CalendarOptions {
     defaultEvents?: FullCalendar.EventObject[];
 }
 
-export class CalendarView extends Controls_Navigation.NavigationView {
+export interface ICalendarHubProps extends IBaseProps {}
+
+interface MonthAndYear {
+    month: number;
+    year: number;
+}
+
+export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAndYear> {
+    private static calendar: Calendar.Calendar;
+    private hubViewState: HubViewState;
+    private calendarView: CalendarView;
+    private calendarDiv: HTMLElement;
+    private summaryDiv: HTMLElement;
+
+    constructor() {
+        super();
+        this.hubViewState = new HubViewState({ defaultPivot: "calendar" });
+        this.state = { month: new Date().getMonth(), year: new Date().getFullYear() };
+    }
+
+    private getHeaderItems(): IHubBreadcrumbItem[] {
+        return [
+            // Coming soon, etc.
+            // {
+            //     key: "team",
+            //     text: "Team",
+            // },
+            // {
+            //     key: "Month",
+            //     text: "The date",
+            // },
+        ];
+    }
+
+    /**
+     * Get list of current month -5 and +5 months
+     */
+    private getMonthPickerOptions(): MonthAndYear[] {
+        const options: MonthAndYear[] = [];
+        const listSize = 3;
+        for (let i = -listSize; i <= listSize; ++i) {
+            let optionMonth = (this.state.month + i) % 12;
+            let optionYear = Math.floor(this.state.year + Math.trunc(this.state.month + i) / 12);
+            if (optionMonth < 0) {
+                optionMonth = 12 + optionMonth;
+                optionYear -= 1;
+            }
+            options.push({ month: optionMonth, year: optionYear });
+        }
+        return options;
+    }
+
+    private enhanceControls(): void {
+        if (this.calendarDiv) {
+            this.calendarView = CalendarView.enhance<CalendarViewOptions>(
+                CalendarView,
+                this.calendarDiv,
+                {} as CalendarViewOptions,
+            ) as CalendarView;
+            CalendarComponent.calendar = this.calendarView.getCalendar();
+        }
+    }
+
+    public static getCalendarEnhancement() {
+        return this.calendar;
+    }
+
+    public componentDidMount(): void {
+        this.enhanceControls();
+    }
+
+    public render(): JSX.Element {
+        return (
+            <Hub
+                hideFullScreenToggle={true}
+                hubViewState={this.hubViewState}
+                viewActions={[
+                    {
+                        key: "move-today",
+                        name: "Today",
+                        important: true,
+                        onClick: this._onCommandClick,
+                    },
+                    {
+                        key: "move-left",
+                        name: "Prev",
+                        important: true,
+                        iconProps: {
+                            iconName: "ChevronLeft",
+                        },
+                        onClick: this._onCommandClick,
+                    },
+                    {
+                        key: "move-right",
+                        name: "Next",
+                        important: true,
+                        iconProps: {
+                            iconName: "ChevronRight",
+                        },
+                        onClick: this._onCommandClick,
+                    },
+                ]}
+                commands={[
+                    {
+                        key: "new-item",
+                        name: "New Item",
+                        important: true,
+                        iconProps: {
+                            iconName: "Add",
+                        },
+                        onClick: this._onCommandClick,
+                    },
+                    {
+                        key: "refresh",
+                        name: "Refresh",
+                        important: true,
+                        iconProps: {
+                            iconName: "Refresh",
+                        },
+                        onClick: this._onCommandClick,
+                    },
+                ]}>
+                <HubHeader
+                    breadcrumbItems={this.getHeaderItems()}
+                    iconProps={{ iconName: "Calendar" }}
+                    headerItemPicker={{
+                        getItems: () => {
+                            return this.getMonthPickerOptions();
+                        },
+                        getListItem: (item: MonthAndYear) => {
+                            const str = `${months[item.month]} ${item.year}`;
+                            return {
+                                name: str,
+                                key: str,
+                            };
+                        },
+                        selectedItem: this.state,
+                        onSelectedItemChanged: currentItem => {
+                            this.setState(currentItem);
+                            CalendarComponent.calendar.goTo(new Date(currentItem.year, currentItem.month, 1, 0, 0, 0));
+                        },
+                        isDropdownVisible: new ObservableValue(false),
+                    }}
+                />
+                <PivotBarItem name="Calendar" itemKey="calendar">
+                    <div
+                        className="calendar-canvas"
+                        id="calendarCanvas"
+                        ref={elem => {
+                            this.calendarDiv = elem;
+                        }}
+                    />
+                </PivotBarItem>
+            </Hub>
+        );
+    }
+    private _onCommandClick = (ev: React.MouseEvent<HTMLElement>, item: IContextualMenuItem): void => {
+        switch (item.key) {
+            case "refresh":
+                CalendarComponent.calendar.refreshEvents();
+                break;
+            case "new-item":
+                this.calendarView.addEventClicked();
+                break;
+            case "move-left":
+                this.setState({month: this.state.month - 1});
+                CalendarComponent.calendar.prev();
+                break;
+            case "move-right":
+                this.setState({month: this.state.month + 1});
+                CalendarComponent.calendar.next();
+                break;
+            case "move-today":
+                this.setState({month: new Date().getMonth()});
+                CalendarComponent.calendar.showToday();
+                break;
+        }
+    };
+}
+
+export class CalendarView extends Controls.BaseControl {
     private _eventSources: EventSourceCollection;
 
     private _calendar: Calendar.Calendar;
     private _popupMenu: Controls_Menus.PopupMenu;
-    private _toolbar: Controls_Menus.MenuBar;
     private _defaultEvents: FullCalendar.EventObject[];
     private _calendarEventSourceMap: { [sourceId: string]: Calendar.CalendarEventSource } = {};
     private _iterations: Work_Contracts.TeamSettingsIteration[];
@@ -113,12 +324,10 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             url: "",
         };
 
-        this._setupToolbar();
-
         // Create calendar control
         this._calendar = Controls.create(
             Calendar.Calendar,
-            this._element.find(".calendar-container"),
+            this._element,
             $.extend(
                 {},
                 {
@@ -142,8 +351,6 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventDrop, this._eventMoved.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventResize, this._eventMoved.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.select, this._daysSelected.bind(this));
-
-            this._toolbar.updateItems(this._createToolbarItems());
         });
 
         const setAspectRatio = Utils_Core.throttledDelegate(this, 300, () => {
@@ -152,100 +359,23 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         window.addEventListener("resize", () => {
             setAspectRatio();
         });
+    }
 
-        this._updateTitle();
+    public getCalendar() {
+        return this._calendar;
     }
 
     private _getCalendarAspectRatio() {
-        const leftPane = this._element.closest(".splitter>.leftPane");
-        const titleBar = this._element.find("div.calendar-title");
-        const toolbar = this._element.find("div.menu-container");
-        return leftPane.width() / (leftPane.height() - toolbar.height() - titleBar.height() - 20);
+        const extensionFrame = this._element.closest("#extensionFrame");
+        const availableHeight =
+            extensionFrame.height() -
+            extensionFrame.find("vss-PivotBar--bar-one-line").height() -
+            33 /* 23 margin pixels added */;
+        const availableWidth = extensionFrame.find(".calendar-area").width();
+        return availableWidth / availableHeight;
     }
 
-    private _setupToolbar() {
-        this._toolbar = <Controls_Menus.MenuBar>Controls.BaseControl.createIn(
-            Controls_Menus.MenuBar,
-            this._element.find(".menu-container"),
-            {
-                items: this._createToolbarItems(),
-                executeAction: this._onToolbarItemClick.bind(this),
-            },
-        );
-
-        this._element.find(".menu-container").addClass("toolbar");
-    }
-
-    private _createToolbarItems(): any {
-        const addDisabled = this._eventSources == null || this._eventSources.getAllSources().length == 0;
-        return [
-            {
-                id: "new-item",
-                text: "New Item",
-                title: "Add event",
-                icon: "icon-add-small",
-                showText: false,
-                disabled: addDisabled,
-            },
-            { separator: true },
-            { id: "refresh-items", title: "Refresh", icon: "icon-refresh", showText: false },
-            { id: "move-today", text: "Today", title: "Today", noIcon: true, showText: true, cssClass: "right-align" },
-            {
-                id: "move-next",
-                text: "Next",
-                icon: "icon-drop-right",
-                title: "Next",
-                noIcon: false,
-                showText: false,
-                cssClass: "right-align",
-            },
-            {
-                id: "move-prev",
-                text: "Prev",
-                icon: "icon-drop-left",
-                showText: false,
-                title: "Previous",
-                noIcon: false,
-                cssClass: "right-align",
-            },
-        ];
-    }
-
-    public _onToolbarItemClick(e?: any): any {
-        const command = e ? e.get_commandName() : "";
-        let result = false;
-        switch (command) {
-            case "refresh-items":
-                this._calendar.refreshEvents();
-                break;
-            case "new-item":
-                this._addEventClicked();
-                break;
-            case "move-prev":
-                this._calendar.prev();
-                this._updateTitle();
-                break;
-            case "move-next":
-                this._calendar.next();
-                this._updateTitle();
-                break;
-            case "move-today":
-                this._calendar.showToday();
-                this._updateTitle();
-                break;
-            default:
-                result = true;
-                break;
-        }
-        return result;
-    }
-
-    private _updateTitle(): void {
-        const formattedDate = this._calendar.getFormattedDate("MMMM YYYY");
-        $(".calendar-title").text(formattedDate);
-    }
-
-    private _addEventClicked(): void {
+    public addEventClicked(): void {
         // Find the free form event source
         const eventSource: Calendar_Contracts.IEventSource = $.grep(this._eventSources.getAllSources(), eventSource => {
             return eventSource.id == "freeForm";
@@ -262,13 +392,13 @@ export class CalendarView extends Controls_Navigation.NavigationView {
 
     private _addDefaultEventSources(): void {
         const eventSources = $.map(this._eventSources.getAllSources(), eventSource => {
-            const sourceAndOptions = <Calendar.SourceAndOptions>{
+            const sourceAndOptions = {
                 source: eventSource,
                 callbacks: {},
-            };
+            } as Calendar.SourceAndOptions;
             sourceAndOptions.callbacks[Calendar.FullCalendarCallbackType.eventRender] = this._eventRender.bind(this, eventSource);
             if (eventSource.background) {
-                sourceAndOptions.options = <any>{ rendering: "background" };
+                sourceAndOptions.options = { rendering: "background" } as any;
             }
             return sourceAndOptions;
         });
@@ -290,11 +420,11 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         view: FullCalendar.ViewObject,
     ) {
         if (event.rendering !== "background") {
-            const eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
+            const eventObject = event as Calendar_Contracts.IExtendedCalendarEventObject;
             const calendarEvent = this._eventObjectToCalendarEvent(eventObject);
 
             if (calendarEvent.icons) {
-                $.each(calendarEvent.icons, (index: number, icon: Calendar_Contracts.IEventIcon) => {
+                for (const icon of calendarEvent.icons) {
                     const $image = $("<img/>")
                         .attr("src", icon.src)
                         .addClass("event-icon")
@@ -322,7 +452,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             }
                         });
                     }
-                });
+                }
             }
 
             if (eventSource.getEnhancer) {
@@ -363,7 +493,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 this._popupMenu.dispose();
                 this._popupMenu = null;
             }
-            this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(
+            this._popupMenu = Controls.BaseControl.createIn(
                 Controls_Menus.PopupMenu,
                 this._element,
                 $.extend(
@@ -375,7 +505,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                         items: [{ childItems: Controls_Menus.sortMenuItems(commands) }],
                     },
                 ),
-            );
+            ) as Controls_Menus.PopupMenu;
             Utils_Core.delay(this, 10, () => {
                 this._popupMenu.popup(this._element, $element);
             });
@@ -415,8 +545,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
             addEventSources = $.grep(this._eventSources.getAllSources(), eventSource => {
                 return !!eventSource.addEvent;
             });
-            const start = new Date(<any>startDate).toISOString();
-            const end = Utils_Date.addDays(new Date(<any>endDate), -1).toISOString();
+            const start = new Date(startDate as any).toISOString();
+            const end = Utils_Date.addDays(new Date(endDate as any), -1).toISOString();
             let event: Calendar_Contracts.CalendarEvent;
 
             if (addEventSources.length > 0) {
@@ -439,14 +569,14 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                     this._popupMenu.dispose();
                     this._popupMenu = null;
                 }
-                this._popupMenu = <Controls_Menus.PopupMenu>Controls.BaseControl.createIn(
+                this._popupMenu = Controls.BaseControl.createIn(
                     Controls_Menus.PopupMenu,
                     this._element,
                     $.extend(menuOptions, {
                         align: "left-bottom",
                         items: [{ childItems: Controls_Menus.sortMenuItems(commands) }],
                     }),
-                );
+                ) as Controls_Menus.PopupMenu;
                 Utils_Core.delay(this, 10, () => {
                     this._popupMenu.popup(this._element, $element);
                 });
@@ -467,27 +597,27 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 commandPromises.push(
                     source.getEnhancer().then(enhancer => {
                         return enhancer.canAdd(event, this._currentMember).then((canAdd: boolean) => {
-                            return <Controls_Menus.IMenuItemSpec>{
+                            return {
                                 rank: source.order || i,
                                 id: event.id,
                                 text: Utils_String.format("Add {0}", source.name.toLocaleLowerCase()),
                                 icon: enhancer.icon || "icon-add",
                                 disabled: !canAdd,
                                 action: this._addEvent.bind(this, event, source),
-                            };
+                            } as Controls_Menus.IMenuItemSpec;
                         });
                     }),
                 );
             } else {
                 commandPromises.push(
-                    Promise.resolve(<Controls_Menus.IMenuItemSpec>{
+                    Promise.resolve({
                         rank: source.order || i,
                         id: event.id,
                         text: Utils_String.format("Add {0}", source.name.toLocaleLowerCase()),
                         icon: "icon-add",
                         disabled: false,
                         action: this._addEvent.bind(this, event, source),
-                    }),
+                    } as Controls_Menus.IMenuItemSpec),
                 );
             }
             i++;
@@ -496,11 +626,12 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     }
 
     private _eventClick(event: FullCalendar.EventObject, jsEvent: MouseEvent, view: FullCalendar.ViewObject) {
-        const eventObject = <Calendar_Contracts.IExtendedCalendarEventObject>event;
+        const eventObject = event as Calendar_Contracts.IExtendedCalendarEventObject;
         const source = this._getEventSourceFromEvent(eventObject);
+        delete eventObject.source;
         if (source.getEnhancer) {
             source.getEnhancer().then(enhancer => {
-                enhancer.canEdit(<any>eventObject, this._currentMember).then((canEdit: boolean) => {
+                enhancer.canEdit(eventObject as any, this._currentMember).then((canEdit: boolean) => {
                     if (canEdit) {
                         this._editEvent(eventObject);
                     }
@@ -538,7 +669,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                                     event.end = Utils_Date.addDays(new Date(updatedEvent.endDate), 1).toISOString();
                                     event.start = updatedEvent.startDate;
                                     event.__etag = updatedEvent.__etag;
-                                    this._calendar.updateEvent(<any>event);
+                                    this._calendar.updateEvent(event as any);
                                 });
                         }
                     });
@@ -634,7 +765,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                             event.__etag = updatedEvent.__etag;
                             // Update iteration
                             event.iterationId = updatedEvent.iterationId;
-                            this._calendar.updateEvent(<any>event);
+                            this._calendar.updateEvent(event as any);
                         } else {
                             this._calendar.refreshEvents(originalEventSource);
                         }
@@ -657,7 +788,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
                 eventSource.removeEvent(calendarEvent).then((calendarEvents: Calendar_Contracts.CalendarEvent[]) => {
                     const originalEventSource = this._getCalendarEventSource(eventSource.id);
                     originalEventSource.state.dirty = true;
-                    this._calendar.removeEvent(<string>event.id);
+                    this._calendar.removeEvent(event.id as string);
                     if (!calendarEvents) {
                         this._calendar.refreshEvents(originalEventSource);
                     }
@@ -669,8 +800,8 @@ export class CalendarView extends Controls_Navigation.NavigationView {
     private _eventObjectToCalendarEvent(
         eventObject: Calendar_Contracts.IExtendedCalendarEventObject,
     ): Calendar_Contracts.CalendarEvent {
-        const start = new Date(<any>eventObject.start).toISOString();
-        const end = eventObject.end ? Utils_Date.addDays(new Date(<any>eventObject.end), -1).toISOString() : start;
+        const start = new Date(eventObject.start as any).toISOString();
+        const end = eventObject.end ? Utils_Date.addDays(new Date(eventObject.end as any), -1).toISOString() : start;
         const calendarEvent = {
             startDate: start,
             endDate: end,
@@ -678,8 +809,7 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         CalendarView.calendarEventFields.forEach(prop => {
             calendarEvent[prop] = eventObject[prop];
         });
-
-        return <any>calendarEvent;
+        return calendarEvent as any;
     }
 
     private _calendarEventToEventObject(
@@ -696,21 +826,46 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         CalendarView.calendarEventFields.forEach(prop => {
             eventObject[prop] = calendarEvent[prop];
         });
-        return <any>eventObject;
+        return eventObject as any;
     }
 
     private _getEventSourceFromEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): Calendar_Contracts.IEventSource {
         let calendarEventSource: Calendar_Contracts.IEventSource;
         let eventSource;
         if (event.source) {
-            calendarEventSource = <Calendar_Contracts.IEventSource>event.source.events;
+            calendarEventSource = event.source.func as Calendar_Contracts.IEventSource;
             if (calendarEventSource) {
-                eventSource = (<any>calendarEventSource).eventSource;
+                eventSource = (calendarEventSource as any).eventSource;
             }
         } else if (event.eventType) {
             eventSource = this._eventSources.getById(event.eventType);
         }
         return eventSource;
+    }
+}
+
+export class SummaryComponent extends BaseComponent<{}> {
+    private summaryDiv: HTMLElement;
+
+    private enhanceControls() {
+        if (this.summaryDiv) {
+            SummaryView.enhance<any>(SummaryView, this.summaryDiv, { calendar: CalendarComponent.getCalendarEnhancement() });
+        }
+    }
+
+    public componentDidMount() {
+        this.enhanceControls();
+    }
+
+    public render(): JSX.Element {
+        return (
+            <div
+                className=""
+                ref={elem => {
+                    this.summaryDiv = elem;
+                }}
+            />
+        );
     }
 }
 
@@ -723,17 +878,13 @@ export class SummaryView extends Controls.BaseControl {
         super.initialize();
         this._rendering = false;
         const $statusContainer = this._element.parent().find(".status-indicator-container");
-        this._statusIndicator = <Controls_StatusIndicator.StatusIndicator>Controls.BaseControl.createIn(
-            Controls_StatusIndicator.StatusIndicator,
-            $statusContainer,
-            {
-                center: true,
-                throttleMinTime: 0,
-                imageClass: "big-status-progress",
-            },
-        );
+        this._statusIndicator = Controls.BaseControl.createIn(Controls_StatusIndicator.StatusIndicator, $statusContainer, {
+            center: true,
+            throttleMinTime: 0,
+            imageClass: "big-status-progress",
+        }) as Controls_StatusIndicator.StatusIndicator;
         this._statusIndicator.start();
-        this._calendar = <Calendar.Calendar>Controls.Enhancement.getInstance(Calendar.Calendar, $(".vss-calendar"));
+        this._calendar = this._options.calendar;
 
         // Attach to calendar changes to refresh summary view
         this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventAfterAllRender, () => {

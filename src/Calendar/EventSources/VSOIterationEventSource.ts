@@ -111,24 +111,10 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
         events: Calendar_Contracts.CalendarEvent[],
         query: Calendar_Contracts.IEventQuery,
     ): Calendar_Contracts.IEventCategory[] {
-        const categories: Calendar_Contracts.IEventCategory[] = [];
-
-        $.each(
-            events.splice(0).sort((e1: Calendar_Contracts.CalendarEvent, e2: Calendar_Contracts.CalendarEvent) => {
-                if (!e1.startDate || !e2.endDate) {
-                    return 0;
-                }
-
-                return new Date(e1.startDate).getTime() - new Date(e2.startDate).getTime();
-            }),
-            (index: number, event: Calendar_Contracts.CalendarEvent) => {
-                if (Calendar_DateUtils.eventIn(event, query)) {
-                    categories.push(event.category);
-                }
-            },
-        );
-
-        return categories;
+        return events
+            .filter(e => Calendar_DateUtils.eventIn(e, query))
+            .sort((a, b) => new Date(a.startDate || (0 as any)).getTime() - new Date(b.startDate || (0 as any)).getTime())
+            .map(e => e.category);
     }
 
     private _isCurrentIteration(event: Calendar_Contracts.CalendarEvent): boolean {

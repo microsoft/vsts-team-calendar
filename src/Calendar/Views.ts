@@ -575,9 +575,9 @@ export class CalendarView extends Controls_Navigation.NavigationView {
         var deferred = Q.defer<WebApi_Contracts.IdentityRef[]>();
 
         var webContext = VSS.getWebContext();
-        var workClient: Tfs_Core_WebApi.CoreHttpClient = Service.VssConnection
+        var workClient: Tfs_Core_WebApi.CoreHttpClient4 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Tfs_Core_WebApi.CoreHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Tfs_Core_WebApi.CoreHttpClient4, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         // fetch the wit events
         workClient.getTeamMembers(webContext.project.name, webContext.team.name).then((members: WebApi_Contracts.IdentityRef[]) => {

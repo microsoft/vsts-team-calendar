@@ -276,7 +276,6 @@ export class Calendar extends Controls.Control<CalendarOptions> {
             timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.").then(
                 results => {
                     const calendarEvents = results.map((value, index) => {
-                        //const end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
                         const start = value.startDate;
                         const end = value.endDate ? Utils_Date.addDays(new Date(value.endDate), 1).toISOString() : start;
                         const event: any = {

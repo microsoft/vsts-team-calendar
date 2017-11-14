@@ -139,6 +139,15 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAnd
         ];
     }
 
+    private static calcMonths(current: MonthAndYear, monthDelta: number): MonthAndYear {
+        let month = (current.month + monthDelta) % 12;
+        let year = current.year + Math.floor((current.month + monthDelta) / 12);
+        if (month < 0) {
+            month = 12 + month;
+        }
+        return { month, year };
+    }
+
     /**
      * Get list of current month -5 and +5 months
      */
@@ -146,13 +155,7 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAnd
         const options: MonthAndYear[] = [];
         const listSize = 3;
         for (let i = -listSize; i <= listSize; ++i) {
-            let optionMonth = (this.state.month + i) % 12;
-            let optionYear = Math.floor(this.state.year + Math.trunc(this.state.month + i) / 12);
-            if (optionMonth < 0) {
-                optionMonth = 12 + optionMonth;
-                optionYear -= 1;
-            }
-            options.push({ month: optionMonth, year: optionYear });
+            options.push(CalendarComponent.calcMonths(this.state, i));
         }
         return options;
     }
@@ -270,15 +273,17 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAnd
                 this.calendarView.addEventClicked();
                 break;
             case "move-left":
-                this.setState({month: this.state.month - 1});
+                const prevMonth = this.state.month - 1;
+                this.setState(CalendarComponent.calcMonths(this.state, -1));
                 CalendarComponent.calendar.prev();
                 break;
             case "move-right":
-                this.setState({month: this.state.month + 1});
+                this.setState(CalendarComponent.calcMonths(this.state, 1));
                 CalendarComponent.calendar.next();
                 break;
             case "move-today":
-                this.setState({month: new Date().getMonth()});
+                const date = new Date();
+                this.setState({ month: date.getMonth(), year: date.getFullYear() });
                 CalendarComponent.calendar.showToday();
                 break;
         }
@@ -294,6 +299,7 @@ export class CalendarView extends Controls.BaseControl {
     private _calendarEventSourceMap: { [sourceId: string]: Calendar.CalendarEventSource } = {};
     private _iterations: Work_Contracts.TeamSettingsIteration[];
     private _currentMember: Calendar_Contracts.ICalendarMember;
+    private _processedSprints: { [key: string]: boolean } = {};
 
     private static calendarEventFields: string[] = [
         "title",
@@ -346,6 +352,7 @@ export class CalendarView extends Controls.BaseControl {
 
             this._addDefaultEventSources();
 
+            this._calendar.addCallback(Calendar.FullCalendarCallbackType.viewDestroy, this._viewDestroy.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventAfterRender, this._eventAfterRender.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventClick, this._eventClick.bind(this));
             this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventDrop, this._eventMoved.bind(this));
@@ -363,6 +370,10 @@ export class CalendarView extends Controls.BaseControl {
 
     public getCalendar() {
         return this._calendar;
+    }
+
+    private _viewDestroy() {
+        this._processedSprints = {};
     }
 
     private _getCalendarAspectRatio() {
@@ -528,8 +539,8 @@ export class CalendarView extends Controls.BaseControl {
                     }
                     contentCellIndex += parseInt($(child).attr("colspan"));
                 });
-            if (event["sprintProcessedFor"] === undefined || event["sprintProcessedFor"] !== view["renderId"]) {
-                event["sprintProcessedFor"] = view["renderId"];
+            if (!this._processedSprints[event.title]) {
+                this._processedSprints[event.title] = true;
                 $contentCells.eq(contentCellIndex).append(
                     $("<span/>")
                         .addClass("sprint-label")
@@ -709,11 +720,15 @@ export class CalendarView extends Controls.BaseControl {
 
     private _getTeamMembers(): PromiseLike<WebApi_Contracts.IdentityRef[]> {
         const webContext = VSS.getWebContext();
-        
+
         // Hack to temporarily workaround API compat break in M125 which is being reverted
-        let coreClient: any = Service.VssConnection.getConnection().getHttpClient(Tfs_Core_WebApi.CoreHttpClient2_2, WebApi_Constants.ServiceInstanceTypes.TFS);
-        if (!coreClient.getTeamMembers) { 
-            coreClient = Service.VssConnection.getConnection().getHttpClient(Tfs_Core_WebApi.CoreHttpClient4, WebApi_Constants.ServiceInstanceTypes.TFS);
+        let coreClient: any = Service.VssConnection
+            .getConnection()
+            .getHttpClient(Tfs_Core_WebApi.CoreHttpClient2_2, WebApi_Constants.ServiceInstanceTypes.TFS);
+        if (!coreClient.getTeamMembers) {
+            coreClient = Service.VssConnection
+                .getConnection()
+                .getHttpClient(Tfs_Core_WebApi.CoreHttpClient4, WebApi_Constants.ServiceInstanceTypes.TFS);
         }
 
         return coreClient.getTeamMembers(webContext.project.name, webContext.team.name);

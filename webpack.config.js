@@ -3,7 +3,6 @@ const webpack = require("webpack");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const extractSass = new ExtractTextPlugin({
     filename: path.relative(process.cwd(), path.join(__dirname, "dist", "css", "style.css")),
-    /* disable: process.env.NODE_ENV !== "production", */
 });
 
 module.exports = env => {

@@ -1,4 +1,4 @@
-import FullCalendar = require("FullCalendar");
+import * as FullCalendar from "FullCalendar";
 
 /**
  * Content to be rendered by the Add Event Dialog
@@ -57,7 +57,7 @@ export interface IAddEventTextField {
     /**
      * Returns true if the current input for the field is valid
      */
-    checkValid?: (value: string) => IPromise<boolean>;
+    checkValid?: (value: string) => PromiseLike<boolean>;
 
     /**
      * Error message to display if field is not valid
@@ -77,7 +77,7 @@ export interface IAddEventTextField {
     /**
      * Executed by the Add Event Dialog on Ok click
      */
-    okCallback?: (value: string) => IPromise<any>;
+    okCallback?: (value: string) => PromiseLike<any>;
 }
 
 /**
@@ -108,7 +108,7 @@ export interface IAddEventComboField {
     /**
      * Returns true if the current input for the field is valid
      */
-    checkValid?: (value: string) => IPromise<boolean>;
+    checkValid?: (value: string) => PromiseLike<boolean>;
 
     /**
      * Error message to display if field is not valid
@@ -128,7 +128,7 @@ export interface IAddEventComboField {
     /**
      * Executed by the Add Event Dialog on Ok click
      */
-    okCallback?: (value: string) => IPromise<any>;
+    okCallback?: (value: string) => PromiseLike<any>;
 }
 
 /**
@@ -138,27 +138,27 @@ export interface IDialogContent {
     /**
      * Returns the updated calendar item
      */
-    onOkClick: () => IPromise<any>;
+    onOkClick: () => PromiseLike<any>;
 
     /**
      * Returns the current title of the dialog
      */
-    getTitle?: () => IPromise<string>;
+    getTitle?: () => PromiseLike<string>;
 
     /**
      * Return height of the contributed content, defaults to 0
      */
-    getContributedHeight?: () => IPromise<number>;
+    getContributedHeight?: () => PromiseLike<number>;
 
     /**
      * Returns the fields for the Add Event dialog to display
      */
-    getFields?: () => IPromise<IAddEventContent>;
+    getFields?: () => PromiseLike<IAddEventContent>;
 
     /**
      * Returns true if the state of the customized contributed content is valid
      */
-    checkValid?: () => IPromise<boolean>;
+    checkValid?: () => PromiseLike<boolean>;
 }
 
 /**
@@ -190,12 +190,12 @@ export interface IEventEnhancer {
     *
     * @param event
     */
-    canEdit: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+    canEdit: (event: CalendarEvent, member: ICalendarMember) => PromiseLike<boolean>;
 
     /**
      * Determines whether an event can be added
      */
-    canAdd: (event: CalendarEvent, member: ICalendarMember) => IPromise<boolean>;
+    canAdd: (event: CalendarEvent, member: ICalendarMember) => PromiseLike<boolean>;
 }
 
 /**
@@ -220,7 +220,7 @@ export interface IEventSource {
     /**
      * Returns the UI enhancer for the event source
      */
-    getEnhancer?: () => IPromise<IEventEnhancer>;
+    getEnhancer?: () => PromiseLike<IEventEnhancer>;
 
     /**
     * Set to true if events from this source should be rendered in the background.
@@ -230,39 +230,39 @@ export interface IEventSource {
     /**
      * Returns true when the event source is loaded
      */
-    load: () => IPromise<CalendarEvent[]>;
+    load: () => PromiseLike<CalendarEvent[]>;
 
     /**
     * Get the events that match a certain criteria
     *
     * @param query Events query
     */
-    getEvents: (query?: IEventQuery) => IPromise<CalendarEvent[]>;
+    getEvents: (query?: IEventQuery) => PromiseLike<CalendarEvent[]>;
 
     /**
      * Get the event categories that match a certain criteria
      */
-    getCategories(query?: IEventQuery): IPromise<IEventCategory[]>;
+    getCategories(query?: IEventQuery): PromiseLike<IEventCategory[]>;
 
     /**
     * Optional method to add events to a given source
     */
-    addEvent?: (events: CalendarEvent) => IPromise<CalendarEvent>;
+    addEvent?: (events: CalendarEvent) => PromiseLike<CalendarEvent>;
 
     /**
     * Optional method to remove events from this event source
     */
-    removeEvent?: (events: CalendarEvent) => IPromise<CalendarEvent[]>;
+    removeEvent?: (events: CalendarEvent) => PromiseLike<CalendarEvent[]>;
 
     /**
     * Optional method to update an event in this event source
     */
-    updateEvent?: (oldEvent: CalendarEvent, newEvent: CalendarEvent) => IPromise<CalendarEvent>;
+    updateEvent?: (oldEvent: CalendarEvent, newEvent: CalendarEvent) => PromiseLike<CalendarEvent>;
 
     /**
     * Forms the url which is linked to the title of the summary section for the source
     */
-    getTitleUrl(webContext: WebContext): IPromise<string>;
+    getTitleUrl(webContext: WebContext): PromiseLike<string>;
 }
 
 /**
@@ -431,7 +431,7 @@ export interface IEventIcon {
     /**
      * The action executed when the icon is clicked
      */
-    action?: (event: CalendarEvent) => IPromise<any>;
+    action?: (event: CalendarEvent) => PromiseLike<any>;
 
     /**
      * The event to edit or delete when the icon is selected
@@ -463,7 +463,7 @@ export interface IExtendedCalendarEventObject {
     member?: ICalendarMember;
     overlap?: boolean;
     rendering?: string;
-    source?: any | IExtendedCalendarEventSource;
+    source?: IExtendedCalendarEventSource;
     start: Date | string;
     startEditable?: boolean;
     textColor?: string;
@@ -475,5 +475,5 @@ export interface IExtendedCalendarEventObject {
 * Represents a single calendar event
 */
 export interface IExtendedCalendarEventSource {
-    events?: IExtendedCalendarEventObject[] | IEventSource;
+    func?: IExtendedCalendarEventObject[] | IEventSource;
 }

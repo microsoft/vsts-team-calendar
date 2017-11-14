@@ -1,17 +1,19 @@
 ﻿<!DOCTYPE html>
 <html>
+
 <head>
     <title>Calendar Extension</title>
-    <script src="../dist/vss-web-extension-sdk/VSS.SDK.js"></script>
-    
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.1.0/fullcalendar.min.css" />
-    <link rel="stylesheet" href="css/site.css" />
+    <script src="../sdk/VSS.SDK.js"></script>
+
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.6.2/fullcalendar.css" />
+    <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.1.0/fullcalendar.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.6.2/fullcalendar.js"></script>
     <base target="_blank" />
 </head>
+
 <body>
     <script type="text/javascript">
         // Initialize the VSS SDK
@@ -19,19 +21,23 @@
             usePlatformScripts: true,
             moduleLoaderConfig: {
                 paths: {
-                    "Calendar": "dist/Calendar"
+                    "Calendar": "js"
                 }
             }
         });
 
         // Wait for the SDK to be initialized
         VSS.ready(function () {
-            require(["Calendar/Extension"], function (items) { });
-            VSS.notifyLoadSucceeded();
+            require(["Calendar/main"], function (items) {
+                VSS.notifyLoadSucceeded();
+            });
         });
     </script>
-
-    <div id="calendar-extension">
+    <div id="extensionFrame">
+        <div class="calendar-area" id="calendarArea"></div>
+        <div class="summary-area" id="summaryArea"></div>
+    </div>
+    <!-- <div id="calendar-extension">
         <div class="splitter horizontal right">
             <div class="leftPane">
                 <div class="calendar-view">
@@ -44,12 +50,13 @@
             <div class="rightPane">
                 <div class="status-indicator-container"></div>
                 <div class="feedback-area">
-                    <a href="https://github.com/Microsoft/vsts-team-calendar/issues">Submit a bug or request</a>  
+                    <a href="https://github.com/Microsoft/vsts-team-calendar/issues">Submit a bug or request</a>
                 </div>
                 <div class="summary-view">
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 </body>
+
 </html>

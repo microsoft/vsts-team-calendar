@@ -1,5 +1,4 @@
-import Calendar_Contracts = require("../Contracts");
-import Q = require("q");
+import * as Calendar_Contracts from "../Contracts";
 
 export class VSOCapacityEnhancer implements Calendar_Contracts.IEventEnhancer {
     public id: string = "daysOff";
@@ -8,15 +7,15 @@ export class VSOCapacityEnhancer implements Calendar_Contracts.IEventEnhancer {
     public icon = "icon-tfs-build-reason-schedule";
 
     constructor() {
-        var extensionContext = VSS.getExtensionContext();
+        const extensionContext = VSS.getExtensionContext();
         this.addDialogId = extensionContext.publisherId + "." + extensionContext.extensionId + ".add-daysoff-control";
     }
 
-    public canEdit(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): IPromise<boolean> {
-        return Q.resolve(event.category.title !== "Grouped Event");
+    public canEdit(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): PromiseLike<boolean> {
+        return Promise.resolve(event.category.title !== "Grouped Event");
     }
 
-    public canAdd(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): IPromise<boolean> {
-        return Q.resolve(true);
+    public canAdd(event: Calendar_Contracts.CalendarEvent, member: Calendar_Contracts.ICalendarMember): PromiseLike<boolean> {
+        return Promise.resolve(true);
     }
 }

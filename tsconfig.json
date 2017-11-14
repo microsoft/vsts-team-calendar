@@ -3,17 +3,29 @@
         "module": "amd",
         "moduleResolution": "node",
         "target": "es5",
-        "outDir": "dist/",
+        "outDir": "dist/js",
+        "lib": [
+            "es5",
+            "es6",
+            "dom"
+        ],
+        "importHelpers": true,
+        "jsx": "react",
+        "noEmitHelpers": true,
         "rootDir": "src/",
+        "baseUrl": ".",
+        "paths": {
+            "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib/*"]
+        },
         "skipLibCheck": true,
         "types": [
             "vss-web-extension-sdk",
             "fullcalendar",
-            "jquery",
-            "q"
+            "jquery"
         ]
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "src/**/*.tsx"
     ]
 }

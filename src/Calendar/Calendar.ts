@@ -1,14 +1,12 @@
-﻿import Calendar_ColorUtils = require("./Utils/Color");
-import Calendar_Contracts = require("./Contracts");
-import Calendar_Utils_Guid = require("./Utils/Guid");
-import Controls = require("VSS/Controls");
-import Culture = require("VSS/Utils/Culture");
-import Q = require("q");
-import Utils_Core = require("VSS/Utils/Core");
-import Utils_Date = require("VSS/Utils/Date");
-import Utils_String = require("VSS/Utils/String");
-
-import FullCalendar = require("fullCalendar");
+﻿import * as Calendar_ColorUtils from "./Utils/Color";
+import * as Calendar_Contracts from "./Contracts";
+import * as Calendar_Utils_Guid from "./Utils/Guid";
+import { timeout } from "./Utils/Promise";
+import * as Controls from "VSS/Controls";
+import * as Culture from "VSS/Utils/Culture";
+import * as Utils_Date from "VSS/Utils/Date";
+import * as Utils_String from "VSS/Utils/String";
+import * as FullCalendar from "fullCalendar";
 
 export interface CalendarOptions {
     fullCalendarOptions: IDictionaryStringTo<any>;
@@ -81,9 +79,8 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         super.initialize();
 
         //  Determine optimal aspect ratio
-        var aspectRatio = $(".leftPane").width() / ($(".leftPane").height() - 85);
-        aspectRatio = parseFloat(aspectRatio.toFixed(1));
-        var firstDay = Culture.getDateTimeFormat().FirstDayOfWeek;
+        const aspectRatio = parseFloat(($(".leftPane").width() / ($(".leftPane").height() - 85)).toFixed(1));
+        const firstDay = Culture.getDateTimeFormat().FirstDayOfWeek;
 
         this._element.fullCalendar(
             $.extend(
@@ -131,21 +128,24 @@ export class Calendar extends Controls.Control<CalendarOptions> {
 
     public addEventSources(sources: SourceAndOptions[]): CalendarEventSource[] {
         sources.forEach(source => {
-            var calendarSource = this._createEventSource(source.source, source.options || {});
+            const calendarSource = this._createEventSource(source.source, source.options || {});
             this._calendarSources.push(calendarSource);
             this._element.fullCalendar("addEventSource", calendarSource);
 
             if (source.callbacks) {
-                var callbackTypes = Object.keys(source.callbacks);
-                for (var i = 0; i < callbackTypes.length; ++i) {
-                    var callbackType: FullCalendarCallbackType = parseInt(callbackTypes[i]);
+                const callbackTypes = Object.keys(source.callbacks);
+                for (let i = 0; i < callbackTypes.length; ++i) {
+                    const callbackType: FullCalendarCallbackType = parseInt(callbackTypes[i]);
                     if (callbackType === FullCalendarCallbackType.eventAfterAllRender) {
                         // This callback doesn't make sense for individual events.
                         continue;
                     }
                     this.addCallback(
                         callbackType,
-                        this._createFilteredCallback(source.callbacks[callbackTypes[i]], event => event["eventType"] === source.source.id),
+                        this._createFilteredCallback(
+                            source.callbacks[callbackTypes[i]],
+                            event => event["eventType"] === source.source.id,
+                        ),
                     );
                 }
             }
@@ -155,11 +155,11 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     public getViewQuery(): Calendar_Contracts.IEventQuery {
-        var view = this._element.fullCalendar("getView");
+        const view = this._element.fullCalendar("getView");
 
         return {
-            startDate: Utils_Date.shiftToUTC(new Date(view.start.valueOf())),
-            endDate: Utils_Date.shiftToUTC(new Date(view.end.valueOf())),
+            startDate: Utils_Date.shiftToUTC(new Date(view.start.valueOf() as string)),
+            endDate: Utils_Date.shiftToUTC(new Date(view.end.valueOf() as string)),
         };
     }
 
@@ -171,18 +171,22 @@ export class Calendar extends Controls.Control<CalendarOptions> {
         this._element.fullCalendar("prev");
     }
 
+    public goTo(date: Date) {
+        this._element.fullCalendar("gotoDate", date);
+    }
+
     public showToday(): void {
         this._element.fullCalendar("today");
     }
 
     public getFormattedDate(format: string): string {
-        var currentDate: any = this._element.fullCalendar("getDate");
+        const currentDate: any = this._element.fullCalendar("getDate");
         return currentDate.format(format);
     }
 
     public renderEvent(event: Calendar_Contracts.CalendarEvent, eventType: string) {
-        var end = Utils_Date.addDays(new Date(<any>event.endDate), 1).toISOString();
-        var calEvent: any = {
+        const end = Utils_Date.addDays(new Date(<any>event.endDate), 1).toISOString();
+        const calEvent: any = {
             id: event.id,
             title: event.title,
             description: event.description,
@@ -256,9 +260,9 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     private _createEventSource(source: Calendar_Contracts.IEventSource, options: FullCalendar.Options): CalendarEventSource {
-        var state: CalendarEventSourceState = {};
+        const state: CalendarEventSourceState = {};
 
-        var getEventsMethod = (
+        const getEventsMethod = (
             start: Date,
             end: Date,
             timezone: string | boolean,
@@ -268,14 +272,13 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                 callback(state.cachedEvents);
                 return;
             }
-            var loadSourcePromise = <Q.Promise<Calendar_Contracts.CalendarEvent[]>>source.load();
-            Q.timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.").then(
+            const loadSourcePromise = <PromiseLike<Calendar_Contracts.CalendarEvent[]>>source.load();
+            timeout(loadSourcePromise, 5000, "Could not load event source " + source.name + ". Request timed out.").then(
                 results => {
-                    var calendarEvents = results.map((value, index) => {
-                        //var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate.valueOf()), 1) : value.startDate;
-                        var start = value.startDate;
-                        var end = value.endDate ? Utils_Date.addDays(new Date(value.endDate), 1).toISOString() : start;
-                        var event: any = {
+                    const calendarEvents = results.map((value, index) => {
+                        const start = value.startDate;
+                        const end = value.endDate ? Utils_Date.addDays(new Date(value.endDate), 1).toISOString() : start;
+                        const event: any = {
                             id: value.id || Calendar_Utils_Guid.newGuid(),
                             title: value.title,
                             description: value.description,
@@ -297,16 +300,18 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                         }
 
                         if ($.isFunction(source.addEvent) && value.category) {
-                            var color =
+                            const color =
                                 <any>value.category.color ||
-                                Calendar_ColorUtils.generateColor((<string>value.category.title || "uncategorized").toLowerCase());
+                                Calendar_ColorUtils.generateColor(
+                                    (<string>value.category.title || "uncategorized").toLowerCase(),
+                                );
                             event.backgroundColor = color;
                             event.borderColor = color;
                             event.textColor = value.category.textColor || "#FFFFFF";
                         }
 
                         if ((<any>options).rendering === "background" && value.category) {
-                            var color =
+                            const color =
                                 <any>value.category.color ||
                                 Calendar_ColorUtils.generateBackgroundColor(
                                     (<string>event.category.title || "uncategorized").toLowerCase(),
@@ -324,13 +329,15 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     callback(calendarEvents);
                 },
                 reason => {
-                    console.error(Utils_String.format("Error getting event data.\nEvent source: {0}\nReason: {1}", source.name, reason));
+                    console.error(
+                        Utils_String.format("Error getting event data.\nEvent source: {0}\nReason: {1}", source.name, reason),
+                    );
                     callback([]);
                 },
             );
         };
 
-        var calendarEventSource: CalendarEventSource = <any>getEventsMethod;
+        const calendarEventSource: CalendarEventSource = <any>getEventsMethod;
         calendarEventSource.eventSource = source;
         calendarEventSource.state = state;
 
@@ -345,18 +352,18 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     private _getComposedCallback(callbackType: FullCalendarCallbackType) {
-        var args = arguments;
+        const args = arguments;
         return (event: FullCalendar.EventObject, element: JQuery, view: FullCalendar.ViewObject): JQuery | boolean => {
-            var fns = this._callbacks[callbackType];
+            const fns = this._callbacks[callbackType];
             if (!fns) {
                 return undefined;
             }
-            var broken = false;
-            var updatedElement = element;
-            for (var i = 0; i < fns.length; ++i) {
-                var fn = fns[i];
+            let broken = false;
+            let updatedElement = element;
+            for (let i = 0; i < fns.length; ++i) {
+                const fn = fns[i];
 
-                var result = fn(event, updatedElement, view);
+                const result = fn(event, updatedElement, view);
                 if (callbackType === FullCalendarCallbackType.eventRender && result === false) {
                     broken = true;
                     break;
@@ -389,7 +396,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
      * @return EventObject[] - events that were removed.
      */
     public removeEvents(filter: any[] | ((event: FullCalendar.EventObject) => boolean)): FullCalendar.EventObject[] {
-        var clientEvents = this._element.fullCalendar("clientEvents", filter);
+        const clientEvents = this._element.fullCalendar("clientEvents", filter);
         this._element.fullCalendar("removeEvents", filter);
         return clientEvents;
     }

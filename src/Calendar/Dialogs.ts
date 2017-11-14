@@ -1,37 +1,35 @@
-import Calendar_Contracts = require("./Contracts");
-import Context = require("VSS/Context");
-import Controls = require("VSS/Controls");
-import Controls_Contributions = require("VSS/Contributions/Controls");
-import Controls_Notifications = require("VSS/Controls/Notifications");
-import Controls_Combos = require("VSS/Controls/Combos");
-import Controls_Dialog = require("VSS/Controls/Dialogs");
-import Controls_Validation = require("VSS/Controls/Validation");
-import Culture = require("VSS/Utils/Culture");
-import Utils_Core = require("VSS/Utils/Core");
-import Utils_Date = require("VSS/Utils/Date");
-import Utils_String = require("VSS/Utils/String");
-import Utils_UI = require("VSS/Utils/UI");
-import WebApi_Contracts = require("VSS/WebApi/Contracts");
-import Work_Contracts = require("TFS/Work/Contracts");
-import Q = require("q");
+import * as Calendar_Contracts from "./Contracts";
+import * as Context from "VSS/Context";
+import * as Controls from "VSS/Controls";
+import * as Controls_Contributions from "VSS/Contributions/Controls";
+import * as Controls_Notifications from "VSS/Controls/Notifications";
+import * as Controls_Combos from "VSS/Controls/Combos";
+import * as Controls_Dialog from "VSS/Controls/Dialogs";
+import * as Controls_Validation from "VSS/Controls/Validation";
+import * as Culture from "VSS/Utils/Culture";
+import * as Utils_Date from "VSS/Utils/Date";
+import * as Utils_String from "VSS/Utils/String";
+import * as Utils_UI from "VSS/Utils/UI";
+import * as WebApi_Contracts from "VSS/WebApi/Contracts";
+import * as Work_Contracts from "TFS/Work/Contracts";
 
-var domElem = Utils_UI.domElem;
+const domElem = Utils_UI.domElem;
 
 export interface IEventControlOptions {
     calendarEvent: Calendar_Contracts.CalendarEvent;
     title?: string;
     isEdit?: boolean;
     validStateChangedHandler: (valid: boolean) => any;
-    membersPromise: IPromise<WebApi_Contracts.IdentityRef[]>;
-    getIterations: () => IPromise<Work_Contracts.TeamSettingsIteration[]>;
-    categoriesPromise: () => IPromise<Calendar_Contracts.IEventCategory[]>;
+    membersPromise: PromiseLike<WebApi_Contracts.IdentityRef[]>;
+    getIterations: () => PromiseLike<Work_Contracts.TeamSettingsIteration[]>;
+    categoriesPromise: () => PromiseLike<Calendar_Contracts.IEventCategory[]>;
 }
 
 export interface IEventDialogOptions extends Controls_Dialog.IModalDialogOptions {
     source: Calendar_Contracts.IEventSource;
     calendarEvent: Calendar_Contracts.CalendarEvent;
     query: Calendar_Contracts.IEventQuery;
-    membersPromise?: IPromise<WebApi_Contracts.IdentityRef[]>;
+    membersPromise?: PromiseLike<WebApi_Contracts.IdentityRef[]>;
     isEdit?: boolean;
 }
 
@@ -101,12 +99,12 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         this._$contributedContent = $(domElem("div"))
             .addClass("contributed-content-container")
             .appendTo(this._element);
-        var membersPromise = this._options.membersPromise;
-        var content;
+        const membersPromise = this._options.membersPromise;
+        let content;
         if (this._source.getEnhancer) {
             this._source.getEnhancer().then(
                 enhancer => {
-                    var options = {
+                    const options = {
                         calendarEvent: this._calendarEvent,
                         isEdit: this._options.isEdit,
                         categoriesPromise: this._source.getCategories.bind(this, this._options.query),
@@ -119,7 +117,9 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                             };
                         },
                         membersPromise: this._options.membersPromise,
-                        getIterations: !!(<any>this._source).getIterations ? (<any>this._source).getIterations.bind(this._source) : null,
+                        getIterations: !!(<any>this._source).getIterations
+                            ? (<any>this._source).getIterations.bind(this._source)
+                            : null,
                     };
                     Controls_Contributions.createContributedControl<Calendar_Contracts.IDialogContent>(
                         this._$contributedContent,
@@ -169,8 +169,8 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             { closeable: false },
         );
 
-        var $editControl = $(domElem("div", "event-edit-control"));
-        var $fieldsContainer = $(domElem("table")).appendTo($editControl);
+        const $editControl = $(domElem("div", "event-edit-control"));
+        const $fieldsContainer = $(domElem("table")).appendTo($editControl);
 
         // Build title input
         if (this._content.title) {
@@ -181,12 +181,12 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
                 });
         }
 
-        var startDateString = Utils_Date.localeFormat(
+        const startDateString = Utils_Date.localeFormat(
             Utils_Date.shiftToUTC(new Date(this._calendarEvent.startDate)),
             Culture.getDateTimeFormat().ShortDatePattern,
             true,
         );
-        var endDateString = startDateString;
+        let endDateString = startDateString;
 
         // Build start input
         if (this._content.start) {
@@ -214,10 +214,11 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
 
         // Build text inputs
         if (this._content.textFields) {
-            var textFields = this._content.textFields;
-            for (var i = 0; i < textFields.length; i++) {
-                var textField = textFields[i];
-                var textInput = $(Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}'/>", textField.label));
+            const textFields = this._content.textFields;
+            for (const textField of textFields) {
+                const textInput = $(
+                    Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}'/>", textField.label),
+                );
                 if (textField.checkValid) {
                     textInput.bind("blur", e => {
                         this._validate(true);
@@ -235,10 +236,11 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
 
         // Build combo inputs
         if (this._content.comboFields) {
-            var comboFields = this._content.comboFields;
-            for (var i = 0; i < comboFields.length; i++) {
-                var comboField = comboFields[i];
-                var comboInput = $(Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}' />", comboField.label));
+            const comboFields = this._content.comboFields;
+            for (const comboField of comboFields) {
+                const comboInput = $(
+                    Utils_String.format("<input type='text' class='requiredInfoLight' id='field{0}' />", comboField.label),
+                );
 
                 if (comboField.initialValue) {
                     comboInput.val(comboField.initialValue);
@@ -254,17 +256,17 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         }
 
         // Populate fields container with fields. The form fields array contain pairs of field label and field element itself.
-        var fields = this._getFormFields();
-        for (var i = 0, l = fields.length; i < l; i += 1) {
-            var labelName = fields[i][0];
-            var field = fields[i][1];
+        const fields = this._getFormFields();
+        for (let i = 0, l = fields.length; i < l; i += 1) {
+            const labelName = fields[i][0];
+            const field = fields[i][1];
             if (field) {
                 if (i === 0) {
                     field.attr("autofocus", true);
                 }
-                var $row = $(domElem("tr"));
+                const $row = $(domElem("tr"));
 
-                var fieldId = field.attr("id") || $("input", field).attr("id");
+                const fieldId = field.attr("id") || $("input", field).attr("id");
                 $(domElem("label"))
                     .attr("for", fieldId)
                     .text(labelName)
@@ -313,15 +315,15 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         );
 
         // push text input fields
-        for (var i = 0; i < this._$textInputs.length; i++) {
-            var textField = this._content.textFields[i];
+        for (let i = 0; i < this._$textInputs.length; i++) {
+            const textField = this._content.textFields[i];
             if (!textField.checkValid && textField.requiredField) {
                 this._setupRequiredValidators(this._$textInputs[i], textField.validationErrorMessage);
             }
         }
         // push combo input fields
-        for (var i = 0; i < this._$comboInputs.length; i++) {
-            var comboField = this._content.comboFields[i];
+        for (let i = 0; i < this._$comboInputs.length; i++) {
+            const comboField = this._content.comboFields[i];
             if (!comboField.checkValid && comboField.requiredField) {
                 this._setupRequiredValidators(this._$comboInputs[i], comboField.validationErrorMessage);
             }
@@ -329,31 +331,31 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
     }
 
     private _getFormFields(): any[] {
-        var fields = [];
+        const fields = [];
         // push basic fields
         fields.push(["Title", this._$titleInput]);
         fields.push(["Start Date", this._$startInput]);
         fields.push(["End Date", this._$endInput]);
 
         // push text input fields
-        var textFields = this._content.textFields;
-        var textInputs = this._$textInputs;
-        for (var i = 0; i < textInputs.length; i++) {
+        const textFields = this._content.textFields;
+        const textInputs = this._$textInputs;
+        for (let i = 0; i < textInputs.length; i++) {
             fields.push([textFields[i].label, textInputs[i]]);
         }
         // push combo input fields
-        var comboFields = this._content.comboFields;
-        var comboInputs = this._$comboInputs;
-        for (var i = 0; i < comboInputs.length; i++) {
+        const comboFields = this._content.comboFields;
+        const comboInputs = this._$comboInputs;
+        for (let i = 0; i < comboInputs.length; i++) {
             fields.push([comboFields[i].label, comboInputs[i]]);
         }
         return fields;
     }
 
     private _buildComboControls() {
-        var comboFields = this._content.comboFields;
-        var comboInputs = this._$comboInputs;
-        for (var i = 0; i < comboInputs.length; i++) {
+        const comboFields = this._content.comboFields;
+        const comboInputs = this._$comboInputs;
+        for (let i = 0; i < comboInputs.length; i++) {
             if (comboFields[i].disabled) {
                 comboInputs[i].prop("disabled", true);
             } else {
@@ -365,7 +367,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
         }
     }
 
-    private _buildCalendarEventFromFields(): IPromise<any> {
+    private _buildCalendarEventFromFields(): PromiseLike<any> {
         if (this._$startInput) {
             this._calendarEvent.startDate = Utils_Date.shiftToLocal(
                 Utils_Date.parseDateString(this._$startInput.val(), Culture.getDateTimeFormat().ShortDatePattern, true),
@@ -380,11 +382,11 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             this._calendarEvent.title = $.trim(this._$titleInput.val());
         }
 
-        var promises: IPromise<any>[] = [];
+        const promises: PromiseLike<any>[] = [];
         // create event data from text fields
-        var textFields = this._content.textFields;
-        var textInputs = this._$textInputs;
-        for (var i = 0; i < textInputs.length; i++) {
+        const textFields = this._content.textFields;
+        const textInputs = this._$textInputs;
+        for (let i = 0; i < textInputs.length; i++) {
             if (textFields[i].okCallback) {
                 promises.push(textFields[i].okCallback(textInputs[i].val()));
             } else if (textFields[i].eventProperty) {
@@ -392,9 +394,9 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             }
         }
         // create event data from combo fields
-        var comboFields = this._content.comboFields;
-        var comboInputs = this._$comboInputs;
-        for (var i = 0; i < comboInputs.length; i++) {
+        const comboFields = this._content.comboFields;
+        const comboInputs = this._$comboInputs;
+        for (let i = 0; i < comboInputs.length; i++) {
             if (comboFields[i].okCallback) {
                 promises.push(comboFields[i].okCallback(comboInputs[i].val()));
             } else if (comboFields[i].eventProperty) {
@@ -402,7 +404,7 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             }
         }
 
-        return Q.all(promises);
+        return Promise.all(promises);
     }
 
     private _validate(showError?: boolean) {
@@ -412,8 +414,8 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             return;
         }
 
-        var validationResult = [];
-        var groupIsValid: boolean = Controls_Validation.validateGroup("default", validationResult);
+        const validationResult = [];
+        const groupIsValid: boolean = Controls_Validation.validateGroup("default", validationResult);
         if (!groupIsValid) {
             if (showError) {
                 this._setError(validationResult[0].getMessage());
@@ -422,13 +424,13 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             return;
         }
 
-        var errorPromises: IPromise<string>[] = [];
+        const errorPromises: PromiseLike<string>[] = [];
 
         // validate text input fields
-        var textFields = this._content.textFields;
-        var textInputs = this._$textInputs;
-        for (var i = 0; i < textInputs.length; i++) {
-            var textField = textFields[i];
+        const textFields = this._content.textFields;
+        const textInputs = this._$textInputs;
+        for (let i = 0; i < textInputs.length; i++) {
+            const textField = textFields[i];
             if (textField.checkValid) {
                 errorPromises.push(
                     textField.checkValid($.trim(textInputs[i].val())).then((isValid: boolean) => {
@@ -441,10 +443,10 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             }
         }
         // validate combo input fields
-        var comboFields = this._content.comboFields;
-        var comboInputs = this._$comboInputs;
-        for (var i = 0; i < comboInputs.length; i++) {
-            var comboField = comboFields[i];
+        const comboFields = this._content.comboFields;
+        const comboInputs = this._$comboInputs;
+        for (let i = 0; i < comboInputs.length; i++) {
+            const comboField = comboFields[i];
             if (comboField.checkValid && !comboField.disabled) {
                 errorPromises.push(
                     comboField.checkValid($.trim(comboInputs[i].val())).then((isValid: boolean) => {
@@ -457,8 +459,8 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
             }
         }
 
-        return Q.all(errorPromises).then((results: string[]) => {
-            var invalidMessages = results.filter(r => r !== "valid");
+        return Promise.all(errorPromises).then((results: string[]) => {
+            const invalidMessages = results.filter(r => r !== "valid");
             if (invalidMessages && invalidMessages.length > 0) {
                 if (showError) {
                     this._setError(invalidMessages[0]);
@@ -538,7 +540,8 @@ export class EditEventDialog extends Controls_Dialog.ModalDialogO<IEventDialogOp
  * A control which allows users to add / edit free-form events.
  * In addition to start/end dates, allows user to enter a title and select a category.
 */
-export class EditFreeFormEventControl extends Controls.Control<IEventControlOptions> implements Calendar_Contracts.IDialogContent {
+export class EditFreeFormEventControl extends Controls.Control<IEventControlOptions>
+    implements Calendar_Contracts.IDialogContent {
     private _calendarEvent: Calendar_Contracts.CalendarEvent;
     private _categories: Calendar_Contracts.IEventCategory[];
     private _$descriptionInput: JQuery;
@@ -560,27 +563,28 @@ export class EditFreeFormEventControl extends Controls.Control<IEventControlOpti
         this._createLayout();
     }
 
-    public onOkClick(): IPromise<any> {
-        return Q.resolve({
+    public onOkClick(): PromiseLike<any> {
+        return Promise.resolve({
             movable: true,
             description: this._$descriptionInput.val(),
             category: this._calendarEvent.category,
         });
     }
 
-    public getTitle(): IPromise<string> {
-        return Q.resolve(this._options.isEdit ? "Edit Event" : "Add Event");
+    public getTitle(): PromiseLike<string> {
+        return Promise.resolve(this._options.isEdit ? "Edit Event" : "Add Event");
     }
 
-    public getContributedHeight(): IPromise<number> {
-        return Q.resolve(EditFreeFormEventControl.height);
+    public getContributedHeight(): PromiseLike<number> {
+        return Promise.resolve(EditFreeFormEventControl.height);
     }
 
-    public getFields(): IPromise<Calendar_Contracts.IAddEventContent> {
+    public getFields(): PromiseLike<Calendar_Contracts.IAddEventContent> {
         return this._options.categoriesPromise().then((categories: Calendar_Contracts.IEventCategory[]) => {
+            let categoryTitles = undefined;
             if (categories) {
                 this._categories = categories;
-                var categoryTitles = categories.map(cat => {
+                categoryTitles = categories.map(cat => {
                     return cat.title;
                 });
             }
@@ -601,12 +605,14 @@ export class EditFreeFormEventControl extends Controls.Control<IEventControlOpti
     }
 
     private _createLayout() {
-        var $container = $(domElem("table")).appendTo(this._element);
+        const $container = $(domElem("table")).appendTo(this._element);
 
-        var descriptionString = this._calendarEvent.description || "";
-        this._$descriptionInput = $("<textarea rows='3' id='descriptionText' class=''requiredInfoLight' />").val(descriptionString);
+        const descriptionString = this._calendarEvent.description || "";
+        this._$descriptionInput = $("<textarea rows='3' id='descriptionText' class=''requiredInfoLight' />").val(
+            descriptionString,
+        );
 
-        var $row = $(domElem("tr"));
+        const $row = $(domElem("tr"));
 
         $(domElem("label"))
             .attr("for", this._$descriptionInput.attr("id"))
@@ -618,21 +624,21 @@ export class EditFreeFormEventControl extends Controls.Control<IEventControlOpti
         $row.appendTo($container);
     }
 
-    private _categoryCallback(value: string): IPromise<any> {
-        var title = $.trim(value);
+    private _categoryCallback(value: string): PromiseLike<any> {
+        let title = $.trim(value);
         if (!title || title.length === 0) {
             title = "Uncategorized";
         }
-        var category: Calendar_Contracts.IEventCategory = {
+        let category: Calendar_Contracts.IEventCategory = {
             title: title,
             id: Utils_String.format("freeForm.{0}", title),
         };
-        var categories = this._categories.filter(cat => cat.title === value);
+        const categories = this._categories.filter(cat => cat.title === value);
         if (categories && categories.length > 0) {
             category = categories[0];
         }
         this._calendarEvent.category = category;
-        return Q.resolve(null);
+        return Promise.resolve(null);
     }
 }
 
@@ -640,7 +646,8 @@ export class EditFreeFormEventControl extends Controls.Control<IEventControlOpti
  * A control which allows users to add / edit days off events.
  * In addition to start/end dates, allows user to select a user (or the entire team).
 */
-export class EditCapacityEventControl extends Controls.Control<IEventControlOptions> implements Calendar_Contracts.IDialogContent {
+export class EditCapacityEventControl extends Controls.Control<IEventControlOptions>
+    implements Calendar_Contracts.IDialogContent {
     private _calendarEvent: Calendar_Contracts.CalendarEvent;
     private _members: WebApi_Contracts.IdentityRef[];
     private _iterations: Work_Contracts.TeamSettingsIteration[];
@@ -665,20 +672,20 @@ export class EditCapacityEventControl extends Controls.Control<IEventControlOpti
     }
 
     public onOkClick(): any {
-        return Q.resolve({
+        return Promise.resolve({
             iterationId: this._calendarEvent.iterationId,
             member: this._calendarEvent.member,
         });
     }
 
-    public getTitle(): IPromise<string> {
-        return Q.resolve(this._options.isEdit ? "Edit Day off" : "Add Day off");
+    public getTitle(): PromiseLike<string> {
+        return Promise.resolve(this._options.isEdit ? "Edit Day off" : "Add Day off");
     }
 
-    public getFields(): IPromise<Calendar_Contracts.IAddEventContent> {
+    public getFields(): PromiseLike<Calendar_Contracts.IAddEventContent> {
         return this._options.membersPromise.then((members: WebApi_Contracts.IdentityRef[]) => {
             this._members = members;
-            var memberNames = [];
+            const memberNames = [];
             memberNames.push(EditCapacityEventControl.EVERYONE);
             members.sort((a, b) => {
                 return a.displayName.toLocaleLowerCase().localeCompare(b.displayName.toLocaleLowerCase());
@@ -687,16 +694,16 @@ export class EditCapacityEventControl extends Controls.Control<IEventControlOpti
                 memberNames.push(member.displayName);
             });
 
-            var initialMemberValue = this._calendarEvent.member.displayName || "";
-            var disabled = false;
+            const initialMemberValue = this._calendarEvent.member.displayName || "";
+            let disabled = false;
             if (this._options.isEdit) {
                 disabled = true;
             }
 
             return this._options.getIterations().then(iterations => {
                 this._iterations = iterations;
-                var initialIterationValue = iterations[0].name;
-                var iteration;
+                let initialIterationValue = iterations[0].name;
+                let iteration;
                 if (this._calendarEvent.iterationId) {
                     iteration = iterations.filter(i => i.id === this._calendarEvent.iterationId)[0];
                 } else {
@@ -736,7 +743,10 @@ export class EditCapacityEventControl extends Controls.Control<IEventControlOpti
         //no op
     }
 
-    private _getCurrentIteration(iterations: Work_Contracts.TeamSettingsIteration[], date: Date): Work_Contracts.TeamSettingsIteration {
+    private _getCurrentIteration(
+        iterations: Work_Contracts.TeamSettingsIteration[],
+        date: Date,
+    ): Work_Contracts.TeamSettingsIteration {
         return iterations.filter(
             (iteration: Work_Contracts.TeamSettingsIteration, index: number, array: Work_Contracts.TeamSettingsIteration[]) => {
                 if (
@@ -751,30 +761,32 @@ export class EditCapacityEventControl extends Controls.Control<IEventControlOpti
         )[0];
     }
 
-    private _iterationCallback(value: string): IPromise<any> {
-        var iteration = this._iterations.filter(i => i.name === $.trim(value))[0];
+    private _iterationCallback(value: string): PromiseLike<any> {
+        const iteration = this._iterations.filter(i => i.name === $.trim(value))[0];
         if (iteration) {
             this._calendarEvent.iterationId = iteration.id;
         }
-        return Q.resolve(null);
+        return Promise.resolve(null);
     }
 
-    private _checkIterationValid(value: string): IPromise<boolean> {
-        return Q.resolve(this._iterations.filter(i => i.name === $.trim(value)).length > 0);
+    private _checkIterationValid(value: string): PromiseLike<boolean> {
+        return Promise.resolve(this._iterations.filter(i => i.name === $.trim(value)).length > 0);
     }
 
-    private _memberCallback(value: string): IPromise<any> {
-        var member = this._members.filter(m => m.displayName === $.trim(value))[0];
+    private _memberCallback(value: string): PromiseLike<any> {
+        const member = this._members.filter(m => m.displayName === $.trim(value))[0];
         if (member) {
             this._calendarEvent.member = member;
         } else {
-            this._calendarEvent.member = <WebApi_Contracts.IdentityRef>{ displayName: EditCapacityEventControl.EVERYONE };
+            this._calendarEvent.member = <WebApi_Contracts.IdentityRef>{
+                displayName: EditCapacityEventControl.EVERYONE,
+            };
         }
-        return Q.resolve(null);
+        return Promise.resolve(null);
     }
 
-    private _checkMemberValid(value: string): IPromise<boolean> {
-        return Q.resolve(
+    private _checkMemberValid(value: string): PromiseLike<boolean> {
+        return Promise.resolve(
             this._members.filter(m => m.displayName === $.trim(value)).length > 0 || value === EditCapacityEventControl.EVERYONE,
         );
     }
@@ -808,7 +820,7 @@ class DateRelativeToValidator extends Controls_Validation.BaseValidator<DateRela
     }
 
     public isValid(): boolean {
-        var fieldText = $.trim(this.getValue()),
+        let fieldText = $.trim(this.getValue()),
             relativeToFieldText = $.trim(this._options.relativeToField.val()),
             fieldDate,
             relativeToFieldDate,

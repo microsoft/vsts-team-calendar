@@ -1,11 +1,5 @@
-﻿import Calendar_Contracts = require("../Contracts");
-import Q = require("q");
-import Service = require("VSS/Service");
-import TFS_Core_Contracts = require("TFS/Core/Contracts");
-import Utils_Date = require("VSS/Utils/Date");
-import WebApi_Constants = require("VSS/WebApi/Constants");
-import Work_Client = require("TFS/Work/RestClient");
-import Work_Contracts = require("TFS/Work/Contracts");
+﻿import * as Calendar_Contracts from "../Contracts";
+import * as Utils_Date from "VSS/Utils/Date";
 
 function ensureDate(date: string | Date): Date {
     if (typeof date === "string") {
@@ -23,7 +17,7 @@ function ensureDate(date: string | Date): Date {
  * @return True if date is between 2 dates, otherwise false
  */
 export function isBetween(date: Date, startDate: Date, endDate: Date): boolean {
-    var ticks = date.getTime();
+    const ticks = date.getTime();
     return ticks >= startDate.getTime() && ticks <= endDate.getTime();
 }
 
@@ -56,8 +50,8 @@ export function eventIn(event: Calendar_Contracts.CalendarEvent, query: Calendar
  * @return Date[] containing each date in the range
  */
 export function getDatesInRange(startDate: Date, endDate: Date): Date[] {
-    var dates = [];
-    var current: Date = startDate;
+    const dates = [];
+    let current: Date = startDate;
     while (current.getTime() <= endDate.getTime()) {
         dates.push(new Date(<any>current));
         current = Utils_Date.addDays(current, 1);

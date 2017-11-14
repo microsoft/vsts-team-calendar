@@ -1,8 +1,8 @@
 {
     "manifestVersion": 1,
     "id": "team-calendar",
-    "version": "0.5.12",
     "publisher": "ms-devlabs",
+    "version": "0.5.94",
     "name": "Team Calendar",
     "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
     "public": true,
@@ -61,13 +61,19 @@
             "addressable": true
         },
         {
-            "path": "dist",
+            "path": "dist/js",
+            "packagePath": "js",
+            "addressable": true
+        },
+        {
+            "path": "dist/css",
+            "packagePath": "css",
             "addressable": true
         },
         {
             "path": "node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
-            "packagePath": "dist/vss-web-extension-sdk"
+            "packagePath": "sdk"
         }
     ],
     "branding": {

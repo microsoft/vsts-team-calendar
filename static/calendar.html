@@ -4,13 +4,13 @@
 <head>
     <title>Calendar Extension</title>
     <script src="../sdk/VSS.SDK.js"></script>
+    <script src="../lib/jquery/jquery.min.js"></script>
+    <script src="../lib/moment/moment.min.js"></script>
+    <script src="../lib/fullcalendar/fullcalendar.min.js"></script>
+    
 
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.6.2/fullcalendar.css" />
+    <link rel="stylesheet" href="../lib/fullcalendar/fullcalendar.min.css" />
     <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.6.2/fullcalendar.js"></script>
     <base target="_blank" />
 </head>
 
@@ -28,14 +28,13 @@
 
         // Wait for the SDK to be initialized
         VSS.ready(function () {
-            require(["Calendar/main"], function (items) {
+            require(["Calendar/main"], function () {
                 VSS.notifyLoadSucceeded();
             });
         });
     </script>
     <div id="extensionFrame">
-        <div class="calendar-area" id="calendarArea"></div>
-        <div class="summary-area" id="summaryArea"></div>
+        
     </div>
     <!-- <div id="calendar-extension">
         <div class="splitter horizontal right">

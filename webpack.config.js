@@ -34,8 +34,10 @@ module.exports = env => {
                 react: true,
                 "react-dom": true,
             },
-            /^TFS\//, // Ignore TFS/* since they are coming from VSTS host
-            /^VSS\//, // Ignore VSS/* since they are coming from VSTS host
+            // Ignore TFS/*, VSS/*, Favorites/* since they are coming from VSTS host
+            /^TFS\//,
+            /^VSS\//,
+            /^Favorites\//,
         ],
         resolve: {
             alias: { OfficeFabric: "../node_modules/office-ui-fabric-react/lib-amd" },
@@ -64,8 +66,8 @@ module.exports = env => {
                 },
                 {
                     test: /\.css$/,
-                    use: ["style-loader", "css-loader"]
-                }
+                    use: ["style-loader", "css-loader"],
+                },
             ],
         },
         plugins: plugins,

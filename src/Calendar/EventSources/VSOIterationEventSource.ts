@@ -1,13 +1,14 @@
-import * as Calendar_Contracts from "../Contracts";
-import * as Calendar_ColorUtils from "../Utils/Color";
-import * as Calendar_DateUtils from "../Utils/Date";
-import * as Service from "VSS/Service";
-import * as TFS_Core_Contracts from "TFS/Core/Contracts";
-import * as Utils_Date from "VSS/Utils/Date";
-import * as Utils_String from "VSS/Utils/String";
-import * as WebApi_Constants from "VSS/WebApi/Constants";
-import * as Work_Client from "TFS/Work/RestClient";
-import * as Work_Contracts from "TFS/Work/Contracts";
+import { WebApiTeam } from 'TFS/Core/Contracts';
+import * as Calendar_Contracts from '../Contracts';
+import * as Calendar_ColorUtils from '../Utils/Color';
+import * as Calendar_DateUtils from '../Utils/Date';
+import * as Service from 'VSS/Service';
+import * as TFS_Core_Contracts from 'TFS/Core/Contracts';
+import * as Utils_Date from 'VSS/Utils/Date';
+import * as Utils_String from 'VSS/Utils/String';
+import * as WebApi_Constants from 'VSS/WebApi/Constants';
+import * as Work_Client from 'TFS/Work/RestClient';
+import * as Work_Contracts from 'TFS/Work/Contracts';
 
 export class VSOIterationEventSource implements Calendar_Contracts.IEventSource {
     public id = "iterations";
@@ -16,6 +17,15 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
     public background = true;
     private _events: Calendar_Contracts.CalendarEvent[];
     private _categories: Calendar_Contracts.IEventCategory[];
+    private _teamId: string;
+
+    constructor(context?: any) {
+        this.updateTeamContext(context.team);
+    }
+
+    public updateTeamContext(newTeam: WebApiTeam) {
+        this._teamId = newTeam.id;
+    }
 
     public load(): PromiseLike<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents();
@@ -28,7 +38,7 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._teamId,
             project: "",
             team: "",
         };

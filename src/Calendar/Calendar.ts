@@ -127,6 +127,9 @@ export class Calendar extends Controls.Control<CalendarOptions> {
     }
 
     public addEventSources(sources: SourceAndOptions[]): CalendarEventSource[] {
+        if (this._disposed) {
+            return [];
+        }
         sources.forEach(source => {
             const calendarSource = this._createEventSource(source.source, source.options || {});
             this._calendarSources.push(calendarSource);

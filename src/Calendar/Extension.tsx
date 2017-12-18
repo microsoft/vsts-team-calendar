@@ -9,6 +9,5 @@ import * as Calendar_Views from "./Views";
 require("./Style/style.scss");
 
 $(() => {
-    ReactDOM.render(<CalendarView.CalendarComponent />, document.getElementById("calendarArea"));
-    ReactDOM.render(<CalendarView.SummaryComponent />, document.getElementById("summaryArea"));
+    ReactDOM.render(<CalendarView.CalendarStateManagerComponent />, document.getElementById("extensionFrame"));
 });

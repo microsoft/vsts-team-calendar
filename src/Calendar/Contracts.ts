@@ -1,4 +1,5 @@
-import * as FullCalendar from "FullCalendar";
+import { WebApiTeam } from 'TFS/Core/Contracts';
+import * as FullCalendar from 'FullCalendar';
 
 /**
  * Content to be rendered by the Add Event Dialog
@@ -258,6 +259,12 @@ export interface IEventSource {
     * Optional method to update an event in this event source
     */
     updateEvent?: (oldEvent: CalendarEvent, newEvent: CalendarEvent) => PromiseLike<CalendarEvent>;
+
+    /**
+     * Called when the team context is updated. Subsequent calls should fetch data
+     * relevant to the new team, if necessary.
+     */
+    updateTeamContext?: (newTeam: WebApiTeam) => void;
 
     /**
     * Forms the url which is linked to the title of the summary section for the source

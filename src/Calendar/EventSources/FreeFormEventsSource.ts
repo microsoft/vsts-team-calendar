@@ -1,11 +1,12 @@
-import * as Calendar_Contracts from "../Contracts";
-import * as Calendar_DateUtils from "../Utils/Date";
-import * as Calendar_ColorUtils from "../Utils/Color";
-import * as Contributions_Contracts from "VSS/Contributions/Contracts";
-import * as FreeForm_Enhancer from "../Enhancers/FreeFormEnhancer";
-import * as Services_ExtensionData from "VSS/SDK/Services/ExtensionData";
-import * as Utils_Date from "VSS/Utils/Date";
-import * as Utils_String from "VSS/Utils/String";
+import { WebApiTeam } from 'TFS/Core/Contracts';
+import * as Calendar_Contracts from '../Contracts';
+import * as Calendar_DateUtils from '../Utils/Date';
+import * as Calendar_ColorUtils from '../Utils/Color';
+import * as Contributions_Contracts from 'VSS/Contributions/Contracts';
+import * as FreeForm_Enhancer from '../Enhancers/FreeFormEnhancer';
+import * as Services_ExtensionData from 'VSS/SDK/Services/ExtensionData';
+import * as Utils_Date from 'VSS/Utils/Date';
+import * as Utils_String from 'VSS/Utils/String';
 
 export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     public id = "freeForm";
@@ -18,9 +19,12 @@ export class FreeFormEventsSource implements Calendar_Contracts.IEventSource {
     private _events: Calendar_Contracts.CalendarEvent[];
     private _categories: Calendar_Contracts.IEventCategory[];
 
-    constructor() {
-        const webContext = VSS.getWebContext();
-        this._teamId = webContext.team.id;
+    constructor(context?: any) {
+        this.updateTeamContext(context.team);
+    }
+
+    public updateTeamContext(newTeam: WebApiTeam) {
+        this._teamId = newTeam.id;
         this._categoryId = Utils_String.format("{0}-categories", this._teamId);
     }
 

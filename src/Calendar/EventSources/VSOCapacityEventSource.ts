@@ -1,15 +1,16 @@
-import * as Calendar_Contracts from "../Contracts";
-import * as Calendar_DateUtils from "../Utils/Date";
+import { WebApiTeam } from 'TFS/Core/Contracts';
+import * as Calendar_Contracts from '../Contracts';
+import * as Calendar_DateUtils from '../Utils/Date';
 import { realPromise } from "../Utils/Promise";
-import * as Capacity_Enhancer from "../Enhancers/VSOCapacityEnhancer";
-import * as Culture from "VSS/Utils/Culture";
-import * as Service from "VSS/Service";
-import * as TFS_Core_Contracts from "TFS/Core/Contracts";
-import * as Utils_Date from "VSS/Utils/Date";
-import * as Utils_String from "VSS/Utils/String";
-import * as WebApi_Constants from "VSS/WebApi/Constants";
-import * as Work_Client from "TFS/Work/RestClient";
-import * as Work_Contracts from "TFS/Work/Contracts";
+import * as Capacity_Enhancer from '../Enhancers/VSOCapacityEnhancer';
+import * as Culture from 'VSS/Utils/Culture';
+import * as Service from 'VSS/Service';
+import * as TFS_Core_Contracts from 'TFS/Core/Contracts';
+import * as Utils_Date from 'VSS/Utils/Date';
+import * as Utils_String from 'VSS/Utils/String';
+import * as WebApi_Constants from 'VSS/WebApi/Constants';
+import * as Work_Client from 'TFS/Work/RestClient';
+import * as Work_Contracts from 'TFS/Work/Contracts';
 
 export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     public id = "daysOff";
@@ -19,6 +20,15 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     private _events: Calendar_Contracts.CalendarEvent[];
     private _renderedEvents: Calendar_Contracts.CalendarEvent[];
     private _categoryColor: string = "transparent";
+    private _team: WebApiTeam;
+
+    constructor(context?: any) {
+        this.updateTeamContext(context.team);
+    }
+
+    public updateTeamContext(newTeam: WebApiTeam) {
+        this._team = newTeam;
+    }
 
     public load(): PromiseLike<Calendar_Contracts.CalendarEvent[]> {
         return this.getEvents().then((events: Calendar_Contracts.CalendarEvent[]) => {
@@ -72,7 +82,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -99,9 +109,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                             event.endDate = new Date(daysOffRange.end.valueOf()).toISOString();
                             event.title = "Team Day Off";
                             event.member = {
-                                displayName: webContext.team.name,
-                                id: webContext.team.id,
-                                imageUrl: this._buildTeamImageUrl(webContext.host.uri, webContext.team.id),
+                                displayName: this._team.name,
+                                id: this._team.id,
+                                imageUrl: this._buildTeamImageUrl(webContext.host.uri, this._team.id),
                             };
                             event.category = <Calendar_Contracts.IEventCategory>{
                                 id: this.id + "." + "Everyone",
@@ -222,7 +232,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -252,7 +262,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -300,7 +310,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -367,7 +377,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         const webContext = VSS.getWebContext();
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -429,7 +439,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             .getHttpClient(Work_Client.WorkHttpClient, WebApi_Constants.ServiceInstanceTypes.TFS);
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
-            teamId: webContext.team.id,
+            teamId: this._team.id,
             project: "",
             team: "",
         };
@@ -441,16 +451,16 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
                         webContext.host.uri +
                         webContext.project.name +
                         "/" +
-                        webContext.team.name +
+                        this._team.name +
                         "/_backlogs/capacity/" +
                         iterationPath
                     );
                 } else {
-                    return webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations";
+                    return webContext.host.uri + webContext.project.name + "/" + this._team.name + "/_admin/_iterations";
                 }
             },
             error => {
-                return webContext.host.uri + webContext.project.name + "/" + webContext.team.name + "/_admin/_iterations";
+                return webContext.host.uri + webContext.project.name + "/" + this._team.name + "/_admin/_iterations";
             },
         );
     }

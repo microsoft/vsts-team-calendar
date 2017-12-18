@@ -16,16 +16,20 @@ import * as Utils_Core from "VSS/Utils/Core";
 import * as Utils_Date from "VSS/Utils/Date";
 import * as Utils_String from "VSS/Utils/String";
 import { Hub } from "vss-ui/Hub";
-import { HubHeader, IHubBreadcrumbItem } from "vss-ui/HubHeader";
+import { HubHeader } from "vss-ui/HubHeader";
+import { PickList, PickListDropdown, IPickListSelection } from "vss-ui/PickList";
+import { IHubBreadcrumbItem } from "vss-ui/HubHeader";
 import { HubViewState } from "vss-ui/Utilities/HubViewState";
-import { ObservableValue } from "vss-ui/Utilities/Observable";
+import { IObservableValue, ObservableValue } from "vss-ui/Utilities/Observable";
 import * as WebApi_Constants from "VSS/WebApi/Constants";
 import * as WebApi_Contracts from "VSS/WebApi/Contracts";
 import * as Work_Contracts from "TFS/Work/Contracts";
-import * as FullCalendar from "fullcalendar";
+import * as FullCalendar from "fullcalendar"; // types only
 
-import { BaseComponent, IBaseProps, IContextualMenuItem } from "office-ui-fabric-react";
+import { BaseComponent, IBaseProps, IContextualMenuItem, IBreadcrumbItem, SelectionMode } from "office-ui-fabric-react";
 import { PivotBarItem } from "vss-ui/PivotBar";
+import { WebApiTeam } from "TFS/Core/Contracts";
+import { Callout } from "vss-ui/node_modules/office-ui-fabric-react/lib/Callout";
 
 const months = [
     "January",
@@ -76,13 +80,21 @@ export class EventSourceCollection {
         return this._collection;
     }
 
-    public static create(): PromiseLike<EventSourceCollection> {
+    public updateTeamContext(newTeam: WebApiTeam) {
+        for (const eventSource of this._collection) {
+            if (typeof eventSource.updateTeamContext === "function") {
+                eventSource.updateTeamContext(newTeam);
+            }
+        }
+    }
+
+    public static create(team?: any): PromiseLike<EventSourceCollection> {
         if (!this._createPromise) {
             const extensionContext = VSS.getExtensionContext();
             const eventSourcesTargetId =
                 extensionContext.publisherId + "." + extensionContext.extensionId + ".calendar-event-sources";
             this._createPromise = realPromise(VSS.getServiceContributions(eventSourcesTargetId)).then(contributions => {
-                const servicePromises = contributions.map(c => c.getInstance(c.id));
+                const servicePromises = contributions.map(c => c.getInstance(c.id, { team }));
                 return allSettled(servicePromises).then(promiseStates => {
                     const services = [];
                     promiseStates.forEach((promiseState, index: number) => {
@@ -103,40 +115,124 @@ export class EventSourceCollection {
 
 export interface CalendarViewOptions extends Calendar.CalendarOptions {
     defaultEvents?: FullCalendar.EventObject[];
+    selectedTeam?: WebApiTeam;
 }
 
-export interface ICalendarHubProps extends IBaseProps {}
+export interface ICalendarHubProps extends IBaseProps {
+    onSelectedTeamChanged: (selectedTeam: WebApiTeam) => void;
+    onCalendarViewUpdated: (calendarView: CalendarView) => void;
+    selectedTeam?: WebApiTeam;
+}
 
 interface MonthAndYear {
     month: number;
     year: number;
 }
 
-export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAndYear> {
-    private static calendar: Calendar.Calendar;
+export interface CalendarState {
+    calendar: MonthAndYear;
+    showMonthPicker: boolean;
+    monthPickerTarget: HTMLElement | null;
+}
+
+export class CalendarStateManagerComponent extends BaseComponent<
+    {},
+    { calendarView?: ObservableValue<CalendarView>; selectedTeam?: WebApiTeam }
+> {
+    constructor() {
+        super();
+        this.state = { calendarView: new ObservableValue() };
+
+        this.initialize();
+    }
+
+    private async initialize() {
+        const navSvc = await VSS.getService<IHostNavigationService>(VSS.ServiceIds.Navigation);
+        let selectedTeamId = (await navSvc.getCurrentState()).team;
+        if (!selectedTeamId) {
+            // Nothing in URL - check context
+            const contextTeam = VSS.getWebContext().team;
+            if (contextTeam && contextTeam.id) {
+                selectedTeamId = contextTeam.id;
+            }
+        }
+        if (!selectedTeamId) {
+            // Nothing in URL or context - check data service
+            const dataSvc = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+            selectedTeamId = await dataSvc.getValue<string>("selected-team", { scopeType: "User" });
+        }
+        if (selectedTeamId) {
+            // get the team if we found a way to choose one
+            const team = await Tfs_Core_WebApi.getClient().getTeam(VSS.getWebContext().project.id, selectedTeamId);
+            if (team) {
+                await this.setSelectedTeam(team);
+
+                // Work around a bug where pivot bar wont render properly on initial render.
+                setTimeout(() => {
+                    this.forceUpdate();
+                }, 250);
+            }
+        }
+    }
+
+    private async setSelectedTeam(selectedTeam: WebApiTeam) {
+        // Set the URL and data service value to the selected team.
+        const navSvc = await VSS.getService<IHostNavigationService>(VSS.ServiceIds.Navigation);
+        navSvc.updateHistoryEntry(null, { team: selectedTeam.id }, true, true, null, false);
+
+        const dataSvc = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+        dataSvc.setValue<string>("selected-team", selectedTeam.id, { scopeType: "User" });
+
+        this.setState({ selectedTeam });
+    }
+
+    public render(): JSX.Element {
+        return (
+            <div>
+                <div className="calendar-area" id="calendarArea">
+                    <CalendarComponent
+                        onSelectedTeamChanged={async selectedTeam => {
+                            this.setSelectedTeam(selectedTeam);
+                        }}
+                        onCalendarViewUpdated={calendarView => {
+                            this.state.calendarView.value = calendarView;
+                            this.forceUpdate();
+                        }}
+                        selectedTeam={this.state.selectedTeam}
+                    />
+                </div>
+                {this.state.selectedTeam &&
+                    this.state.calendarView.value && (
+                        <div className="summary-area" id="summaryArea">
+                            <SummaryComponent calendarView={this.state.calendarView} />
+                        </div>
+                    )}
+            </div>
+        );
+    }
+}
+
+export class CalendarComponent extends BaseComponent<ICalendarHubProps, CalendarState> {
     private hubViewState: HubViewState;
     private calendarView: CalendarView;
     private calendarDiv: HTMLElement;
-    private summaryDiv: HTMLElement;
+    private header: HubHeader;
+    private needToEnhance: boolean = false;
 
     constructor() {
         super();
         this.hubViewState = new HubViewState({ defaultPivot: "calendar" });
-        this.state = { month: new Date().getMonth(), year: new Date().getFullYear() };
+        this.state = {
+            calendar: { month: new Date().getMonth(), year: new Date().getFullYear() },
+            showMonthPicker: false,
+            monthPickerTarget: null,
+        };
     }
 
-    private getHeaderItems(): IHubBreadcrumbItem[] {
-        return [
-            // Coming soon, etc.
-            // {
-            //     key: "team",
-            //     text: "Team",
-            // },
-            // {
-            //     key: "Month",
-            //     text: "The date",
-            // },
-        ];
+    private setSelectedTeam(team: WebApiTeam) {
+        if (team.id !== this.props.selectedTeam.id && typeof this.props.onSelectedTeamChanged === "function") {
+            this.props.onSelectedTeamChanged(team);
+        }
     }
 
     private static calcMonths(current: MonthAndYear, monthDelta: number): MonthAndYear {
@@ -148,143 +244,215 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, MonthAnd
         return { month, year };
     }
 
+    private onMonthPickerClick(ev?: React.MouseEvent<HTMLElement>, item?: IBreadcrumbItem) {
+        this.setState({ showMonthPicker: true, monthPickerTarget: ev.target as HTMLElement });
+    }
+
     /**
      * Get list of current month -5 and +5 months
      */
+    private getHeaderItems(): IHubBreadcrumbItem[] {
+        return [
+            {
+                text: `${months[this.state.calendar.month]} ${this.state.calendar.year}`,
+                key: "monthpicker",
+                leftIconProps: { iconName: "Calendar" },
+                onClick: this.onMonthPickerClick.bind(this),
+            },
+        ];
+    }
+
     private getMonthPickerOptions(): MonthAndYear[] {
         const options: MonthAndYear[] = [];
         const listSize = 3;
         for (let i = -listSize; i <= listSize; ++i) {
-            options.push(CalendarComponent.calcMonths(this.state, i));
+            options.push(CalendarComponent.calcMonths(this.state.calendar, i));
         }
         return options;
     }
 
+    private getMonthPickerListItem(item: MonthAndYear) {
+        const str = `${months[item.month]} ${item.year}`;
+        return {
+            name: str,
+            key: str,
+        };
+    }
+
     private enhanceControls(): void {
-        if (this.calendarDiv) {
-            this.calendarView = CalendarView.enhance<CalendarViewOptions>(
-                CalendarView,
-                this.calendarDiv,
-                {} as CalendarViewOptions,
-            ) as CalendarView;
-            CalendarComponent.calendar = this.calendarView.getCalendar();
+        if (this.calendarView) {
+            this.calendarView.dispose();
+            this.calendarView = null;
+        }
+        if (this.calendarDiv && this.props.selectedTeam) {
+            $(this.calendarDiv).empty();
+            this.calendarView = Controls.create(CalendarView, $(this.calendarDiv), {
+                selectedTeam: this.props.selectedTeam,
+            } as CalendarViewOptions);
+            this.props.onCalendarViewUpdated(this.calendarView);
         }
     }
 
-    public static getCalendarEnhancement() {
-        return this.calendar;
-    }
-
-    public componentDidMount(): void {
-        this.enhanceControls();
+    public componentDidUpdate(prevProps: ICalendarHubProps, prevState: CalendarState): void {
+        if (prevProps.selectedTeam !== this.props.selectedTeam) {
+            if (this.needToEnhance) {
+                this.enhanceControls();
+                this.needToEnhance = false;
+            } else {
+                this.needToEnhance = true;
+            }
+        }
     }
 
     public render(): JSX.Element {
         return (
-            <Hub
-                hideFullScreenToggle={true}
-                hubViewState={this.hubViewState}
-                viewActions={[
-                    {
-                        key: "move-today",
-                        name: "Today",
-                        important: true,
-                        onClick: this._onCommandClick,
-                    },
-                    {
-                        key: "move-left",
-                        name: "Prev",
-                        important: true,
-                        iconProps: {
-                            iconName: "ChevronLeft",
+            <div>
+                {this.state.showMonthPicker && (
+                    <Callout
+                        isBeakVisible={false}
+                        target={this.state.monthPickerTarget}
+                        onDismiss={() => {
+                            this.setState({ showMonthPicker: false });
+                        }}>
+                        <PickList
+                            selectionMode={SelectionMode.single}
+                            items={this.getMonthPickerOptions()}
+                            getListItem={this.getMonthPickerListItem.bind(this)}
+                            onSelectionChanged={selection => {
+                                const selectedItem = selection.selectedItems[0] as MonthAndYear;
+                                this.setState({ showMonthPicker: false, calendar: selection.selectedItems[0] });
+                                this.calendarView.getCalendar().goTo(new Date(selectedItem.year, selectedItem.month, 1, 0, 0, 0));
+                            }}
+                            selectedItems={[this.state.calendar]}
+                        />
+                    </Callout>
+                )}
+                <Hub
+                    hideFullScreenToggle={true}
+                    hubViewState={this.hubViewState}
+                    viewActions={[
+                        {
+                            key: "move-today",
+                            name: "Today",
+                            important: true,
+                            onClick: this._onCommandClick,
                         },
-                        onClick: this._onCommandClick,
-                    },
-                    {
-                        key: "move-right",
-                        name: "Next",
-                        important: true,
-                        iconProps: {
-                            iconName: "ChevronRight",
+                        {
+                            key: "move-left",
+                            name: "Prev",
+                            important: true,
+                            iconProps: {
+                                iconName: "ChevronLeft",
+                            },
+                            onClick: this._onCommandClick,
                         },
-                        onClick: this._onCommandClick,
-                    },
-                ]}
-                commands={[
-                    {
-                        key: "new-item",
-                        name: "New Item",
-                        important: true,
-                        iconProps: {
-                            iconName: "Add",
+                        {
+                            key: "move-right",
+                            name: "Next",
+                            important: true,
+                            iconProps: {
+                                iconName: "ChevronRight",
+                            },
+                            onClick: this._onCommandClick,
                         },
-                        onClick: this._onCommandClick,
-                    },
-                    {
-                        key: "refresh",
-                        name: "Refresh",
-                        important: true,
-                        iconProps: {
-                            iconName: "Refresh",
+                    ]}
+                    commands={[
+                        {
+                            key: "new-item",
+                            name: "New Item",
+                            important: true,
+                            iconProps: {
+                                iconName: "Add",
+                            },
+                            onClick: this._onCommandClick,
                         },
-                        onClick: this._onCommandClick,
-                    },
-                ]}>
-                <HubHeader
-                    breadcrumbItems={this.getHeaderItems()}
-                    iconProps={{ iconName: "Calendar" }}
-                    headerItemPicker={{
-                        getItems: () => {
-                            return this.getMonthPickerOptions();
+                        {
+                            key: "refresh",
+                            name: "Refresh",
+                            important: true,
+                            iconProps: {
+                                iconName: "Refresh",
+                            },
+                            onClick: this._onCommandClick,
                         },
-                        getListItem: (item: MonthAndYear) => {
-                            const str = `${months[item.month]} ${item.year}`;
-                            return {
-                                name: str,
-                                key: str,
-                            };
-                        },
-                        selectedItem: this.state,
-                        onSelectedItemChanged: currentItem => {
-                            this.setState(currentItem);
-                            CalendarComponent.calendar.goTo(new Date(currentItem.year, currentItem.month, 1, 0, 0, 0));
-                        },
-                        isDropdownVisible: new ObservableValue(false),
-                    }}
-                />
-                <PivotBarItem name="Calendar" itemKey="calendar">
-                    <div
-                        className="calendar-canvas"
-                        id="calendarCanvas"
-                        ref={elem => {
-                            this.calendarDiv = elem;
+                    ]}>
+                    <HubHeader
+                        breadcrumbItems={this.getHeaderItems()}
+                        ref={header => {
+                            this.header = header;
+                        }}
+                        headerItemPicker={{
+                            isSearchable: true,
+                            searchTextPlaceholder: "Filter...",
+                            getItems: () => {
+                                return new Promise<WebApiTeam[]>((resolve, reject) => {
+                                    Tfs_Core_WebApi.getClient()
+                                        .getTeams(VSS.getWebContext().project.id)
+                                        .then(resolve, reject);
+                                });
+                            },
+                            getListItem: (item: WebApiTeam) => {
+                                if (item) {
+                                    return {
+                                        name: item.name,
+                                        key: item.id,
+                                    };
+                                }
+                                return {
+                                    name: "Select a team",
+                                    key: "selectteammessage",
+                                };
+                            },
+                            selectedItem: this.props.selectedTeam,
+                            onSelectedItemChanged: (selectedTeam: WebApiTeam) => {
+                                this.setSelectedTeam(selectedTeam);
+                            },
                         }}
                     />
-                </PivotBarItem>
-            </Hub>
+                    {this.props.selectedTeam && (
+                        <PivotBarItem name="Calendar" itemKey="calendar">
+                            <div
+                                className="calendar-canvas"
+                                id="calendarCanvas"
+                                ref={elem => {
+                                    if (elem) {
+                                        this.calendarDiv = elem;
+                                        if (this.needToEnhance) {
+                                            this.enhanceControls();
+                                            this.needToEnhance = false;
+                                        } else {
+                                            this.needToEnhance = true;
+                                        }
+                                    }
+                                }}
+                            />
+                        </PivotBarItem>
+                    )}
+                </Hub>
+            </div>
         );
     }
     private _onCommandClick = (ev: React.MouseEvent<HTMLElement>, item: IContextualMenuItem): void => {
         switch (item.key) {
             case "refresh":
-                CalendarComponent.calendar.refreshEvents();
+                this.calendarView.getCalendar().refreshEvents();
                 break;
             case "new-item":
                 this.calendarView.addEventClicked();
                 break;
             case "move-left":
-                const prevMonth = this.state.month - 1;
-                this.setState(CalendarComponent.calcMonths(this.state, -1));
-                CalendarComponent.calendar.prev();
+                const prevMonth = this.state.calendar.month - 1;
+                this.setState({ calendar: CalendarComponent.calcMonths(this.state.calendar, -1) });
+                this.calendarView.getCalendar().prev();
                 break;
             case "move-right":
-                this.setState(CalendarComponent.calcMonths(this.state, 1));
-                CalendarComponent.calendar.next();
+                this.setState({ calendar: CalendarComponent.calcMonths(this.state.calendar, 1) });
+                this.calendarView.getCalendar().next();
                 break;
             case "move-today":
                 const date = new Date();
-                this.setState({ month: date.getMonth(), year: date.getFullYear() });
-                CalendarComponent.calendar.showToday();
+                this.setState({ calendar: { month: date.getMonth(), year: date.getFullYear() } });
+                this.calendarView.getCalendar().showToday();
                 break;
         }
     };
@@ -300,6 +468,7 @@ export class CalendarView extends Controls.BaseControl {
     private _iterations: Work_Contracts.TeamSettingsIteration[];
     private _currentMember: Calendar_Contracts.ICalendarMember;
     private _processedSprints: { [key: string]: boolean } = {};
+    private _selectedTeam: WebApiTeam;
 
     private static calendarEventFields: string[] = [
         "title",
@@ -318,6 +487,7 @@ export class CalendarView extends Controls.BaseControl {
         super(options);
         this._eventSources = new EventSourceCollection([]);
         this._defaultEvents = options.defaultEvents || [];
+        this._selectedTeam = options.selectedTeam;
     }
 
     public initialize() {
@@ -346,7 +516,11 @@ export class CalendarView extends Controls.BaseControl {
             ),
         );
 
-        EventSourceCollection.create().then(eventSources => {
+        EventSourceCollection.create(this._selectedTeam).then(eventSources => {
+            if (this._disposed) {
+                return;
+            }
+            eventSources.updateTeamContext(this._selectedTeam);
             this._eventSources = eventSources;
             this._calendar.addEvents(this._defaultEvents);
 
@@ -368,6 +542,13 @@ export class CalendarView extends Controls.BaseControl {
         });
     }
 
+    public dispose() {
+        if (this._calendar) {
+            this._calendar.dispose();
+            this._calendar = null;
+        }
+    }
+
     public getCalendar() {
         return this._calendar;
     }
@@ -380,7 +561,7 @@ export class CalendarView extends Controls.BaseControl {
         const extensionFrame = this._element.closest("#extensionFrame");
         const availableHeight =
             extensionFrame.height() -
-            extensionFrame.find("vss-PivotBar--bar-one-line").height() -
+            extensionFrame.find(".vss-PivotBar--bar-one-line").height() -
             33 /* 23 margin pixels added */;
         const availableWidth = extensionFrame.find(".calendar-area").width();
         return availableWidth / availableHeight;
@@ -722,16 +903,18 @@ export class CalendarView extends Controls.BaseControl {
         const webContext = VSS.getWebContext();
 
         // Hack to temporarily workaround API compat break in M125 which is being reverted
-        let coreClient: any = Service.VssConnection
-            .getConnection()
-            .getHttpClient(Tfs_Core_WebApi.CoreHttpClient2_2, WebApi_Constants.ServiceInstanceTypes.TFS);
+        let coreClient: any = Service.VssConnection.getConnection().getHttpClient(
+            Tfs_Core_WebApi.CoreHttpClient2_2,
+            WebApi_Constants.ServiceInstanceTypes.TFS,
+        );
         if (!coreClient.getTeamMembers) {
-            coreClient = Service.VssConnection
-                .getConnection()
-                .getHttpClient(Tfs_Core_WebApi.CoreHttpClient4, WebApi_Constants.ServiceInstanceTypes.TFS);
+            coreClient = Service.VssConnection.getConnection().getHttpClient(
+                Tfs_Core_WebApi.CoreHttpClient4,
+                WebApi_Constants.ServiceInstanceTypes.TFS,
+            );
         }
 
-        return coreClient.getTeamMembers(webContext.project.name, webContext.team.name);
+        return coreClient.getTeamMembers(webContext.project.name, this._selectedTeam.name);
     }
 
     private _editEvent(event: Calendar_Contracts.IExtendedCalendarEventObject): void {
@@ -859,16 +1042,32 @@ export class CalendarView extends Controls.BaseControl {
     }
 }
 
-export class SummaryComponent extends BaseComponent<{}> {
+interface SummaryComponentProps extends IBaseProps {
+    calendarView: IObservableValue<CalendarView>;
+}
+
+export class SummaryComponent extends BaseComponent<SummaryComponentProps, {}> {
     private summaryDiv: HTMLElement;
+    private summaryView: SummaryView;
 
     private enhanceControls() {
         if (this.summaryDiv) {
-            SummaryView.enhance<any>(SummaryView, this.summaryDiv, { calendar: CalendarComponent.getCalendarEnhancement() });
+            if (this.summaryView) {
+                this.summaryView.dispose();
+            }
+            const $summaryDiv = $(this.summaryDiv);
+            $summaryDiv.empty();
+            this.summaryView = Controls.create(SummaryView, $summaryDiv, {
+                calendar: this.props.calendarView.value.getCalendar(),
+            });
         }
     }
 
     public componentDidMount() {
+        this.enhanceControls();
+    }
+
+    public componentDidUpdate() {
         this.enhanceControls();
     }
 
@@ -903,12 +1102,14 @@ export class SummaryView extends Controls.BaseControl {
 
         // Attach to calendar changes to refresh summary view
         this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventAfterAllRender, () => {
-            EventSourceCollection.create().then((eventSources: EventSourceCollection) => {
-                if (!this._rendering) {
-                    this._rendering = true;
-                    this._loadSections(eventSources);
-                }
-            });
+            if (!this._disposed) {
+                EventSourceCollection.create().then((eventSources: EventSourceCollection) => {
+                    if (!this._rendering) {
+                        this._rendering = true;
+                        this._loadSections(eventSources);
+                    }
+                });
+            }
         });
     }
 
@@ -951,12 +1152,12 @@ export class SummaryView extends Controls.BaseControl {
                 if (titleUrl) {
                     const $link = newElement("a", "", summaryTitle);
                     $link.on("click", eventObject => {
-                        VSS.getService(
-                            VSS.ServiceIds.Navigation,
-                        ).then((navigationService: Services_Navigation.HostNavigationService) => {
-                            // Get current hash value from host url
-                            navigationService.openNewWindow(titleUrl, "");
-                        });
+                        VSS.getService(VSS.ServiceIds.Navigation).then(
+                            (navigationService: Services_Navigation.HostNavigationService) => {
+                                // Get current hash value from host url
+                                navigationService.openNewWindow(titleUrl, "");
+                            },
+                        );
                     });
 
                     const $title = $("<h3>");

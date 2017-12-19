@@ -484,7 +484,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
         return workClient.getCapacities(teamContext, iterationId).then((capacities: Work_Contracts.TeamMemberCapacity[]) => {
             const foundCapacities = capacities.filter(value => value.teamMember.id === memberId);
             if (foundCapacities.length > 0) {
-                foundCapacities[0];
+                return foundCapacities[0];
             }
 
             const value = {

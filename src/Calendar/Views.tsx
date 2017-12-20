@@ -289,6 +289,7 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, Calendar
             this.calendarView = Controls.create(CalendarView, $(this.calendarDiv), {
                 selectedTeam: this.props.selectedTeam,
             } as CalendarViewOptions);
+            this.calendarView.getCalendar().goTo(new Date(this.state.calendar.year, this.state.calendar.month, 1, 0, 0, 0));
             this.props.onCalendarViewUpdated(this.calendarView);
         }
     }
@@ -1109,7 +1110,7 @@ export class SummaryView extends Controls.BaseControl {
         this._calendar.addCallback(Calendar.FullCalendarCallbackType.eventAfterAllRender, () => {
             if (!this._disposed) {
                 EventSourceCollection.create().then((eventSources: EventSourceCollection) => {
-                    if (!this._rendering) {
+                    if (!this._rendering && !this._disposed) {
                         this._rendering = true;
                         this._loadSections(eventSources);
                     }

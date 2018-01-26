@@ -1,3 +1,4 @@
+import "es6-promise/auto";
 import * as Calendar_Contracts from "./Contracts";
 import * as Context from "VSS/Context";
 import * as Controls from "VSS/Controls";

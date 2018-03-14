@@ -388,7 +388,7 @@ export class CalendarComponent extends BaseComponent<ICalendarHubProps, Calendar
                             getItems: () => {
                                 return new Promise<WebApiTeam[]>((resolve, reject) => {
                                     Tfs_Core_WebApi.getClient()
-                                        .getTeams(VSS.getWebContext().project.id, 1000)
+                                        .getTeams(VSS.getWebContext().project.id, 1000 as any)
                                         .then(result => {
                                             result.sort((a, b) => {
                                                 return a.name.toUpperCase().localeCompare(b.name.toUpperCase());

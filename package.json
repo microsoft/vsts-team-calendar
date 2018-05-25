@@ -72,7 +72,7 @@
     "react": "~16.0.0",
     "react-dom": "~16.0.0",
     "tslib": "~1.8.0",
-    "vss-ui": "4.131.2",
-    "vss-web-extension-sdk": "~5.131.0"
+    "vss-ui": "4.134.0",
+    "vss-web-extension-sdk": "5.134.0"
   }
 }

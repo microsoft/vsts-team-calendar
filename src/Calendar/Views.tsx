@@ -26,10 +26,9 @@ import * as WebApi_Contracts from "VSS/WebApi/Contracts";
 import * as Work_Contracts from "TFS/Work/Contracts";
 import * as FullCalendar from "fullcalendar"; // types only
 
-import { BaseComponent, IBaseProps, IContextualMenuItem, IBreadcrumbItem, SelectionMode } from "office-ui-fabric-react";
+import { BaseComponent, Callout, IBaseProps, IContextualMenuItem, IBreadcrumbItem, SelectionMode } from "office-ui-fabric-react";
 import { PivotBarItem } from "vss-ui/PivotBar";
 import { WebApiTeam } from "TFS/Core/Contracts";
-import { Callout } from "vss-ui/node_modules/office-ui-fabric-react/lib/Callout";
 
 const months = [
     "January",

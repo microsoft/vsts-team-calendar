@@ -1,6 +1,6 @@
 {
   "name": "vso-team-calendar",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
   "repository": {
     "type": "git",

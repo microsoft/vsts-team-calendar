@@ -86,9 +86,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         return realPromise(this.getIterations()).then(iterations => {
             if (!iterations || iterations.length === 0) {
@@ -236,9 +236,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         return workClient.getTeamIterations(teamContext);
     }
@@ -266,9 +266,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         if (isTeam) {
             return realPromise(
@@ -314,9 +314,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         if (isTeam) {
             return realPromise(
@@ -381,9 +381,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         if (isTeam) {
             return realPromise(
@@ -434,9 +434,9 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }
 
     public getTitleUrl(webContext: WebContext): PromiseLike<string> {
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
         const teamContext: TFS_Core_Contracts.TeamContext = {
             projectId: webContext.project.id,
             teamId: this._team.id,
@@ -466,7 +466,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }
 
     private _getTeamDaysOff(
-        workClient: Work_Client.WorkHttpClient5,
+        workClient: Work_Client.WorkHttpClient2_1,
         teamContext: TFS_Core_Contracts.TeamContext,
         iterationId,
     ): PromiseLike<Work_Contracts.TeamSettingsDaysOff> {
@@ -476,7 +476,7 @@ export class VSOCapacityEventSource implements Calendar_Contracts.IEventSource {
     }
 
     private _getCapacity(
-        workClient: Work_Client.WorkHttpClient5,
+        workClient: Work_Client.WorkHttpClient2_1,
         teamContext: TFS_Core_Contracts.TeamContext,
         iterationId,
         memberId: string,

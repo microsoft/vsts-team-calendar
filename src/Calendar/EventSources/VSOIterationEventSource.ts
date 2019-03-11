@@ -42,9 +42,9 @@ export class VSOIterationEventSource implements Calendar_Contracts.IEventSource 
             project: "",
             team: "",
         };
-        const workClient: Work_Client.WorkHttpClient5 = Service.VssConnection
+        const workClient: Work_Client.WorkHttpClient2_1 = Service.VssConnection
             .getConnection()
-            .getHttpClient(Work_Client.WorkHttpClient5, WebApi_Constants.ServiceInstanceTypes.TFS);
+            .getHttpClient(Work_Client.WorkHttpClient2_1, WebApi_Constants.ServiceInstanceTypes.TFS);
 
         // fetch the wit events
         return workClient.getTeamIterations(teamContext).then(iterations => {

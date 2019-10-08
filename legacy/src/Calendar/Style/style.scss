@@ -1,0 +1,175 @@
+#extensionFrame {
+    font-size: 14px;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+
+    > div {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .calendar-area {
+        width: 75%;
+        overflow: auto;
+        padding-top: 0;
+
+        .calendar-canvas {
+            margin: 5px 0 0 0;
+        }
+        td {
+            span.sprint-label {
+                float: left;
+                font-size: 11px;
+                font-weight: bold;
+                color: #333;
+                margin-top: 4px;
+                margin-left: 4px;
+            }
+            &.fc-bgevent.sprint-event {
+                background-color: inherit;
+            }
+            &.fc-bgevent.sprint-event.hover {
+                background-color: #ddd;
+            }
+        }
+    }
+    .summary-area {
+        width: 25%;
+        overflow: auto;
+        border-left: 1px solid #ddd;
+
+        .status-indicator-container {
+            position: absolute;
+            top: 43%;
+            left: 0;
+            height: 10%;
+            width: 100%;
+        }
+    }
+
+    .menu-popup {
+        font-size: 12px;
+    }
+    .menu-container {
+        border-bottom: none;
+    }
+
+    .fc-bg .fc-today {
+        background: #bdd7ee;
+    }
+    .calendar-title {
+        /*font-family: "Segoe UI,Tahoma,Arial,Verdana";      */
+        font-weight: lighter;
+        font-size: 20px;
+        color: #444;
+        margin: 0px 10px 10px 10px;
+        padding-top: 8px;
+    }
+    div.fc-content {
+        padding-top: 2px;
+        padding-bottom: 2px;
+
+        .event-icon {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin: 2px 2px 0 0;
+        }
+    }
+    a.fc-event {
+        border-radius: inherit;
+    }
+    .feedback-area {
+        text-align: right;
+        font-size: 12px;
+        margin: 5px 5px 5px 10px;
+    }
+}
+
+.event-edit-control {
+    > table {
+        width: 90%;
+
+        td {
+            padding: 3px;
+
+            &.label:first-child {
+                width: 100px;
+                vertical-align: top;
+                padding-top: 5px;
+            }
+        }
+    }
+}
+
+.category {
+    margin: 5px 5px 5px 10px;
+
+    > h3 {
+        font-weight: lighter;
+        margin-bottom: 3px;
+        color: #000;
+    }
+
+    .category-title {
+        padding-bottom: 4px;
+    }
+    .category-titletext {
+        height: 18px;
+        vertical-align: middle;
+    }
+    .category-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    .category-color {
+        width: 8px;
+        height: 18px;
+        display: inline-block;
+        margin-right: 3px;
+        vertical-align: text-bottom;
+    }
+    .category-subtitle {
+        font-size: smaller;
+        color: #999;
+        margin-bottom: 3px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+
+        &.c-color {
+            margin-left: 11px;
+        }
+        &.c-icon {
+            margin-left: 21px;
+        }
+    }
+}
+
+th.fc-day-header {
+    font-weight: normal;
+    padding: 3px 0px 3px 5px;
+    background-color: #f8f8f8;
+    text-align: left;
+}
+
+/* Contributed dialog content style */
+
+.edit-freeform-control > table,
+.edit-capacity-control > table {
+    width: 90%;
+}
+
+.edit-freeform-control > table td,
+.edit-capacity-control > table td {
+    padding: 3px;
+
+    &.label:first-child {
+        width: 100px;
+        vertical-align: top;
+        padding-top: 5px;
+    }
+}

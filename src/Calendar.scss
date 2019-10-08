@@ -1,0 +1,80 @@
+@import "node_modules/azure-devops-ui/Core/_platformCommon.scss";
+@import "~@fullcalendar/core/main.css";
+@import "~@fullcalendar/daygrid/main.css";
+
+.calendar-area {
+    width: 75%;
+    overflow: auto;
+
+    .calendar-component {
+        padding-left: 20px;
+        padding-right: 16px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+
+        .fc-scroller {
+            overflow-y: hidden !important;
+        }
+    }
+}
+
+.event-dialog-content {
+    .input-row {
+        justify-content: space-between;
+        padding: 4px;
+        .column-2 {
+            width: 250px;
+        }
+    }
+}
+
+.summary-area {
+    border-left: 1px solid #ddd;
+    overflow: auto;
+    width: 25%;
+    padding-top: 16px;
+
+    .category-heading {
+        font-size: 1.17em;
+        font-weight: lighter;
+        margin-left: 10px;
+    }
+
+    .catagory-summary-row {
+        padding: 0px 12px;
+
+        .category-color {
+            width: 8px;
+            height: 18px;
+            align-self: center;
+        }
+
+        .category-icon {
+            width: 18px;
+            height: 18px;
+            align-self: center;
+        }
+
+        .category-titletext {
+            height: 18px;
+        }
+
+        .category-subtitle {
+            font-size: smaller;
+            color: #999;
+        }
+    }
+
+    .empty {
+        padding-bottom: 10px;
+        padding-left: 10px;
+    }
+}
+
+.fc-content .event-icon {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin: 2px 2px 0 0;
+    cursor: pointer;
+}

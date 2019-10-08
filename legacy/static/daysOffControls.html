@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calendar external UI controls</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <script src="../sdk/VSS.SDK.js"></script>
+    <script src="../lib/jquery/jquery.min.js"></script>
+    <script src="../lib/moment/moment.min.js"></script>
+</head>
+
+<body>
+    <div id="add-capacity-event"></div>
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Calendar": "js"
+                }
+            }
+        });
+
+        VSS.require(["Calendar/dialogs", "VSS/Controls"], function (CalendarDialogs, Controls) {
+            VSS.register(VSS.getConfiguration().contributedControlInstanceId, function (context) {
+                return  Controls.Control.create(CalendarDialogs.EditCapacityEventControl, $("#add-capacity-event"), VSS.getConfiguration());
+            }); 
+            VSS.notifyLoadSucceeded();
+        });
+    </script>
+</body>
+
+</html>

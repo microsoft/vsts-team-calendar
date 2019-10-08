@@ -1,0 +1,23 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar built-in services</title>
+    <script src="../sdk/VSS.SDK.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Calendar": "js"
+                }
+            }
+        });
+        
+        VSS.require(["Calendar/calendarServices"], function (FreeFormEventsSource, VSOCapacityEventSource, VSOIterationEventSource) {
+            VSS.notifyLoadSucceeded();
+        });
+    </script>
+</body>
+</html>

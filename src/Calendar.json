@@ -1,0 +1,112 @@
+{
+  "contributions": [
+    {
+      "id": "hub",
+      "type": "ms.vss-web.hub",
+      "description": "Calendar hub in the Work hub group.",
+      "targets": ["ms.vss-work-web.work-hub-group"],
+      "includes": [
+        "ms.vss-tfs-web.tfs-page-data-service",
+        "ms.vss-features.host-navigation-service",
+        "ms.vss-features.extension-data-service",
+        "ms.vss-features.host-dialog-service"
+      ],
+      "properties": {
+        "name": "Calendar2",
+        "uri": "dist/calendar1.html",
+        "icon": "asset://static/sample-icon.png"
+      }
+    },
+    {
+      "id": "calendar-has-moved-banner",
+      "type": "ms.vss-web.global-message-banner",
+      "description": "Banner points out that the Calendar has moved to the Work hub.",
+      "targets": ["ms.vss-web.home-hub-group"],
+      "properties": {
+        "message": "The Calendar has moved! You may now find it under the Work menu.",
+        "level": "info"
+      }
+    },
+    {
+      "id": "calendar",
+      "type": "ms.vss-web.hub",
+      "description": "Calendar hub in the Work hub group.",
+      "targets": ["ms.vss-work-web.work-hub-group"],
+      "properties": {
+        "name": "Calendar",
+        "order": 22,
+        "uri": "static/calendar.html"
+      }
+    },
+    {
+      "id": "calendar-event-sources",
+      "type": ".calendar-event-source-collection",
+      "description": "Target for calendar event sources",
+      "targets": [".calendar"]
+    },
+    {
+      "id": "freeForm",
+      "type": ".calendar-event-source",
+      "description": "Calendar event source for free-form events. Enables users to add their own events to the calendar.",
+      "targets": [".calendar-event-sources"],
+      "properties": {
+        "uri": "static/calendarServices.html"
+      }
+    },
+    {
+      "id": "add-freeform-control",
+      "type": "ms.vss-web.control",
+      "description": "",
+      "targets": [".calendar"],
+      "properties": {
+        "uri": "static/freeFormControls.html"
+      }
+    },
+    {
+      "id": "daysOff",
+      "type": ".calendar-event-source",
+      "description": "Calendar event source for team and personal days off.",
+      "targets": [".calendar-event-sources"],
+      "properties": {
+        "uri": "static/calendarServices.html"
+      }
+    },
+    {
+      "id": "add-daysoff-control",
+      "type": "ms.vss-web.control",
+      "description": "",
+      "targets": [".calendar"],
+      "properties": {
+        "uri": "static/daysOffControls.html"
+      }
+    },
+    {
+      "id": "iterations",
+      "type": ".calendar-event-source",
+      "description": "Calendar event source for sprints/iterations.",
+      "targets": [".calendar-event-sources"],
+      "properties": {
+        "uri": "static/calendarServices.html"
+      }
+    }
+  ],
+  "contributionTypes": [
+    {
+      "id": "calendar-event-source-collection",
+      "name": "Calendar event source collection",
+      "description": "A collection of calendar event sources."
+    },
+    {
+      "id": "calendar-event-source",
+      "name": "Calendar event source",
+      "description": "A provider of calendar events.",
+      "properties": {
+        "uri": {
+          "description": "URI to the (background/hidden) HTML content which registers the calendar event source object.",
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  ]
+}

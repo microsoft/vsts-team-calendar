@@ -1,0 +1,4 @@
+extensions/vss-extmgmt-web/ext-management-hub/RestClient/ExtensionManagement.ts
+extensions/vss-extmgmt-web/ext-management-hub/RestClient/Gallery.ts
+extensions/vss-extmgmt-web/ext-management-hub/Contracts/ExtensionManagement.d.ts
+extensions/vss-extmgmt-web/ext-management-hub/Contracts/Gallery.d.ts

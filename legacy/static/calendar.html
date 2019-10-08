@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calendar Extension</title>
+    <script src="../sdk/VSS.SDK.js"></script>
+    <script src="../lib/jquery/jquery.min.js"></script>
+    <script src="../lib/moment/moment.min.js"></script>
+    <script src="../lib/fullcalendar/fullcalendar.min.js"></script>
+    
+
+    <link rel="stylesheet" href="../lib/fullcalendar/fullcalendar.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <base target="_blank" />
+</head>
+
+<body>
+    <script type="text/javascript">
+        // Initialize the VSS SDK
+        VSS.init({
+            usePlatformScripts: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Calendar": "js"
+                }
+            }
+        });
+
+        // Wait for the SDK to be initialized
+        VSS.ready(function () {
+            require(["Calendar/main"], function () {
+                VSS.notifyLoadSucceeded();
+            });
+        });
+    </script>
+    <div id="extensionFrame">
+        
+    </div>
+    <!-- <div id="calendar-extension">
+        <div class="splitter horizontal right">
+            <div class="leftPane">
+                <div class="calendar-view">
+                    <div class="calendar-title">&nbsp;</div>
+                    <div class="menu-container"></div>
+                    <div class="calendar-container"></div>
+                </div>
+            </div>
+            <div class="handleBar"></div>
+            <div class="rightPane">
+                <div class="status-indicator-container"></div>
+                <div class="feedback-area">
+                    <a href="https://github.com/Microsoft/vsts-team-calendar/issues">Submit a bug or request</a>
+                </div>
+                <div class="summary-view">
+                </div>
+            </div>
+        </div>
+    </div> -->
+</body>
+
+</html>

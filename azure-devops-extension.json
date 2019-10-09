@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "team-calendar",
   "publisher": "ms-devlabs",
-  "version": "1.0.384",
+  "version": "2.0.0",
   "name": "Team Calendar",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
   "categories": ["Plan and track"],
@@ -41,7 +41,7 @@
   ],
   "screenshots": [
     {
-      "path": "static/images/calendar-screen-shot.png"
+      "path": "static/calendar-screen-shot.png"
     }
   ],
   "files": [

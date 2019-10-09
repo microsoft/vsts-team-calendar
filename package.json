@@ -1,18 +1,49 @@
 {
-  "name": "calendar2",
-  "version": "1.0.0",
-  "description": "Calendar",
+  "name": "vso-team-calendar",
+  "version": "2.0.0",
+  "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
   "keywords": [
+    "vsts",
+    "tfs",
+    "extension",
+    "calendar",
     "extensions",
     "Azure DevOps",
     "Visual Studio Team Services"
+  ],
+  "author": "Microsoft",
+  "contributors": [
+    {
+      "name": "Trevor Gau",
+      "email": "trgau@microsoft.com"
+    },
+    {
+      "name": "Hailey Johnson"
+    },
+    {
+      "name": "Derrick Marcey",
+      "email": "demarcey@microsoft.com"
+    },
+    {
+      "name": "Serkan Inci",
+      "email": "serkani@microsoft.com"
+    },
+    {
+      "name": "Ruturaj Hagawane",
+      "email": "ruturajh@microsoft.com"
+    }
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Microsoft/vso-team-calendar.git"
   },
+  "bugs": {
+    "url": "https://github.com/Microsoft/vso-team-calendar/issues"
+  },
+  "homepage": "https://github.com/Microsoft/vso-team-calendar#readme",
   "scripts": {
+    "preinstall": "cd legacy && npm install && npm run build && cd ..",
     "clean": "rimraf ./dist",
     "compile": "npm run clean && webpack --mode production",
     "compile:dev": "npm run clean && webpack --mode development",

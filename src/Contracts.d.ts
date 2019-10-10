@@ -1,34 +1,4 @@
 /**
- * Summary item for events
- */
-export interface IEventCategory {
-    /**
-     * Title of the event category
-     */
-    title: string;
-
-    /**
-     * Sub title of the event category
-     */
-    subTitle?: string;
-
-    /**
-     * Image url of the category
-     */
-    imageUrl?: string;
-
-    /**
-     * Color of the category
-     */
-    color?: string;
-
-    /**
-     * Number of event under this Category
-     */
-    eventCount: number;
-}
-
-/**
  * Represents a single calendar event
  */
 export interface ICalendarEvent {
@@ -94,6 +64,36 @@ export interface ICalendarMember {
      * Unique ID for the member
      */
     id: string;
+}
+
+/**
+ * Summary item for events
+ */
+export interface IEventCategory {
+    /**
+     * Title of the event category
+     */
+    title: string;
+
+    /**
+     * Sub title of the event category
+     */
+    subTitle?: string;
+
+    /**
+     * Image url of the category
+     */
+    imageUrl?: string;
+
+    /**
+     * Color of the category
+     */
+    color?: string;
+
+    /**
+     * Number of event under this Category
+     */
+    eventCount: number;
 }
 
 /**

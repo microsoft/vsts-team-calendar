@@ -6,7 +6,7 @@ import { IExtensionDataManager, ExtensionDataCollection } from "azure-devops-ext
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventCategory } from "./Contracts";
 import { shiftToUTC, shiftToLocal, getMonthYearInRange, toMonthYear } from "./TimeLib";
-import { ObservableValue, ObservableArray, Observable } from "azure-devops-ui/Core/Observable";
+import { ObservableArray } from "azure-devops-ui/Core/Observable";
 
 export const FreeFormId = "FreeForm";
 
@@ -189,6 +189,32 @@ export class FreeFormEventsSource {
         }
     };
 
+    private convertData = (oldData: ICalendarEvent[]) => {
+        // chain all actions
+        let queue = Promise.resolve();
+
+        // create new event and delete old one
+        oldData.forEach(doc => {
+            queue = queue.then(() => {
+                this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(new Date(doc.startDate)), doc);
+            });
+            queue = queue.then(() => {
+                this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);
+            });
+        });
+
+        // delete catagories data if there is any
+        this.dataManager!.queryCollectionsByName([this.selectedTeamId! + "-categories"]).then((collections: ExtensionDataCollection[]) => {
+            if (collections && collections[0] && collections[0].documents) {
+                collections[0].documents.forEach(doc => {
+                    queue = queue.then(() => {
+                        this.dataManager!.deleteDocument(this.selectedTeamId! + "-categories", doc.id!);
+                    });
+                });
+            }
+        });
+    };
+
     private fetchEvents = (start: Date, end: Date): Promise<{ [id: string]: ICalendarEvent }> => {
         const collectionNames = getMonthYearInRange(start, end).map(item => {
             return this.selectedTeamId! + "." + item;
@@ -216,18 +242,16 @@ export class FreeFormEventsSource {
                 return this.dataManager!.queryCollectionsByName([this.selectedTeamId!]).then((collections: ExtensionDataCollection[]) => {
                     this.fetchedCollections.add(this.selectedTeamId!);
                     if (collections && collections[0] && collections[0].documents) {
-                        let lastPromise = Promise.resolve();
-                        collections[0].documents.forEach(doc => {
+                        const oldData: ICalendarEvent[] = [];
+                        collections[0].documents.forEach((doc: ICalendarEvent) => {
                             this.eventMap[doc.id!] = doc;
-                            this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(new Date(doc.startDate)), doc).then(() => {
-                                lastPromise = this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);
-                            });
+                            oldData.push(doc);
                         });
+                        this.convertData(oldData);
                     }
                     return this.eventMap;
                 });
             }
-
             return Promise.resolve(this.eventMap);
         });
     };

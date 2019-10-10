@@ -1,7 +1,7 @@
 {
   "contributions": [
     {
-      "id": "hub",
+      "id": "new-calendar",
       "type": "ms.vss-web.hub",
       "description": "Calendar hub in the Work hub group.",
       "targets": ["ms.vss-work-web.work-hub-group"],
@@ -12,9 +12,8 @@
         "ms.vss-features.host-dialog-service"
       ],
       "properties": {
-        "name": "Calendar2",
-        "uri": "dist/calendar1.html",
-        "icon": "asset://static/sample-icon.png"
+        "name": "Calendar",
+        "uri": "dist/calendar.html"
       }
     },
     {

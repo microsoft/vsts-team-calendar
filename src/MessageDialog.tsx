@@ -3,6 +3,9 @@ import React = require("react");
 import { Dialog } from "azure-devops-ui/Dialog";
 
 interface IMessageDialogProps {
+    /**
+     * Content for dialog
+     */
     message: string;
 
     /**
@@ -15,6 +18,9 @@ interface IMessageDialogProps {
      */
     onDismiss: () => void;
 
+    /**
+     * Title for dialog.
+     */
     title: string;
 }
 

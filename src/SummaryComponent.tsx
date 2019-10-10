@@ -1,18 +1,12 @@
 import React = require("react");
 
-import { ObservableValue } from "azure-devops-ui/Core/Observable";
+import { Link } from "azure-devops-ui/Link";
+import { IListItemDetails, ListItem, ScrollableList } from "azure-devops-ui/List";
+import { Observer } from "azure-devops-ui/Observer";
 
 import { IEventCategory } from "./Contracts";
-import { TwoLineTableCell, ITableColumn, Table } from "azure-devops-ui/Table";
-import { css } from "azure-devops-ui/Util";
-import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
-import { Observer } from "azure-devops-ui/Observer";
-import { Link } from "azure-devops-ui/Link";
-
-import { VSOCapacityEventSource } from "./VSOCapacityEventSource";
 import { FreeFormEventsSource } from "./FreeFormEventSource";
-import { IListItemDetails, ListItem, ScrollableList } from "azure-devops-ui/List";
-import { Icon, IconSize } from "azure-devops-ui/Icon";
+import { VSOCapacityEventSource } from "./VSOCapacityEventSource";
 
 interface ISummaryComponentProps {
     /**

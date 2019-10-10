@@ -22,6 +22,9 @@ export interface IEventCategory {
      */
     color?: string;
 
+    /**
+     * Number of event under this Category
+     */
     eventCount: number;
 }
 
@@ -34,6 +37,9 @@ export interface ICalendarEvent {
      */
     title: string;
 
+    /**
+     * Used by collection to
+     */
     __etag?: number;
 
     /**

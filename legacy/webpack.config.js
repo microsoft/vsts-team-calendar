@@ -2,7 +2,7 @@ const path = require("path");
 const webpack = require("webpack");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const extractSass = new ExtractTextPlugin({
-    filename: path.relative(process.cwd(), path.join(__dirname, "dist", "css", "style.css")),
+    filename: path.relative(process.cwd(), path.join(__dirname, "dist", "css", "style.css"))
 });
 
 module.exports = env => {
@@ -11,37 +11,37 @@ module.exports = env => {
         plugins.push(
             new webpack.optimize.UglifyJsPlugin({
                 compress: {
-                    warnings: false,
+                    warnings: false
                 },
                 output: {
-                    comments: false,
-                },
-            }),
+                    comments: false
+                }
+            })
         );
     }
     return {
         entry: {
             main: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Extension.tsx")),
             calendarServices: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "CalendarServices.ts")),
-            dialogs: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Dialogs.ts")),
+            dialogs: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar", "Dialogs.ts"))
         },
         output: {
             filename: path.relative(process.cwd(), path.join(__dirname, "dist", "js", "[name].js")),
-            libraryTarget: "amd",
+            libraryTarget: "amd"
         },
         externals: [
             {
                 react: true,
-                "react-dom": true,
+                "react-dom": true
             },
             // Ignore TFS/*, VSS/*, Favorites/* since they are coming from VSTS host
             /^TFS\//,
             /^VSS\//,
-            /^Favorites\//,
+            /^Favorites\//
         ],
         resolve: {
             alias: { OfficeFabric: "../node_modules/office-ui-fabric-react/lib-amd" },
-            extensions: [".ts", ".tsx", ".js"],
+            extensions: [".ts", ".tsx", ".js"]
         },
         module: {
             rules: [
@@ -52,24 +52,24 @@ module.exports = env => {
                         use: [
                             {
                                 loader: "css-loader",
-                                options: { importLoaders: 1 },
+                                options: { importLoaders: 1 }
                             },
                             {
-                                loader: "sass-loader",
+                                loader: "sass-loader"
                             },
                             {
-                                loader: "postcss-loader",
-                            },
+                                loader: "postcss-loader"
+                            }
                         ],
-                        fallback: "style-loader",
-                    }),
+                        fallback: "style-loader"
+                    })
                 },
                 {
                     test: /\.css$/,
-                    use: ["style-loader", "css-loader"],
-                },
-            ],
+                    use: ["style-loader", "css-loader"]
+                }
+            ]
         },
-        plugins: plugins,
+        plugins: plugins
     };
 };

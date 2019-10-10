@@ -126,51 +126,53 @@ export class VSOCapacityEventSource {
             calendarEnd.setDate(arg.end.getDate() - 1);
 
             for (const iteration of iterations) {
-                const start = shiftToUTC(iteration.attributes.startDate);
-                const end = shiftToUTC(iteration.attributes.finishDate);
+                if (iteration.attributes.startDate && iteration.attributes.finishDate) {
+                    const start = shiftToUTC(iteration.attributes.startDate);
+                    const end = shiftToUTC(iteration.attributes.finishDate);
 
-                if (
-                    (calendarStart <= start && start <= calendarEnd) ||
-                    (calendarStart <= end && end <= calendarEnd) ||
-                    (start <= calendarStart && end >= calendarEnd)
-                ) {
-                    const now = new Date();
-                    let color = generateColor("otherIteration");
-                    if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
-                        color = generateColor("currentIteration");
+                    if (
+                        (calendarStart <= start && start <= calendarEnd) ||
+                        (calendarStart <= end && end <= calendarEnd) ||
+                        (start <= calendarStart && end >= calendarEnd)
+                    ) {
+                        const now = new Date();
+                        let color = generateColor("otherIteration");
+                        if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
+                            color = generateColor("currentIteration");
+                        }
+                        const exclusiveEndDate = new Date(end);
+                        exclusiveEndDate.setDate(end.getDate() + 1);
+
+                        renderedEvents.push({
+                            id: IterationId + iteration.name,
+                            allDay: true,
+                            start: start,
+                            end: exclusiveEndDate,
+                            title: iteration.name,
+                            textColor: "#FFFFFF",
+                            backgroundColor: color,
+                            rendering: "background"
+                        });
+
+                        currentIterations.push({
+                            color: color,
+                            subTitle: formatDate(start, "MONTH-DD") + " - " + formatDate(end, "MONTH-DD"),
+                            title: iteration.name,
+                            eventCount: 1
+                        });
+
+                        const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
+                        teamDaysOffPromises.push(teamsDayOffPromise);
+                        teamsDayOffPromise.then((teamDaysOff: TeamSettingsDaysOff) => {
+                            this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                        });
+
+                        const capacityPromise = this.fetchCapacities(iteration.id);
+                        capacityPromises.push(capacityPromise);
+                        capacityPromise.then((capacities: TeamMemberCapacityIdentityRef[]) => {
+                            this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                        });
                     }
-                    const exclusiveEndDate = new Date(end);
-                    exclusiveEndDate.setDate(end.getDate() + 1);
-
-                    renderedEvents.push({
-                        id: IterationId + iteration.name,
-                        allDay: true,
-                        start: start,
-                        end: exclusiveEndDate,
-                        title: iteration.name,
-                        textColor: "#FFFFFF",
-                        backgroundColor: color,
-                        rendering: "background"
-                    });
-
-                    currentIterations.push({
-                        color: color,
-                        subTitle: formatDate(start, "MONTH-DD") + " - " + formatDate(end, "MONTH-DD"),
-                        title: iteration.name,
-                        eventCount: 1
-                    });
-
-                    const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
-                    teamDaysOffPromises.push(teamsDayOffPromise);
-                    teamsDayOffPromise.then((teamDaysOff: TeamSettingsDaysOff) => {
-                        this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
-                    });
-
-                    const capacityPromise = this.fetchCapacities(iteration.id);
-                    capacityPromises.push(capacityPromise);
-                    capacityPromise.then((capacities: TeamMemberCapacityIdentityRef[]) => {
-                        this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
-                    });
                 }
             }
 
@@ -194,18 +196,14 @@ export class VSOCapacityEventSource {
                         }
                     });
                     successCallback(renderedEvents);
-                    this.iterationSummaryData.splice(0, this.iterationSummaryData.length, ...currentIterations);
-                    this.capacitySummaryData.splice(
-                        0,
-                        this.capacitySummaryData.length,
-                        ...Object.keys(capacityCatagoryMap).map(key => {
-                            const catagory = capacityCatagoryMap[key];
-                            if (catagory.eventCount > 1) {
-                                catagory.subTitle = catagory.eventCount + " days off";
-                            }
-                            return catagory;
-                        })
-                    );
+                    this.iterationSummaryData.value = currentIterations;
+                    this.capacitySummaryData.value = Object.keys(capacityCatagoryMap).map(key => {
+                        const catagory = capacityCatagoryMap[key];
+                        if (catagory.eventCount > 1) {
+                            catagory.subTitle = catagory.eventCount + " days off";
+                        }
+                        return catagory;
+                    });
                 });
             });
         });

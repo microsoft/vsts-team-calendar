@@ -4,7 +4,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { CommonServiceIds, IProjectPageService, getClient } from "azure-devops-extension-api";
-import { IExtensionDataService, IExtensionDataManager, ILocationService } from "azure-devops-extension-api/Common";
+import { IExtensionDataService, IExtensionDataManager, ILocationService, IHostNavigationService } from "azure-devops-extension-api/Common";
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { TeamMember } from "azure-devops-extension-api/WebApi/WebApi";
 
@@ -33,7 +33,6 @@ import { ICalendarEvent } from "./Contracts";
 import { FreeFormId, FreeFormEventsSource } from "./FreeFormEventSource";
 import { SummaryComponent } from "./SummaryComponent";
 import { MonthAndYear, monthAndYearToString } from "./TimeLib";
-import { getQueryVariable, setTeamQueryVariable } from "./UrlLib";
 import { DaysOffId, VSOCapacityEventSource, IterationId } from "./VSOCapacityEventSource";
 
 enum Dialogs {
@@ -42,27 +41,28 @@ enum Dialogs {
     NewDaysOffDialog
 }
 
-class HubContent extends React.Component {
-    calendarComponentRef = React.createRef<FullCalendar>();
-    openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
+class ExtensionContent extends React.Component {
     anchorElement: ObservableValue<HTMLElement | undefined> = new ObservableValue<HTMLElement | undefined>(undefined);
-    showMonthPicker: ObservableValue<boolean> = new ObservableValue<boolean>(false);
-    selectedStartDate: Date;
-    selectedEndDate: Date;
-    currentMonthAndYear: ObservableValue<MonthAndYear>;
+    calendarComponentRef = React.createRef<FullCalendar>();
     commandBarItems: IHeaderCommandBarItem[];
-    eventToEdit?: ICalendarEvent;
-    eventApi?: EventApi;
-    teams: ObservableValue<WebApiTeam[]>;
-    selectedTeamId: ObservableValue<string>;
-    projectId: string;
-    projectName: string;
-    selectedTeamName: string;
+    currentMonthAndYear: ObservableValue<MonthAndYear>;
     dataManager: IExtensionDataManager | undefined;
+    displayCalendar: ObservableValue<boolean>;
+    eventApi?: EventApi;
+    eventToEdit?: ICalendarEvent;
     freeFormEventSource: FreeFormEventsSource;
-    vsoCapacityEventSource: VSOCapacityEventSource;
     hostUrl: string;
     members: TeamMember[];
+    navigationService: IHostNavigationService | undefined;
+    openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
+    projectId: string;
+    projectName: string;
+    selectedEndDate: Date;
+    selectedStartDate: Date;
+    selectedTeamName: string;
+    showMonthPicker: ObservableValue<boolean> = new ObservableValue<boolean>(false);
+    teams: ObservableValue<WebApiTeam[]>;
+    vsoCapacityEventSource: VSOCapacityEventSource;
 
     constructor(props: {}) {
         super(props);
@@ -136,7 +136,7 @@ class HubContent extends React.Component {
         this.selectedStartDate = new Date();
         this.teams = new ObservableValue<WebApiTeam[]>([]);
         this.selectedTeamName = "Select Team";
-        this.selectedTeamId = new ObservableValue<string>("");
+        this.displayCalendar = new ObservableValue<boolean>(false);
         this.projectId = "";
         this.projectName = "";
         this.hostUrl = "";
@@ -147,7 +147,7 @@ class HubContent extends React.Component {
 
     public render(): JSX.Element {
         return (
-            <Page className="sample-hub flex-grow flex-row">
+            <Page className="flex-grow flex-row">
                 <div className="flex-column scroll-hidden calendar-area">
                     <CustomHeader className="bolt-header-with-commandbar">
                         <HeaderTitleArea className="flex-grow">
@@ -184,9 +184,9 @@ class HubContent extends React.Component {
                         </HeaderTitleArea>
                         <HeaderCommandBar items={this.commandBarItems} />
                     </CustomHeader>
-                    <Observer teamId={this.selectedTeamId}>
-                        {(props: { teamId: string }) => {
-                            return props.teamId === "" ? null : (
+                    <Observer display={this.displayCalendar}>
+                        {(props: { display: boolean }) => {
+                            return props.display ? (
                                 <div className="calendar-component">
                                     <FullCalendar
                                         defaultView="dayGridMonth"
@@ -207,7 +207,7 @@ class HubContent extends React.Component {
                                         ]}
                                     />
                                 </div>
-                            );
+                            ) : null;
                         }}
                     </Observer>
                 </div>
@@ -359,15 +359,13 @@ class HubContent extends React.Component {
     private async initialize() {
         const dataSvc = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
+        this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-        const queryParam = getQueryVariable("team");
+        const queryParam = await this.navigationService.getQueryParams();
         let selectedTeamId;
 
-        if (queryParam) {
-            selectedTeamId = queryParam;
-        } else {
-            // Nothing in URL - check data service
-            selectedTeamId = await this.dataManager.getValue<string>("selected-team", { scopeType: "User" });
+        if (queryParam && queryParam["team"]) {
+            selectedTeamId = queryParam["team"];
         }
 
         const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
@@ -376,6 +374,11 @@ class HubContent extends React.Component {
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
 
         if (project) {
+            if (!selectedTeamId) {
+                // Nothing in URL - check data service
+                selectedTeamId = await this.dataManager.getValue<string>("selected-team-" + project.id, { scopeType: "User" });
+            }
+
             const client = getClient(CoreRestClient);
             const teams = await client.getTeams(project.id, true, 1000);
 
@@ -389,16 +392,16 @@ class HubContent extends React.Component {
             if (!selectedTeamId) {
                 selectedTeamId = teams[0].id;
             }
-            if (!queryParam) {
-                setTeamQueryVariable(selectedTeamId);
+            if (!queryParam || !queryParam["team"]) {
+                this.navigationService.setQueryParams({ team: selectedTeamId });
             }
 
             this.hostUrl = await locationService.getServiceLocation();
             this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
-            this.selectedTeamId.value = selectedTeamId;
-            this.dataManager.setValue<string>("selected-team", this.selectedTeamId.value, { scopeType: "User" });
+            this.displayCalendar.value = true;
+            this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
             this.teams.value = teams;
             this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
         }
@@ -508,7 +511,8 @@ class HubContent extends React.Component {
         this.freeFormEventSource.initialize(newTeam.id, this.dataManager!);
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
         this.getCalendarApi().refetchEvents();
-        this.dataManager!.setValue<string>("selected-team", newTeam.id, { scopeType: "User" });
+        this.dataManager!.setValue<string>("selected-team-" + this.projectId, newTeam.id, { scopeType: "User" });
+        this.navigationService!.setQueryParams({ team: newTeam.id });
         this.members = await getClient(CoreRestClient).getTeamMembersWithExtendedProperties(this.projectId, newTeam.id);
     };
 
@@ -523,4 +527,4 @@ function showRootComponent(component: React.ReactElement<any>) {
     ReactDOM.render(component, document.getElementById("team-calendar"));
 }
 
-showRootComponent(<HubContent />);
+showRootComponent(<ExtensionContent />);

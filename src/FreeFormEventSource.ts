@@ -126,21 +126,17 @@ export class FreeFormEventsSource {
                 }
             });
             successCallback(inputs);
-            this.summaryData.splice(
-                0,
-                this.summaryData.length,
-                ...Object.keys(catagoryMap).map(key => {
-                    const catagory = catagoryMap[key];
-                    if (catagory.eventCount > 1) {
-                        catagory.subTitle = catagory.eventCount + " events";
-                    }
-                    return catagory;
-                })
-            );
+            this.summaryData.value = Object.keys(catagoryMap).map(key => {
+                const catagory = catagoryMap[key];
+                if (catagory.eventCount > 1) {
+                    catagory.subTitle = catagory.eventCount + " events";
+                }
+                return catagory;
+            });
         });
     };
 
-    getSummaryData = (): ObservableArray<IEventCategory> => {
+    public getSummaryData = (): ObservableArray<IEventCategory> => {
         return this.summaryData;
     };
 

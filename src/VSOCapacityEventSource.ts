@@ -51,8 +51,18 @@ export class VSOCapacityEventSource {
             teamDaysOffPatch.daysOff.push({ start: startDate, end: endDate });
             return this.workClient.updateTeamDaysOff(teamDaysOffPatch, this.teamContext, iterationId);
         } else {
-            const capacity = this.capacityMap[iterationId][memberId];
-            delete this.capacityMap[iterationId];
+            const capacity =
+                this.capacityMap[iterationId] && this.capacityMap[iterationId][memberId]
+                    ? this.capacityMap[iterationId][memberId]
+                    : {
+                          activities: [
+                              {
+                                  capacityPerDay: 0,
+                                  name: ""
+                              }
+                          ],
+                          daysOff: []
+                      };
             const capacityPatch: CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
             capacityPatch.daysOff.push({ start: startDate, end: endDate });
             return this.workClient.updateCapacityWithIdentityRef(capacityPatch, this.teamContext, iterationId, memberId);

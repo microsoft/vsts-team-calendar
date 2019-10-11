@@ -1,9 +1,9 @@
 {
   "contributions": [
     {
-      "id": "new-calendar",
+      "id": "team-calendar",
       "type": "ms.vss-web.hub",
-      "description": "Calendar hub in the Work hub group.",
+      "description": "Calendar hub in the Boards hub group.",
       "targets": ["ms.vss-work-web.work-hub-group"],
       "includes": [
         "ms.vss-tfs-web.tfs-page-data-service",
@@ -14,28 +14,38 @@
       "properties": {
         "name": "Calendar",
         "uri": "dist/calendar.html"
-      }
+      },
+      "constraints": [
+        {
+          "id": "ms.vss-web.hosted-only"
+        }
+      ]
     },
     {
       "id": "calendar-has-moved-banner",
       "type": "ms.vss-web.global-message-banner",
-      "description": "Banner points out that the Calendar has moved to the Work hub.",
+      "description": "Banner points out that the Calendar has moved to the Boards hub.",
       "targets": ["ms.vss-web.home-hub-group"],
       "properties": {
-        "message": "The Calendar has moved! You may now find it under the Work menu.",
+        "message": "The Calendar has moved! You may now find it under the Boards menu.",
         "level": "info"
       }
     },
     {
       "id": "calendar",
       "type": "ms.vss-web.hub",
-      "description": "Calendar hub in the Work hub group.",
+      "description": "Calendar hub in the Boards hub group.",
       "targets": ["ms.vss-work-web.work-hub-group"],
       "properties": {
         "name": "Calendar",
         "order": 22,
         "uri": "static/calendar.html"
-      }
+      },
+      "constraints": [
+        {
+          "id": "ms.vss-web.onprem-only"
+        }
+      ]
     },
     {
       "id": "calendar-event-sources",

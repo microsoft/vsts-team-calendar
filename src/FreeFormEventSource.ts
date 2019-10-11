@@ -206,8 +206,6 @@ export class FreeFormEventsSource {
                 index = 0;
             }
             queue[index] = queue[index].then(() => {
-                // let collection create a guid
-                doc.id = undefined;
                 this.dataManager!.createDocument(this.selectedTeamId! + "." + formatDate(new Date(doc.startDate), "MM-YYYY"), doc);
             });
             queue[index] = queue[index].then(() => {

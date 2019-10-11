@@ -3,24 +3,29 @@
  */
 export interface ICalendarEvent {
     /**
-     * Title of the event
-     */
-    title: string;
-
-    /**
      * Used by collection to
      */
     __etag?: number;
 
     /**
-     * Event start date
+     * Category of the service
      */
-    startDate: string;
+    category: string | IEventCategory;
+
+    /**
+     * A description of the event
+     */
+    description?: string;
 
     /**
      * Event end date
      */
     endDate: string;
+
+    /**
+     * Icons to be displayed on the event
+     */
+    icons?: IEventIcon[];
 
     /**
      * Unique id for the event
@@ -34,24 +39,19 @@ export interface ICalendarEvent {
     iterationId?: string;
 
     /**
-     * Category of the service
-     */
-    category: string | IEventCategory;
-
-    /**
      * The member associated with this event
      */
     member?: ICalendarMember;
 
     /**
-     * A description of the event
+     * Event start date
      */
-    description?: string;
+    startDate: string;
 
     /**
-     * Icons to be displayed on the event
+     * Title of the event
      */
-    icons?: IEventIcon[];
+    title: string;
 }
 
 export interface ICalendarMember {
@@ -71,21 +71,6 @@ export interface ICalendarMember {
  */
 export interface IEventCategory {
     /**
-     * Title of the event category
-     */
-    title: string;
-
-    /**
-     * Sub title of the event category
-     */
-    subTitle?: string;
-
-    /**
-     * Image url of the category
-     */
-    imageUrl?: string;
-
-    /**
      * Color of the category
      */
     color?: string;
@@ -94,6 +79,21 @@ export interface IEventCategory {
      * Number of event under this Category
      */
     eventCount: number;
+
+    /**
+     * Image url of the category
+     */
+    imageUrl?: string;
+
+    /**
+     * Sub title of the event category
+     */
+    subTitle?: string;
+
+    /**
+     * Title of the event category
+     */
+    title: string;
 }
 
 /**
@@ -101,12 +101,12 @@ export interface IEventCategory {
  */
 export interface IEventIcon {
     /**
-     * src url for the icon
-     */
-    src: string;
-
-    /**
      * The event to edit or delete when the icon is selected
      */
     linkedEvent: ICalendarEvent;
+
+    /**
+     * src url for the icon
+     */
+    src: string;
 }

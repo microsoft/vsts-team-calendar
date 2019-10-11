@@ -17,7 +17,7 @@ import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
-import { formatDate, getDatesInRange, shiftToLocal, shiftToUTC } from "./TimeLib";
+import { formatDate, getDatesInRange, shiftToUTC, shiftToLocal } from "./TimeLib";
 
 export const DaysOffId = "daysOff";
 export const Everyone = "Everyone";
@@ -41,14 +41,14 @@ export class VSOCapacityEventSource {
      */
     public addEvent = (iterationId: string, startDate: Date, endDate: Date, memberName: string, memberId: string) => {
         const isTeam = memberName === Everyone;
-        startDate = shiftToLocal(startDate);
-        endDate = shiftToLocal(endDate);
+        startDate = shiftToUTC(startDate);
+        endDate = shiftToUTC(endDate);
         if (isTeam) {
             const teamDaysOff = this.teamDayOffMap[iterationId];
             // delete from cached copy
             delete this.teamDayOffMap[iterationId];
             const teamDaysOffPatch: TeamSettingsDaysOffPatch = { daysOff: teamDaysOff.daysOff };
-            teamDaysOffPatch.daysOff.push({ start: startDate, end: endDate });
+            teamDaysOffPatch.daysOff.push({ end: endDate, start: startDate });
             return this.workClient.updateTeamDaysOff(teamDaysOffPatch, this.teamContext, iterationId);
         } else {
             const capacity =
@@ -63,15 +63,20 @@ export class VSOCapacityEventSource {
                           ],
                           daysOff: []
                       };
+            // delete from cached copy
+            delete this.capacityMap[iterationId];
             const capacityPatch: CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };
             capacityPatch.daysOff.push({ start: startDate, end: endDate });
             return this.workClient.updateCapacityWithIdentityRef(capacityPatch, this.teamContext, iterationId, memberId);
         }
     };
 
+    /**
+     *Delete day off for a member or a team
+     */
     public deleteEvent = (event: ICalendarEvent, iterationId: string) => {
         const isTeam = event.member!.displayName === Everyone;
-        const startDate = shiftToLocal(new Date(event.startDate));
+        const startDate = shiftToUTC(new Date(event.startDate));
         if (isTeam) {
             const teamDaysOff = this.teamDayOffMap[iterationId];
             delete this.teamDayOffMap[iterationId];
@@ -137,38 +142,41 @@ export class VSOCapacityEventSource {
 
             for (const iteration of iterations) {
                 if (iteration.attributes.startDate && iteration.attributes.finishDate) {
-                    const start = shiftToUTC(iteration.attributes.startDate);
-                    const end = shiftToUTC(iteration.attributes.finishDate);
+                    const iterationStart = shiftToLocal(iteration.attributes.startDate);
+                    const iterationEnd = shiftToLocal(iteration.attributes.finishDate);
 
                     if (
-                        (calendarStart <= start && start <= calendarEnd) ||
-                        (calendarStart <= end && end <= calendarEnd) ||
-                        (start <= calendarStart && end >= calendarEnd)
+                        (calendarStart <= iterationStart && iterationStart <= calendarEnd) ||
+                        (calendarStart <= iterationEnd && iterationEnd <= calendarEnd) ||
+                        (iterationStart <= calendarStart && iterationEnd >= calendarEnd)
                     ) {
                         const now = new Date();
-                        let color = generateColor("otherIteration");
+                        let color;
                         if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
                             color = generateColor("currentIteration");
+                        } else {
+                            color = generateColor("otherIteration");
                         }
-                        const exclusiveEndDate = new Date(end);
-                        exclusiveEndDate.setDate(end.getDate() + 1);
+
+                        const exclusiveIterationEndDate = new Date(iterationEnd);
+                        exclusiveIterationEndDate.setDate(iterationEnd.getDate() + 1);
 
                         renderedEvents.push({
-                            id: IterationId + iteration.name,
                             allDay: true,
-                            start: start,
-                            end: exclusiveEndDate,
-                            title: iteration.name,
-                            textColor: "#FFFFFF",
                             backgroundColor: color,
-                            rendering: "background"
+                            end: exclusiveIterationEndDate,
+                            id: IterationId + iteration.name,
+                            rendering: "background",
+                            start: iterationStart,
+                            textColor: "#FFFFFF",
+                            title: iteration.name
                         });
 
                         currentIterations.push({
                             color: color,
-                            subTitle: formatDate(start, "MONTH-DD") + " - " + formatDate(end, "MONTH-DD"),
-                            title: iteration.name,
-                            eventCount: 1
+                            eventCount: 1,
+                            subTitle: formatDate(iterationStart, "MONTH-DD") + " - " + formatDate(iterationEnd, "MONTH-DD"),
+                            title: iteration.name
                         });
 
                         const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
@@ -226,8 +234,8 @@ export class VSOCapacityEventSource {
 
     public getIterationForDate = (startDate: Date, endDate: Date): TeamSettingsIteration | undefined => {
         let iteration = undefined;
-        startDate = shiftToLocal(startDate);
-        endDate = shiftToLocal(endDate);
+        startDate = shiftToUTC(startDate);
+        endDate = shiftToUTC(endDate);
         this.iterations.forEach(item => {
             if (
                 item.attributes.startDate <= startDate &&
@@ -253,10 +261,10 @@ export class VSOCapacityEventSource {
     public initialize(projectId: string, projectName: string, teamId: string, teamName: string, hostUrl: string) {
         this.hostUrl = hostUrl;
         this.teamContext = {
-            projectId: projectId,
-            teamId: teamId,
             project: projectName,
-            team: teamName
+            projectId: projectId,
+            team: teamName,
+            teamId: teamId
         };
         this.teamDayOffMap = {};
         this.capacityMap = {};
@@ -266,9 +274,9 @@ export class VSOCapacityEventSource {
 
     public updateEvent = (oldEvent: ICalendarEvent, iterationId: string, startDate: Date, endDate: Date) => {
         const isTeam = oldEvent.member!.displayName === Everyone;
-        const orignalStartDate = shiftToLocal(new Date(oldEvent.startDate));
-        startDate = shiftToLocal(startDate);
-        endDate = shiftToLocal(endDate);
+        const orignalStartDate = shiftToUTC(new Date(oldEvent.startDate));
+        startDate = shiftToUTC(startDate);
+        endDate = shiftToUTC(endDate);
         if (isTeam) {
             const teamDaysOff = this.teamDayOffMap[iterationId];
             delete this.teamDayOffMap[iterationId];
@@ -303,6 +311,7 @@ export class VSOCapacityEventSource {
     }
 
     private fetchCapacities = (iterationId: string): Promise<TeamMemberCapacityIdentityRef[]> => {
+        // fetch capacities only if not in cache
         if (this.capacityMap[iterationId]) {
             const capacities = [];
             for (var key in this.capacityMap[iterationId]) {
@@ -314,6 +323,7 @@ export class VSOCapacityEventSource {
     };
 
     private fetchIterations = (): Promise<TeamSettingsIteration[]> => {
+        // fetch iterations only if not in cache
         if (this.iterations.length > 0) {
             return Promise.resolve(this.iterations);
         }
@@ -321,6 +331,7 @@ export class VSOCapacityEventSource {
     };
 
     private fetchTeamDaysOff = (iterationId: string): Promise<TeamSettingsDaysOff> => {
+        // fetch team day off only if not in cache
         if (this.teamDayOffMap[iterationId]) {
             return Promise.resolve(this.teamDayOffMap[iterationId]);
         }
@@ -345,22 +356,22 @@ export class VSOCapacityEventSource {
                 }
 
                 for (const daysOffRange of capacity.daysOff) {
-                    const start = shiftToUTC(daysOffRange.start);
-                    const end = shiftToUTC(daysOffRange.end);
+                    const start = shiftToLocal(daysOffRange.start);
+                    const end = shiftToLocal(daysOffRange.end);
                     const title = capacity.teamMember.displayName + " Day Off";
 
                     const event: ICalendarEvent = {
-                        title: title,
-                        startDate: start.toISOString(),
-                        endDate: end.toISOString(),
-                        member: capacity.teamMember,
                         category: title,
-                        iterationId: iterationId
+                        endDate: end.toISOString(),
+                        iterationId: iterationId,
+                        member: capacity.teamMember,
+                        startDate: start.toISOString(),
+                        title: title
                     };
 
                     const icon: IEventIcon = {
-                        src: capacity.teamMember.imageUrl,
-                        linkedEvent: event
+                        linkedEvent: event,
+                        src: capacity.teamMember.imageUrl
                     };
 
                     // add personal day off event to calendar day off events
@@ -381,13 +392,13 @@ export class VSOCapacityEventSource {
                             const date = dateObj.toISOString();
                             if (!this.groupedEventMap[date]) {
                                 const regroupedEvent: ICalendarEvent = {
-                                    startDate: date,
-                                    endDate: date,
-                                    member: event.member,
-                                    title: "Grouped Event",
-                                    id: DaysOffId + "." + date,
                                     category: "Grouped Event",
-                                    icons: []
+                                    endDate: date,
+                                    icons: [],
+                                    id: DaysOffId + "." + date,
+                                    member: event.member,
+                                    startDate: date,
+                                    title: "Grouped Event"
                                 };
                                 this.groupedEventMap[date] = regroupedEvent;
                             }
@@ -410,24 +421,24 @@ export class VSOCapacityEventSource {
             this.teamDayOffMap[iterationId] = teamDaysOff;
             for (const daysOffRange of teamDaysOff.daysOff) {
                 const teamImage = this.buildTeamImageUrl(this.teamContext.teamId);
-                const start = shiftToUTC(daysOffRange.start);
-                const end = shiftToUTC(daysOffRange.end);
+                const start = shiftToLocal(daysOffRange.start);
+                const end = shiftToLocal(daysOffRange.end);
 
                 const event: ICalendarEvent = {
-                    title: "Team Day Off",
-                    startDate: start.toISOString(),
+                    category: this.teamContext.team,
                     endDate: end.toISOString(),
+                    iterationId: iterationId,
                     member: {
                         displayName: Everyone,
                         id: this.teamContext.teamId
                     },
-                    category: this.teamContext.team,
-                    iterationId: iterationId
+                    startDate: start.toISOString(),
+                    title: "Team Day Off"
                 };
 
                 const icon: IEventIcon = {
-                    src: teamImage,
-                    linkedEvent: event
+                    linkedEvent: event,
+                    src: teamImage
                 };
 
                 // add personal day off event to calendar day off events
@@ -448,13 +459,13 @@ export class VSOCapacityEventSource {
                         const date = dateObj.toISOString();
                         if (!this.groupedEventMap[date]) {
                             const regroupedEvent: ICalendarEvent = {
-                                startDate: date,
-                                endDate: date,
-                                member: event.member,
-                                title: "Grouped Event",
-                                id: DaysOffId + "." + date,
                                 category: "Grouped Event",
-                                icons: []
+                                endDate: date,
+                                icons: [],
+                                id: DaysOffId + "." + date,
+                                member: event.member,
+                                startDate: date,
+                                title: "Grouped Event"
                             };
                             this.groupedEventMap[date] = regroupedEvent;
                         }

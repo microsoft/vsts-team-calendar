@@ -18,12 +18,10 @@ export function formatDate(date: Date, format?: string): string {
         return format === "YYYY-MM-DD" ? [year, month, day].join("-") : [month, day, year].join("-");
     } else if (format === "MONTH-DD") {
         return months[date.getMonth()] + " " + date.getDate();
+    } else if (format === "MM-YYYY") {
+        return date.getMonth() + 1 + "." + date.getFullYear();
     }
     return date.toISOString();
-}
-
-export function monthAndYearToString(monthAndYear: MonthAndYear): string {
-    return months[monthAndYear.month] + " " + monthAndYear.year;
 }
 
 /**
@@ -53,26 +51,38 @@ export function getMonthYearInRange(startDate: Date, endDate: Date): string[] {
     let current: Date = new Date(startDate);
     current.setMonth(current.getMonth() - 1);
     while (current.getTime() <= endDate.getTime()) {
-        monthYear.push(toMonthYear(current));
+        monthYear.push(formatDate(current, "MM-YYYY"));
         current.setMonth(current.getMonth() + 1);
     }
     return monthYear;
 }
 
-export function shiftToLocal(date: Date): Date {
-    return new Date(date.getTime() - date.getTimezoneOffset() * minute);
+export function monthAndYearToString(monthAndYear: MonthAndYear): string {
+    return months[monthAndYear.month] + " " + monthAndYear.year;
 }
 
-export function shiftToUTC(date: Date): Date {
+/**
+ * Create date which has same time as of UTC time in Local timezone
+ * @param date to be converted
+ */
+export function shiftToLocal(date: Date): Date {
     return new Date(date.getTime() + date.getTimezoneOffset() * minute);
 }
 
+/**
+ * Create date which has same time in UTC timezone
+ * @param date to be converted
+ */
+export function shiftToUTC(date: Date): Date {
+    return new Date(date.getTime() - date.getTimezoneOffset() * minute);
+}
+
+/**
+ * Converts "YYYY-MM-DD" formated string to date
+ * @param dateString date string to be converted
+ */
 export function toDate(dateString: string): Date {
     const [year, month, day] = dateString.split("-").map(Number);
     const date = new Date(year, month - 1, day);
     return date;
-}
-
-export function toMonthYear(current: Date): string {
-    return current.getMonth() + 1 + "." + current.getFullYear();
 }

@@ -7,7 +7,7 @@ import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventCategory } from "./Contracts";
-import { shiftToUTC, shiftToLocal, getMonthYearInRange, toMonthYear } from "./TimeLib";
+import { shiftToLocal, shiftToUTC, getMonthYearInRange, formatDate } from "./TimeLib";
 
 export const FreeFormId = "FreeForm";
 
@@ -20,8 +20,8 @@ export class FreeFormEventsSource {
     summaryData: ObservableArray<IEventCategory> = new ObservableArray<IEventCategory>([]);
 
     public addEvent = (title: string, startDate: Date, endDate: Date, category: string, description: string): PromiseLike<ICalendarEvent> => {
-        const start = shiftToLocal(startDate);
-        const end = shiftToLocal(endDate);
+        const start = shiftToUTC(startDate);
+        const end = shiftToUTC(endDate);
 
         const event: ICalendarEvent = {
             category: category,
@@ -38,22 +38,21 @@ export class FreeFormEventsSource {
             this.categories.add(event.category);
         }
 
-        return this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(startDate), event).then((addedEvent: ICalendarEvent) => {
-            // add event
-            this.eventMap[addedEvent.id!] = addedEvent;
-            const start = shiftToUTC(new Date(addedEvent.startDate));
-            const end = shiftToUTC(new Date(addedEvent.endDate));
-
-            addedEvent.startDate = start.toISOString();
-            addedEvent.endDate = end.toISOString();
-
-            return addedEvent;
-        });
+        return this.dataManager!.createDocument(this.selectedTeamId! + "." + formatDate(startDate, "MM-YYYY"), event).then(
+            (addedEvent: ICalendarEvent) => {
+                // add event to cache
+                // use times from current zone
+                this.eventMap[addedEvent.id!] = addedEvent;
+                addedEvent.startDate = startDate.toISOString();
+                addedEvent.endDate = endDate.toISOString();
+                return addedEvent;
+            }
+        );
     };
 
     public deleteEvent = (eventId: string, startDate: Date) => {
         delete this.eventMap[eventId];
-        return this.dataManager!.deleteDocument(this.selectedTeamId! + "." + toMonthYear(startDate), eventId);
+        return this.dataManager!.deleteDocument(this.selectedTeamId! + "." + formatDate(startDate, "MM-YYYY"), eventId);
     };
 
     public getCategories = (): Set<string> => {
@@ -88,8 +87,8 @@ export class FreeFormEventsSource {
                         this.categories.add(event.category);
                     }
 
-                    const start = shiftToUTC(new Date(event.startDate));
-                    const end = shiftToUTC(new Date(event.endDate));
+                    const start = shiftToLocal(new Date(event.startDate));
+                    const end = shiftToLocal(new Date(event.endDate));
 
                     // check if event should be shown
                     if ((calendarStart <= start && start <= calendarEnd) || (calendarStart <= end && end <= calendarEnd)) {
@@ -158,34 +157,31 @@ export class FreeFormEventsSource {
         description: string
     ): PromiseLike<ICalendarEvent> => {
         const oldEvent = this.eventMap[id];
-        const oldStartDate = shiftToLocal(new Date(oldEvent.startDate));
-        const start = shiftToLocal(startDate);
-        const end = shiftToLocal(endDate);
+        const oldStartDate = new Date(oldEvent.startDate);
 
         oldEvent.category = category;
         oldEvent.description = description;
-        oldEvent.endDate = end.toISOString();
-        oldEvent.startDate = start.toISOString();
+        oldEvent.endDate = shiftToUTC(endDate).toISOString();
+        oldEvent.startDate = shiftToUTC(startDate).toISOString();
         oldEvent.title = title;
 
-        if (toMonthYear(oldStartDate) == toMonthYear(start)) {
-            return this.dataManager!.updateDocument(this.selectedTeamId! + "." + toMonthYear(startDate), oldEvent).then(
-                (updatedEvent: ICalendarEvent) => {
+        const collectionNameOld = this.selectedTeamId! + "." + formatDate(oldStartDate, "MM-YYYY");
+        const collectionNameNew = this.selectedTeamId! + "." + formatDate(startDate, "MM-YYYY");
+
+        if (collectionNameOld == collectionNameNew) {
+            return this.dataManager!.updateDocument(collectionNameNew, oldEvent).then((updatedEvent: ICalendarEvent) => {
+                // add event
+                this.eventMap[updatedEvent.id!] = updatedEvent;
+                return updatedEvent;
+            });
+        } else {
+            // move data to new month's collection
+            return this.dataManager!.deleteDocument(collectionNameOld, oldEvent.id!).then(() => {
+                return this.dataManager!.createDocument(collectionNameNew, oldEvent).then((updatedEvent: ICalendarEvent) => {
                     // add event
                     this.eventMap[updatedEvent.id!] = updatedEvent;
                     return updatedEvent;
-                }
-            );
-        } else {
-            // move data to new month's collection
-            return this.dataManager!.deleteDocument(this.selectedTeamId! + "." + toMonthYear(oldStartDate), oldEvent.id!).then(() => {
-                return this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(startDate), oldEvent).then(
-                    (updatedEvent: ICalendarEvent) => {
-                        // add event
-                        this.eventMap[updatedEvent.id!] = updatedEvent;
-                        return updatedEvent;
-                    }
-                );
+                });
             });
         }
     };
@@ -212,7 +208,7 @@ export class FreeFormEventsSource {
             queue[index] = queue[index].then(() => {
                 // let collection create a guid
                 doc.id = undefined;
-                this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(new Date(doc.startDate)), doc);
+                this.dataManager!.createDocument(this.selectedTeamId! + "." + formatDate(new Date(doc.startDate), "MM-YYYY"), doc);
             });
             queue[index] = queue[index].then(() => {
                 this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);

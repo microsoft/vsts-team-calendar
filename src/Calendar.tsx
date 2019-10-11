@@ -156,13 +156,13 @@ class ExtensionContent extends React.Component {
                                     {(props: { currentMonthAndYear: MonthAndYear }) => {
                                         return (
                                             <Dropdown
-                                                key={props.currentMonthAndYear.month}
                                                 items={this.getMonthPickerOptions()}
+                                                key={props.currentMonthAndYear.month}
+                                                onSelect={this.onSelectMonthYear}
                                                 placeholder={monthAndYearToString(props.currentMonthAndYear)}
                                                 renderExpandable={expandableProps => (
                                                     <DropdownExpandableButton hideDropdownIcon={true} {...expandableProps} />
                                                 )}
-                                                onSelect={this.onSelectMonthYear}
                                             />
                                         );
                                     }}
@@ -173,9 +173,9 @@ class ExtensionContent extends React.Component {
                                         return props.teams === [] ? null : (
                                             <Dropdown
                                                 items={this.getTeamPickerOptions()}
+                                                onSelect={this.onSelectTeam}
                                                 placeholder={this.selectedTeamName}
                                                 renderExpandable={expandableProps => <DropdownExpandableButton {...expandableProps} />}
-                                                onSelect={this.onSelectTeam}
                                             />
                                         );
                                     }}
@@ -190,12 +190,6 @@ class ExtensionContent extends React.Component {
                                 <div className="calendar-component">
                                     <FullCalendar
                                         defaultView="dayGridMonth"
-                                        header={false}
-                                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                                        ref={this.calendarComponentRef}
-                                        selectable={true}
-                                        select={this.handleSelect}
-                                        height={this.getCalendarHeight()}
                                         editable={true}
                                         eventClick={this.onEventClick}
                                         eventDrop={this.onEventDrop}
@@ -205,6 +199,12 @@ class ExtensionContent extends React.Component {
                                             { events: this.freeFormEventSource.getEvents },
                                             { events: this.vsoCapacityEventSource.getEvents }
                                         ]}
+                                        header={false}
+                                        height={this.getCalendarHeight()}
+                                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                        ref={this.calendarComponentRef}
+                                        select={this.onSelectCalendarDates}
+                                        selectable={true}
                                     />
                                 </div>
                             ) : null;
@@ -216,10 +216,10 @@ class ExtensionContent extends React.Component {
                     {(props: { anchorElement: HTMLElement | undefined }) => {
                         return props.anchorElement ? (
                             <ContextualMenu
+                                anchorElement={props.anchorElement}
+                                anchorOffset={{ horizontal: 4, vertical: 4 }}
+                                anchorOrigin={{ horizontal: Location.start, vertical: Location.start }}
                                 key={this.selectedEndDate!.toString()}
-                                onDismiss={() => {
-                                    this.anchorElement.value = undefined;
-                                }}
                                 menuProps={{
                                     id: "foo",
                                     items: [
@@ -227,9 +227,9 @@ class ExtensionContent extends React.Component {
                                         { id: "dayOff", text: "Add days off", iconProps: { iconName: "Clock" }, onActivate: this.onClickAddDaysOff }
                                     ]
                                 }}
-                                anchorElement={props.anchorElement}
-                                anchorOrigin={{ horizontal: Location.start, vertical: Location.start }}
-                                anchorOffset={{ horizontal: 4, vertical: 4 }}
+                                onDismiss={() => {
+                                    this.anchorElement.value = undefined;
+                                }}
                             />
                         ) : null;
                     }}
@@ -242,18 +242,18 @@ class ExtensionContent extends React.Component {
                                 end={this.selectedEndDate}
                                 event={this.eventToEdit}
                                 eventSource={this.vsoCapacityEventSource}
+                                members={this.members}
                                 onDismiss={this.onDialogDismiss}
                                 start={this.selectedStartDate}
-                                members={this.members}
                             />
                         ) : props.dialog === Dialogs.NewEventDialog ? (
                             <AddEditEventDialog
                                 calendarApi={this.getCalendarApi()}
                                 end={this.selectedEndDate}
                                 eventApi={this.eventApi}
+                                eventSource={this.freeFormEventSource}
                                 onDismiss={this.onDialogDismiss}
                                 start={this.selectedStartDate}
-                                eventSource={this.freeFormEventSource}
                             />
                         ) : null;
                     }}
@@ -277,10 +277,15 @@ class ExtensionContent extends React.Component {
         return { month, year };
     }
 
+    /**
+     * Edits the rendered event if required
+     */
     private eventRender = (arg: { isMirror: boolean; isStart: boolean; isEnd: boolean; event: EventApi; el: HTMLElement; view: View }) => {
         if (arg.event.id.startsWith(DaysOffId) && arg.event.start) {
+            // get grouped event for that date
             const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start);
             if (capacityEvent && capacityEvent.icons) {
+                // add all user icons in to event
                 capacityEvent.icons.forEach(element => {
                     if (element.src) {
                         var img: HTMLImageElement = document.createElement("img");
@@ -299,6 +304,7 @@ class ExtensionContent extends React.Component {
                 });
             }
         } else if (arg.event.id.startsWith(IterationId) && arg.isStart) {
+            // iterations are background event, show title for only start
             arg.el.innerText = arg.event.title;
         }
     };
@@ -307,6 +313,9 @@ class ExtensionContent extends React.Component {
         return this.calendarComponentRef.current!.getApi();
     }
 
+    /**
+     * Manually calculates available vertical space for calendar
+     */
     private getCalendarHeight(): number {
         var height = document.getElementById("team-calendar");
         if (height) {
@@ -322,9 +331,9 @@ class ExtensionContent extends React.Component {
             const monthAndYear = this.calcMonths(this.currentMonthAndYear.value, i);
             const text = monthAndYearToString(monthAndYear);
             options.push({
+                data: monthAndYear,
                 id: text,
-                text: text,
-                data: monthAndYear
+                text: text
             });
         }
         return options;
@@ -333,45 +342,28 @@ class ExtensionContent extends React.Component {
     private getTeamPickerOptions(): IListBoxItem[] {
         const options: IListBoxItem[] = [];
         this.teams.value.forEach(function(item) {
-            options.push({ id: item.id, text: item.name, data: item });
+            options.push({ data: item, id: item.id, text: item.name });
         });
 
         return options;
     }
 
-    private handleSelect = (arg: {
-        start: Date;
-        end: Date;
-        startStr: string;
-        endStr: string;
-        allDay: boolean;
-        resource?: any;
-        jsEvent: MouseEvent;
-        view: View;
-    }) => {
-        this.selectedEndDate = new Date(arg.end);
-        this.selectedEndDate.setDate(arg.end.getDate() - 1);
-        this.selectedStartDate = arg.start;
-        const dataDate = this.selectedEndDate.toISOString().split("T")[0];
-        this.anchorElement.value = document.querySelector("td.fc-day-top[data-date='" + dataDate + "']") as HTMLElement;
-    };
-
     private async initialize() {
         const dataSvc = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
+        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+        const project = await projectService.getProject();
+        const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
+
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
         const queryParam = await this.navigationService.getQueryParams();
         let selectedTeamId;
 
+        // if URL has team id in it, use that
         if (queryParam && queryParam["team"]) {
             selectedTeamId = queryParam["team"];
         }
-
-        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-        const project = await projectService.getProject();
-
-        const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
 
         if (project) {
             if (!selectedTeamId) {
@@ -389,10 +381,13 @@ class ExtensionContent extends React.Component {
                 return a.name.toUpperCase().localeCompare(b.name.toUpperCase());
             });
 
+            // if team id wasn't in URL or database use first available team
             if (!selectedTeamId) {
                 selectedTeamId = teams[0].id;
             }
+
             if (!queryParam || !queryParam["team"]) {
+                // Add team id to URL
                 this.navigationService.setQueryParams({ team: selectedTeamId });
             }
 
@@ -495,6 +490,23 @@ class ExtensionContent extends React.Component {
                 arg.event.extendedProps.description
             );
         }
+    };
+
+    private onSelectCalendarDates = (arg: {
+        start: Date;
+        end: Date;
+        startStr: string;
+        endStr: string;
+        allDay: boolean;
+        resource?: any;
+        jsEvent: MouseEvent;
+        view: View;
+    }) => {
+        this.selectedEndDate = new Date(arg.end);
+        this.selectedEndDate.setDate(arg.end.getDate() - 1);
+        this.selectedStartDate = arg.start;
+        const dataDate = this.selectedEndDate.toISOString().split("T")[0];
+        this.anchorElement.value = document.querySelector("td.fc-day-top[data-date='" + dataDate + "']") as HTMLElement;
     };
 
     private onSelectMonthYear = (event: React.SyntheticEvent<HTMLElement, Event>, item: IListBoxItem<{}>) => {

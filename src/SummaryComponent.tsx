@@ -92,7 +92,7 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps> {
                 <div className="catagory-summary-row flex-row h-scroll-hidden">
                     {item.imageUrl && <img alt="" className="category-icon" src={item.imageUrl} />}
                     {!item.imageUrl && item.color && <div className="category-color" style={{ backgroundColor: item.color }} />}
-                    <div style={{ marginLeft: "10px", padding: "10px 0px" }} className="flex-column h-scroll-hidden">
+                    <div className="flex-column h-scroll-hidden catagory-data">
                         <div className="category-titletext">{item.title}</div>
                         <div className="category-subtitle">{item.subTitle}</div>
                     </div>

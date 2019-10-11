@@ -101,7 +101,7 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
                     <PanelHeader
                         onDismiss={this.props.onDismiss}
                         showCloseButton={false}
-                        titleProps={{ text: this.props.eventApi ? "Edit event" : "Add event", size: TitleSize.Small }}
+                        titleProps={{ size: TitleSize.Small, text: this.props.eventApi ? "Edit event" : "Add event" }}
                     />
                     <PanelContent>
                         <div className="flex-grow flex-column event-dialog-content">
@@ -116,50 +116,50 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
                             </Observer>
                             <div className="input-row flex-row">
                                 <span>Title</span>
-                                <TextField className="column-2" value={this.title} onChange={this.onInputTitle} />
+                                <TextField className="column-2" onChange={this.onInputTitle} value={this.title} />
                             </div>
                             <div className="input-row flex-row">
                                 <span>Start Date</span>
                                 <input
                                     className="column-2"
-                                    type="date"
                                     defaultValue={formatDate(this.startDate, "YYYY-MM-DD")}
                                     onChange={this.onInputStartDate}
+                                    type="date"
                                 />
                             </div>
                             <div className="input-row flex-row">
                                 <span>End Date</span>
                                 <input
                                     className="column-2"
-                                    type="date"
                                     defaultValue={formatDate(this.endDate, "YYYY-MM-DD")}
                                     onChange={this.onInputEndDate}
+                                    type="date"
                                 />
                             </div>
                             <div className="input-row flex-row">
                                 <span>Category</span>
                                 <EditableDropdown
-                                    className="column-2"
                                     allowFreeform={true}
+                                    className="column-2"
                                     items={Array.from(this.props.eventSource.getCategories())}
-                                    onValueChange={this.onValueChange}
+                                    onValueChange={this.onCatagorySelectionChange}
                                     placeholder={this.category}
                                 />
                             </div>
                             <div className="input-row flex-row">
                                 <span>Description</span>
-                                <TextField className="column-2" value={this.description} onChange={this.onInputDescription} multiline={true} />
+                                <TextField className="column-2" onChange={this.onInputDescription} multiline={true} value={this.description} />
                             </div>
                         </div>
                     </PanelContent>
                     <PanelFooter>
                         <div className="flex-grow flex-row">
-                            {this.props.eventApi && <Button text="Delete event" onClick={this.onDeleteClick} subtle={true} />}
+                            {this.props.eventApi && <Button onClick={this.onDeleteClick} subtle={true} text="Delete event" />}
                             <ButtonGroup className="bolt-panel-footer-buttons flex-grow">
-                                <Button text="Cancel" onClick={this.props.onDismiss} />
+                                <Button onClick={this.props.onDismiss} text="Cancel" />
                                 <Observer enabled={this.okButtonEnabled}>
                                     {(props: { enabled: boolean }) => {
-                                        return <Button text="Ok" onClick={this.onOKClick} disabled={!props.enabled} primary={true} />;
+                                        return <Button disabled={!props.enabled} onClick={this.onOKClick} primary={true} text="Ok" />;
                                     }}
                                 </Observer>
                             </ButtonGroup>
@@ -191,6 +191,11 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
             </>
         );
     }
+
+    private onCatagorySelectionChange = (value?: IListBoxItem<{}> | undefined): void => {
+        this.category = value ? value.text || "Uncategorized" : "Uncategorized";
+        this.validateSelections();
+    };
 
     private onDeleteClick = async (): Promise<void> => {
         this.isConfirmationDialogOpen.value = true;
@@ -239,11 +244,6 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
             this.props.calendarApi.refetchEvents();
         });
         this.props.onDismiss();
-    };
-
-    private onValueChange = (value?: IListBoxItem<{}> | undefined): void => {
-        this.category = value ? value.text || "Uncategorized" : "Uncategorized";
-        this.validateSelections();
     };
 
     private validateSelections = () => {

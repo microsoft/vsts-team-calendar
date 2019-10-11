@@ -36,7 +36,6 @@ export class MessageDialog extends React.Component<IMessageDialogProps> {
     public render(): JSX.Element {
         return (
             <Dialog
-                titleProps={{ text: this.props.title }}
                 footerButtonProps={[
                     {
                         text: "Cancel",
@@ -45,10 +44,11 @@ export class MessageDialog extends React.Component<IMessageDialogProps> {
                     {
                         text: "Delete",
                         onClick: this.props.onConfirm,
-                        primary: true
+                        danger: true
                     }
                 ]}
                 onDismiss={this.props.onDismiss}
+                titleProps={{ text: this.props.title }}
             >
                 {this.props.message}
             </Dialog>

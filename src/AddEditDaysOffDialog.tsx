@@ -87,20 +87,20 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
         if (this.props.event) {
             this.startDate = new Date(this.props.event.startDate);
             this.endDate = new Date(this.props.event.endDate);
-            this.teamMembers.push({ text: this.props.event.member!.displayName, id: this.props.event.member!.id });
+            this.teamMembers.push({ id: this.props.event.member!.id, text: this.props.event.member!.displayName });
         } else {
             this.startDate = props.start;
             this.endDate = props.end;
             const userName = getUser().displayName;
             let i = 1;
-            this.teamMembers.push({ text: Everyone, id: Everyone });
+            this.teamMembers.push({ id: Everyone, text: Everyone });
             this.teamMembers.push(
                 ...this.props.members.map(item => {
                     if (userName == item.identity.displayName) {
                         selectedIndex = i;
                     }
                     i++;
-                    return { text: item.identity.displayName, id: item.identity.id };
+                    return { id: item.identity.id, text: item.identity.displayName };
                 })
             );
         }
@@ -119,7 +119,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                     <PanelHeader
                         onDismiss={this.props.onDismiss}
                         showCloseButton={false}
-                        titleProps={{ text: this.props.event ? "Edit days off" : "Add days off", size: TitleSize.Small }}
+                        titleProps={{ size: TitleSize.Small, text: this.props.event ? "Edit days off" : "Add days off" }}
                     />
                     <PanelContent>
                         <div className="flex-grow flex-column event-dialog-content">
@@ -136,39 +136,39 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                                 <span>Start Date</span>
                                 <input
                                     className="column-2"
-                                    type="date"
                                     defaultValue={formatDate(this.startDate, "YYYY-MM-DD")}
                                     onChange={this.onInputStartDate}
+                                    type="date"
                                 />
                             </div>
                             <div className="input-row flex-row">
                                 <span>End Date</span>
                                 <input
                                     className="column-2"
-                                    type="date"
                                     defaultValue={formatDate(this.endDate, "YYYY-MM-DD")}
                                     onChange={this.onInputEndDate}
+                                    type="date"
                                 />
                             </div>
                             <div className="input-row flex-row">
                                 <span>Team Member</span>
                                 <Dropdown
                                     className="column-2"
-                                    selection={this.memberSelection}
                                     items={this.teamMembers}
                                     onSelect={this.onSelectTeamMember}
+                                    selection={this.memberSelection}
                                 />
                             </div>
                         </div>
                     </PanelContent>
                     <PanelFooter>
                         <div className="flex-grow flex-row">
-                            {this.props.event && <Button text="Delete days off" onClick={this.onDeleteClick} subtle={true} />}
+                            {this.props.event && <Button onClick={this.onDeleteClick} subtle={true} text="Delete days off" />}
                             <ButtonGroup className="bolt-panel-footer-buttons flex-grow">
-                                <Button text="Cancel" onClick={this.props.onDismiss} />
+                                <Button onClick={this.props.onDismiss} text="Cancel" />
                                 <Observer enabled={this.okButtonEnabled}>
                                     {(props: { enabled: boolean }) => {
-                                        return <Button text="Ok" onClick={this.onOKClick} disabled={!props.enabled} primary={true} />;
+                                        return <Button disabled={!props.enabled} onClick={this.onOKClick} primary={true} text="Ok" />;
                                     }}
                                 </Observer>
                             </ButtonGroup>

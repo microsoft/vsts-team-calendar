@@ -1,12 +1,13 @@
+import { IExtensionDataManager, ExtensionDataCollection } from "azure-devops-extension-api";
+
+import { ObservableArray } from "azure-devops-ui/Core/Observable";
+
 import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
-
-import { IExtensionDataManager, ExtensionDataCollection } from "azure-devops-extension-api";
 
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventCategory } from "./Contracts";
 import { shiftToUTC, shiftToLocal, getMonthYearInRange, toMonthYear } from "./TimeLib";
-import { ObservableArray } from "azure-devops-ui/Core/Observable";
 
 export const FreeFormId = "FreeForm";
 
@@ -189,27 +190,47 @@ export class FreeFormEventsSource {
         }
     };
 
+    /**
+     * Copies legqacy data from single collection in to respective monthly collection
+     * Deletes legacy data
+     */
     private convertData = (oldData: ICalendarEvent[]) => {
-        // chain all actions
-        let queue = Promise.resolve();
+        // chain all actions in to max 10 queues
+        let queue: Promise<void>[] = [];
+        const maxSize = oldData.length < 10 ? oldData.length : 10;
+
+        let index: number;
+        for (index = 0; index < maxSize; index++) {
+            queue[index] = Promise.resolve();
+        }
 
         // create new event and delete old one
         oldData.forEach(doc => {
-            queue = queue.then(() => {
+            if (index == maxSize) {
+                index = 0;
+            }
+            queue[index] = queue[index].then(() => {
+                // let collection create a guid
+                doc.id = undefined;
                 this.dataManager!.createDocument(this.selectedTeamId! + "." + toMonthYear(new Date(doc.startDate)), doc);
             });
-            queue = queue.then(() => {
+            queue[index] = queue[index].then(() => {
                 this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);
             });
+            index++;
         });
 
         // delete catagories data if there is any
         this.dataManager!.queryCollectionsByName([this.selectedTeamId! + "-categories"]).then((collections: ExtensionDataCollection[]) => {
             if (collections && collections[0] && collections[0].documents) {
                 collections[0].documents.forEach(doc => {
-                    queue = queue.then(() => {
+                    if (index == maxSize) {
+                        index = 0;
+                    }
+                    queue[index] = queue[index].then(() => {
                         this.dataManager!.deleteDocument(this.selectedTeamId! + "-categories", doc.id!);
                     });
+                    index++;
                 });
             }
         });

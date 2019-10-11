@@ -17,7 +17,7 @@ import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
-import { formatDate, getDatesInRange, shiftToLocal, shiftToUTC, toDate } from "./TimeLib";
+import { formatDate, getDatesInRange, shiftToLocal, shiftToUTC } from "./TimeLib";
 
 export const DaysOffId = "daysOff";
 export const Everyone = "Everyone";

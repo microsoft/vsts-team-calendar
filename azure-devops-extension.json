@@ -13,7 +13,7 @@
   ],
   "scopes": ["vso.work_write"],
   "icons": {
-    "default": "static/calendar-logo.png"
+    "default": "static/v2-images/calendar-logo.png"
   },
   "content": {
     "details": {
@@ -41,7 +41,7 @@
   ],
   "screenshots": [
     {
-      "path": "static/calendar-screen-shot.png"
+      "path": "static/v2-images/calendar-screen-shot.png"
     }
   ],
   "files": [

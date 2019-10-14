@@ -4,7 +4,7 @@ Team Calendar helps busy teams stay on track and informed about important deadli
 
 At a glance see when sprints start and end. No more guessing at how much time you have before the sprint ends.
 
-![st](static/images/sprint-start.png)
+![st](static/v2-images/sprint-start.png)
 
 Learn how to [setup your sprint schedule](https://msdn.microsoft.com/Library/vs/alm/work/scrum/define-sprints)
 
@@ -12,9 +12,9 @@ Learn how to [setup your sprint schedule](https://msdn.microsoft.com/Library/vs/
 
 From your team calendar, mark days you (or anyone on your team) will be out of the office. Simply click a day and choose to add a day off. No more digging around the capacity settings page to set or manage days off.
 
-![ado](static/images/add-day-off.png)
+![ado](static/v2-images/add-day-off.png)
 
-![ado-dialog](static/images/add-day-off-dialog.png)
+![ado-dialog](static/v2-images/add-day-off-dialog.png)
 
 Learn more about [capacity planning](https://msdn.microsoft.com/en-us/Library/vs/alm/Work/scale/capacity-planning)
 
@@ -22,7 +22,7 @@ Learn more about [capacity planning](https://msdn.microsoft.com/en-us/Library/vs
 
 Visualize the availability of the team as you plan your team. Understand who is unavailable and when. Know ahead of time when you have multiple team members out at the same time.
 
-![vdo](static/images/day-off-view.png)
+![vdo](static/v2-images/day-off-view.png)
 
 ## Quick steps to get started
 
@@ -30,7 +30,8 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
 1. Navigate to your project home and open the **Calendar** hub
 
-    ![calendar](static/images/calendar-hub.png)
+    ![calendar](static/v2-images/calendar-hub.png)
+    ![calendar](static/v2-images/calendar-hub-2.png)
 
 2. You will see any iterations that occur in the month and also any days off already set for users or the team
 
@@ -38,11 +39,11 @@ Team Calendar automatically shows iterations, days off, and configured working d
 
 1. Click a day and select **Add an event**
 
-    ![ae](static/images/add-event.png)
+    ![ae](static/v2-images/add-event.png)
 
 2. Provide a description, optionally choose a different end date and category
 
-    ![aed](static/images/add-event-dialog.png)
+    ![aed](static/v2-images/add-event-dialog.png)
 
 ## Known issues
 

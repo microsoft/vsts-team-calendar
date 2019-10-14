@@ -202,7 +202,7 @@ export class FreeFormEventsSource {
 
         // create new event and delete old one
         oldData.forEach(doc => {
-            if (index == maxSize) {
+            if (index === maxSize) {
                 index = 0;
             }
             queue[index] = queue[index].then(() => {
@@ -218,7 +218,7 @@ export class FreeFormEventsSource {
         this.dataManager!.queryCollectionsByName([this.selectedTeamId! + "-categories"]).then((collections: ExtensionDataCollection[]) => {
             if (collections && collections[0] && collections[0].documents) {
                 collections[0].documents.forEach(doc => {
-                    if (index == maxSize) {
+                    if (index === maxSize) {
                         index = 0;
                     }
                     queue[index] = queue[index].then(() => {

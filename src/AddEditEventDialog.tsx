@@ -252,7 +252,7 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
             this.message.value = "Title can not be empty.";
         } else if (this.startDate > this.endDate) {
             this.message.value = "Start date must be same or before the end date.";
-        } else if (this.message.value != "") {
+        } else if (this.message.value !== "") {
             this.message.value = "";
         }
     };

@@ -236,7 +236,7 @@ class ExtensionContent extends React.Component {
                 </Observer>
                 <Observer dialog={this.openDialog}>
                     {(props: { dialog: Dialogs }) => {
-                        return props.dialog == Dialogs.NewDaysOffDialog ? (
+                        return props.dialog === Dialogs.NewDaysOffDialog ? (
                             <AddEditDaysOffDialog
                                 calendarApi={this.getCalendarApi()}
                                 end={this.selectedEndDate}

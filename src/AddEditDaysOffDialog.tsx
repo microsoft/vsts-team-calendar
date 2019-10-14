@@ -96,7 +96,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
             this.teamMembers.push({ id: Everyone, text: Everyone });
             this.teamMembers.push(
                 ...this.props.members.map(item => {
-                    if (userName == item.identity.displayName) {
+                    if (userName === item.identity.displayName) {
                         selectedIndex = i;
                     }
                     i++;
@@ -250,7 +250,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
         valid = valid && !!this.iteration;
 
         if (valid) {
-            if (this.message.value != "") {
+            if (this.message.value !== "") {
                 this.message.value = "";
             }
         } else {

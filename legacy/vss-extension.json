@@ -99,12 +99,12 @@
         {
             "id": "calendar-has-moved-banner",
             "type": "ms.vss-web.global-message-banner",
-            "description": "Banner points out that the Calendar has moved to the Work hub.",
+            "description": "Banner points out that the Calendar has moved to the Boards hub.",
             "targets": [
                 "ms.vss-web.home-hub-group"
             ],
             "properties": {
-                "message": "The Calendar has moved! You may now find it under the Work menu.",
+                "message": "The Calendar has moved! You may now find it under the Boards menu.",
                 "level": "info"
             }
         },

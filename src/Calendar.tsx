@@ -306,6 +306,7 @@ class ExtensionContent extends React.Component {
         } else if (arg.event.id.startsWith(IterationId) && arg.isStart) {
             // iterations are background event, show title for only start
             arg.el.innerText = arg.event.title;
+            arg.el.style.color = "black";
         }
     };
 

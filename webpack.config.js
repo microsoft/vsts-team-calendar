@@ -3,10 +3,9 @@ const fs = require("fs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-    mode: "development", // "production" | "development" | "none"
+    mode: "production", // "production" | "development" | "none"
     optimization: {
-        // We no not want to minimize our code.
-        minimize: false
+        minimize: true
     },
     entry: {
         Calendar: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar.tsx"))

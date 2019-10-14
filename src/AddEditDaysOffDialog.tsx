@@ -62,6 +62,9 @@ interface IAddEditDaysOffDialogProps {
     start: Date;
 }
 
+/**
+ * Dialog that lets user add new days off
+ */
 export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogProps> {
     endDate: Date;
     isConfirmationDialogOpen: ObservableValue<boolean>;

@@ -52,8 +52,7 @@ interface IAddEditEventDialogProps {
 }
 
 /**
- * Dialog that lets user view scope changes for extension
- * only admin can authorize extension update
+ * Dialog that lets user add new event
  */
 export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps> {
     startDate: Date;

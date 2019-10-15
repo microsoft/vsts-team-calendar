@@ -373,7 +373,7 @@ class ExtensionContent extends React.Component {
             }
 
             const client = getClient(CoreRestClient);
-            const teams = await client.getTeams(project.id, true, 1000);
+            const teams = await client.getTeams(project.id, false, 1000);
 
             this.projectId = project.id;
             this.projectName = project.name;

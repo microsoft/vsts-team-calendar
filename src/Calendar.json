@@ -12,7 +12,9 @@
         "ms.vss-features.host-dialog-service"
       ],
       "properties": {
+        "iconName": "Calendar",
         "name": "Calendar",
+        "order": 22,
         "uri": "dist/calendar.html"
       },
       "constraints": [
@@ -37,6 +39,7 @@
       "description": "Calendar hub in the Boards hub group.",
       "targets": ["ms.vss-work-web.work-hub-group"],
       "properties": {
+        "iconName": "Calendar",
         "name": "Calendar",
         "order": 22,
         "uri": "static/calendar.html"

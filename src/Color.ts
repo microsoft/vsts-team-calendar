@@ -1,6 +1,6 @@
 ﻿const allColors = ["0072C6", "4617B4", "8C0095", "008A17", "D24726", "008299", "AC193D", "DC4FAD", "FF8F32", "82BA00", "03B3B2", "5DB2FF"];
 const currentIterationColor = "#C1E6FF"; /*Pattens Blue*/
-const otherIterationColors = ["#FFEDDD", "#FFFCDD", "#FFDDEF"]; /*Peach Cream, Rice Flower, Pale Rose*/
+const otherIterationColors = ["#FFDAC1", "#E6FFC1", "#FFC1E6"]; /*Negroni, Chiffon, Cotton Candy*/
 
 var interationCount = 0;
 
@@ -15,7 +15,7 @@ export function generateColor(name: string): string {
     }
 
     if (name === "otherIteration") {
-        return otherIterationColors[interationCount++ % 3];
+        return otherIterationColors[interationCount++ % otherIterationColors.length];
     }
 
     const id = name.slice().toLowerCase();

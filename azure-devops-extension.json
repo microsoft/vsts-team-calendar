@@ -5,6 +5,7 @@
   "version": "2.0.0",
   "name": "Team Calendar",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
+  "public": true,
   "categories": ["Plan and track"],
   "targets": [
     {

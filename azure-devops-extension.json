@@ -1,0 +1,92 @@
+{
+  "manifestVersion": 1,
+  "id": "team-calendar",
+  "publisher": "ms-devlabs",
+  "version": "2.0.0",
+  "name": "Team Calendar",
+  "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
+  "categories": ["Plan and track"],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "scopes": ["vso.work_write"],
+  "icons": {
+    "default": "static/v2-images/calendar-logo.png"
+  },
+  "content": {
+    "details": {
+      "path": "overview.md"
+    },
+    "license": {
+      "path": "LICENSE.txt"
+    }
+  },
+  "links": {
+    "support": {
+      "uri": "https://github.com/Microsoft/vsts-team-calendar/issues"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vsts-team-calendar"
+  },
+  "badges": [
+    {
+      "href": "https://github.com/Microsoft/vsts-team-calendar",
+      "uri": "https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge",
+      "description": "Team Calendar CI build status"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "static/v2-images/calendar-screen-shot.png"
+    }
+  ],
+  "files": [
+    {
+      "path": "static",
+      "addressable": true
+    },
+    {
+      "path": "dist",
+      "addressable": true
+    },
+    {
+      "path": "legacy/static",
+      "packagePath": "static",
+      "addressable": true
+    },
+    {
+      "path": "legacy/dist/js",
+      "packagePath": "js",
+      "addressable": true
+    },
+    {
+      "path": "legacy/dist/css",
+      "packagePath": "css",
+      "addressable": true
+    },
+    {
+      "path": "legacy/node_modules/vss-web-extension-sdk/lib",
+      "addressable": true,
+      "packagePath": "sdk"
+    },
+    {
+      "path": "legacy/node_modules/jquery/dist",
+      "addressable": true,
+      "packagePath": "lib/jquery"
+    },
+    {
+      "path": "legacy/node_modules/moment/min",
+      "addressable": true,
+      "packagePath": "lib/moment"
+    },
+    {
+      "path": "legacy/node_modules/fullcalendar/dist",
+      "addressable": true,
+      "packagePath": "lib/fullcalendar"
+    }
+  ]
+}

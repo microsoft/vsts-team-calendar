@@ -1,29 +1,18 @@
 {
-    "compilerOptions": {
-        "module": "amd",
-        "moduleResolution": "node",
-        "target": "es5",
-        "outDir": "dist/js",
-        "lib": [
-            "es5",
-            "es6",
-            "dom"
-        ],
-        "importHelpers": true,
-        "jsx": "react",
-        "noEmitHelpers": true,
-        "rootDir": "src/",
-        "baseUrl": ".",
-        "paths": {
-            "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib/*"]
-        },
-        "skipLibCheck": true,
-        "types": [
-            "vss-web-extension-sdk"
-        ]
-    },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.tsx"
-    ]
+  "compilerOptions": {
+    "charset": "utf8",
+    "experimentalDecorators": true,
+    "module": "amd",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strict": true,
+    "target": "es5",
+    "rootDir": "src/",
+    "outDir": "dist/",
+    "jsx": "react",
+    "lib": ["es5", "es6", "dom", "es2015.promise"],
+    "types": ["react"]
+  },
+  "exclude": ["legacy"]
 }

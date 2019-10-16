@@ -141,15 +141,22 @@ export class VSOCapacityEventSource {
             calendarEnd.setDate(arg.end.getDate() - 1);
 
             for (const iteration of iterations) {
+                let loadIterationData = false;
+
                 if (iteration.attributes.startDate && iteration.attributes.finishDate) {
                     const iterationStart = shiftToLocal(iteration.attributes.startDate);
                     const iterationEnd = shiftToLocal(iteration.attributes.finishDate);
+
+                    const exclusiveIterationEndDate = new Date(iterationEnd);
+                    exclusiveIterationEndDate.setDate(iterationEnd.getDate() + 1);
 
                     if (
                         (calendarStart <= iterationStart && iterationStart <= calendarEnd) ||
                         (calendarStart <= iterationEnd && iterationEnd <= calendarEnd) ||
                         (iterationStart <= calendarStart && iterationEnd >= calendarEnd)
                     ) {
+                        loadIterationData = true;
+
                         const now = new Date();
                         let color;
                         if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
@@ -157,9 +164,6 @@ export class VSOCapacityEventSource {
                         } else {
                             color = generateColor("otherIteration");
                         }
-
-                        const exclusiveIterationEndDate = new Date(iterationEnd);
-                        exclusiveIterationEndDate.setDate(iterationEnd.getDate() + 1);
 
                         renderedEvents.push({
                             allDay: true,
@@ -178,19 +182,23 @@ export class VSOCapacityEventSource {
                             subTitle: formatDate(iterationStart, "MONTH-DD") + " - " + formatDate(iterationEnd, "MONTH-DD"),
                             title: iteration.name
                         });
-
-                        const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
-                        teamDaysOffPromises.push(teamsDayOffPromise);
-                        teamsDayOffPromise.then((teamDaysOff: TeamSettingsDaysOff) => {
-                            this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
-                        });
-
-                        const capacityPromise = this.fetchCapacities(iteration.id);
-                        capacityPromises.push(capacityPromise);
-                        capacityPromise.then((capacities: TeamMemberCapacityIdentityRef[]) => {
-                            this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
-                        });
                     }
+                } else {
+                    loadIterationData = true;
+                }
+
+                if (loadIterationData) {
+                    const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
+                    teamDaysOffPromises.push(teamsDayOffPromise);
+                    teamsDayOffPromise.then((teamDaysOff: TeamSettingsDaysOff) => {
+                        this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                    });
+
+                    const capacityPromise = this.fetchCapacities(iteration.id);
+                    capacityPromises.push(capacityPromise);
+                    capacityPromise.then((capacities: TeamMemberCapacityIdentityRef[]) => {
+                        this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                    });
                 }
             }
 

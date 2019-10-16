@@ -19,7 +19,10 @@
       },
       "constraints": [
         {
-          "id": "ms.vss-web.hosted-only"
+          "name": "ExecutionEnvironment",
+          "properties": {
+            "hosted": true
+          }
         }
       ]
     },
@@ -46,7 +49,10 @@
       },
       "constraints": [
         {
-          "id": "ms.vss-web.onprem-only"
+          "name": "ExecutionEnvironment",
+          "properties": {
+            "hosted": false
+          }
         }
       ]
     },

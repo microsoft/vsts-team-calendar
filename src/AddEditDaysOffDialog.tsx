@@ -137,9 +137,9 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                             </Observer>
                             <div className="input-row flex-row">
                                 <span>Start Date</span>
-                                <div className="bolt-textfield">
+                                <div className="bolt-textfield column-2">
                                     <input
-                                        className="bolt-textfield-input column-2"
+                                        className="bolt-textfield-input input-date"
                                         defaultValue={formatDate(this.startDate, "YYYY-MM-DD")}
                                         onChange={this.onInputStartDate}
                                         type="date"
@@ -148,9 +148,9 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                             </div>
                             <div className="input-row flex-row">
                                 <span>End Date</span>
-                                <div className="bolt-textfield">
+                                <div className="bolt-textfield column-2">
                                     <input
-                                        className="bolt-textfield-input column-2"
+                                        className="bolt-textfield-input input-date"
                                         defaultValue={formatDate(this.endDate, "YYYY-MM-DD")}
                                         onChange={this.onInputEndDate}
                                         type="date"

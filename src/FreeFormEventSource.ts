@@ -86,6 +86,9 @@ export class FreeFormEventsSource {
                     if (event.category !== "Uncategorized") {
                         this.categories.add(event.category);
                     }
+                    if (!event.category) {
+                        event.category = "Uncategorized";
+                    }
 
                     const start = shiftToLocal(new Date(event.startDate));
                     const end = shiftToLocal(new Date(event.endDate));

@@ -137,21 +137,25 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                             </Observer>
                             <div className="input-row flex-row">
                                 <span>Start Date</span>
-                                <input
-                                    className="column-2"
-                                    defaultValue={formatDate(this.startDate, "YYYY-MM-DD")}
-                                    onChange={this.onInputStartDate}
-                                    type="date"
-                                />
+                                <div className="bolt-textfield">
+                                    <input
+                                        className="bolt-textfield-input column-2"
+                                        defaultValue={formatDate(this.startDate, "YYYY-MM-DD")}
+                                        onChange={this.onInputStartDate}
+                                        type="date"
+                                    />
+                                </div>
                             </div>
                             <div className="input-row flex-row">
                                 <span>End Date</span>
-                                <input
-                                    className="column-2"
-                                    defaultValue={formatDate(this.endDate, "YYYY-MM-DD")}
-                                    onChange={this.onInputEndDate}
-                                    type="date"
-                                />
+                                <div className="bolt-textfield">
+                                    <input
+                                        className="bolt-textfield-input column-2"
+                                        defaultValue={formatDate(this.endDate, "YYYY-MM-DD")}
+                                        onChange={this.onInputEndDate}
+                                        type="date"
+                                    />
+                                </div>
                             </div>
                             <div className="input-row flex-row">
                                 <span>Team Member</span>

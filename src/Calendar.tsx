@@ -27,6 +27,8 @@ import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 
+import { localeData } from "moment";
+
 import { AddEditDaysOffDialog } from "./AddEditDaysOffDialog";
 import { AddEditEventDialog } from "./AddEditEventDialog";
 import { ICalendarEvent } from "./Contracts";
@@ -199,6 +201,7 @@ class ExtensionContent extends React.Component {
                                             { events: this.freeFormEventSource.getEvents },
                                             { events: this.vsoCapacityEventSource.getEvents }
                                         ]}
+                                        firstDay={localeData(navigator.language).firstDayOfWeek()}
                                         header={false}
                                         height={this.getCalendarHeight()}
                                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

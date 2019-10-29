@@ -43,8 +43,8 @@ export class FreeFormEventsSource {
                 // add event to cache
                 // use times from current zone
                 this.eventMap[addedEvent.id!] = addedEvent;
-                addedEvent.startDate = startDate.toISOString();
-                addedEvent.endDate = endDate.toISOString();
+                addedEvent.startDate = start.toISOString();
+                addedEvent.endDate = end.toISOString();
                 return addedEvent;
             }
         );

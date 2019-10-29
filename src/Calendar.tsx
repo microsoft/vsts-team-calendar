@@ -34,7 +34,7 @@ import { AddEditEventDialog } from "./AddEditEventDialog";
 import { ICalendarEvent } from "./Contracts";
 import { FreeFormId, FreeFormEventsSource } from "./FreeFormEventSource";
 import { SummaryComponent } from "./SummaryComponent";
-import { MonthAndYear, monthAndYearToString } from "./TimeLib";
+import { MonthAndYear, monthAndYearToString, formatDate } from "./TimeLib";
 import { DaysOffId, VSOCapacityEventSource, IterationId } from "./VSOCapacityEventSource";
 
 enum Dialogs {
@@ -509,7 +509,7 @@ class ExtensionContent extends React.Component {
         this.selectedEndDate = new Date(arg.end);
         this.selectedEndDate.setDate(arg.end.getDate() - 1);
         this.selectedStartDate = arg.start;
-        const dataDate = this.selectedEndDate.toISOString().split("T")[0];
+        const dataDate = formatDate(this.selectedEndDate, "YYYY-MM-DD");
         this.anchorElement.value = document.querySelector("td.fc-day-top[data-date='" + dataDate + "']") as HTMLElement;
     };
 

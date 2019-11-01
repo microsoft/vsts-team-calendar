@@ -165,6 +165,7 @@ class ExtensionContent extends React.Component {
                                                 renderExpandable={expandableProps => (
                                                     <DropdownExpandableButton hideDropdownIcon={true} {...expandableProps} />
                                                 )}
+                                                width={200}
                                             />
                                         );
                                     }}
@@ -178,6 +179,7 @@ class ExtensionContent extends React.Component {
                                                 onSelect={this.onSelectTeam}
                                                 placeholder={this.selectedTeamName}
                                                 renderExpandable={expandableProps => <DropdownExpandableButton {...expandableProps} />}
+                                                width={200}
                                             />
                                         );
                                     }}
@@ -376,18 +378,27 @@ class ExtensionContent extends React.Component {
             }
 
             const client = getClient(CoreRestClient);
-            const teams = await client.getTeams(project.id, false, 1000);
+
+            const allTeams = [];
+            let teams;
+            let callCount = 0;
+            const fetchCount = 1000;
+            do {
+                teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
+                allTeams.push(...teams);
+                callCount++;
+            } while (teams.length === fetchCount);
 
             this.projectId = project.id;
             this.projectName = project.name;
 
-            teams.sort((a, b) => {
+            allTeams.sort((a, b) => {
                 return a.name.toUpperCase().localeCompare(b.name.toUpperCase());
             });
 
             // if team id wasn't in URL or database use first available team
             if (!selectedTeamId) {
-                selectedTeamId = teams[0].id;
+                selectedTeamId = allTeams[0].id;
             }
 
             if (!queryParam || !queryParam["team"]) {
@@ -401,7 +412,7 @@ class ExtensionContent extends React.Component {
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;
             this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
-            this.teams.value = teams;
+            this.teams.value = allTeams;
             this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
         }
     }

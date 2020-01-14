@@ -149,16 +149,16 @@ export class CalendarStateManagerComponent extends BaseComponent<
         const navSvc = await VSS.getService<IHostNavigationService>(VSS.ServiceIds.Navigation);
         let selectedTeamId = (await navSvc.getCurrentState()).team;
         if (!selectedTeamId) {
-            // Nothing in URL - check context
+            // Nothing in URL - check data service
+            const dataSvc = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+            selectedTeamId = await dataSvc.getValue<string>("selected-team-" + VSS.getWebContext().project.id, { scopeType: "User" });
+        }
+        if (!selectedTeamId) {
+            // Nothing in URL or data service - check context
             const contextTeam = VSS.getWebContext().team;
             if (contextTeam && contextTeam.id) {
                 selectedTeamId = contextTeam.id;
             }
-        }
-        if (!selectedTeamId) {
-            // Nothing in URL or context - check data service
-            const dataSvc = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
-            selectedTeamId = await dataSvc.getValue<string>("selected-team", { scopeType: "User" });
         }
         if (selectedTeamId) {
             // get the team if we found a way to choose one
@@ -180,7 +180,7 @@ export class CalendarStateManagerComponent extends BaseComponent<
         navSvc.updateHistoryEntry(null, { team: selectedTeam.id }, true, true, null, false);
 
         const dataSvc = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
-        dataSvc.setValue<string>("selected-team", selectedTeam.id, { scopeType: "User" });
+        dataSvc.setValue<string>("selected-team-" + VSS.getWebContext().project.id, selectedTeam.id, { scopeType: "User" });
 
         this.setState({ selectedTeam });
     }

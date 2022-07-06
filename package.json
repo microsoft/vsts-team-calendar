@@ -62,7 +62,7 @@
     "@fullcalendar/interaction": "^4.1.0",
     "@fullcalendar/react": "^4.1.0",
     "@fullcalendar/timegrid": "^4.1.0",
-    "moment": "~2.24.0",
+    "moment": "~2.29.4",
     "react": "~16.8.1",
     "react-dom": "~16.8.1"
   },

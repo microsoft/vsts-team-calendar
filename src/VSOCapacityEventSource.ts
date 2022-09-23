@@ -13,7 +13,7 @@ import {
 import { ObservableValue, ObservableArray } from "azure-devops-ui/Core/Observable";
 
 import { EventInput } from "@fullcalendar/core";
-import { EventSourceError } from "@fullcalendar/core/structs/event-source";
+import { EventSourceError } from "@fullcalendar/core/structs/event-source";;
 
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
@@ -119,7 +119,7 @@ export class VSOCapacityEventSource {
             timeZone: string;
         },
         successCallback: (events: EventInput[]) => void,
-        failureCallback: (error: EventSourceError) => void
+        failureCallback: (error: any) => void
     ): void | PromiseLike<EventInput[]> => {
         const capacityPromises: PromiseLike<TeamMemberCapacity[]>[] = [];
         const teamDaysOffPromises: PromiseLike<TeamSettingsDaysOff>[] = [];

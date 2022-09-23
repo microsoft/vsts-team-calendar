@@ -189,50 +189,6 @@ export class FreeFormEventsSource {
         }
     };
 
-    /**
-     * Copies legqacy data from single collection in to respective monthly collection
-     * Deletes legacy data
-     */
-    private convertData = (oldData: ICalendarEvent[]) => {
-        // chain all actions in to max 10 queues
-        let queue: Promise<void>[] = [];
-        const maxSize = oldData.length < 10 ? oldData.length : 10;
-
-        let index: number;
-        for (index = 0; index < maxSize; index++) {
-            queue[index] = Promise.resolve();
-        }
-
-        // create new event and delete old one
-        oldData.forEach(doc => {
-            if (index === maxSize) {
-                index = 0;
-            }
-            queue[index] = queue[index].then(() => {
-                this.dataManager!.createDocument(this.selectedTeamId! + "." + formatDate(new Date(doc.startDate), "MM-YYYY"), doc);
-            });
-            queue[index] = queue[index].then(() => {
-                this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);
-            });
-            index++;
-        });
-
-        // delete catagories data if there is any
-        this.dataManager!.queryCollectionsByName([this.selectedTeamId! + "-categories"]).then((collections: ExtensionDataCollection[]) => {
-            if (collections && collections[0] && collections[0].documents) {
-                collections[0].documents.forEach(doc => {
-                    if (index === maxSize) {
-                        index = 0;
-                    }
-                    queue[index] = queue[index].then(() => {
-                        this.dataManager!.deleteDocument(this.selectedTeamId! + "-categories", doc.id!);
-                    });
-                    index++;
-                });
-            }
-        });
-    };
-
     private fetchEvents = (start: Date, end: Date): Promise<{ [id: string]: ICalendarEvent }> => {
         const collectionNames = getMonthYearInRange(start, end).map(item => {
             return this.selectedTeamId! + "." + item;
@@ -254,22 +210,6 @@ export class FreeFormEventsSource {
                     });
                 }
             });
-
-            // if there is old data get it and convert it
-            if (!this.fetchedCollections.has(this.selectedTeamId!)) {
-                return this.dataManager!.queryCollectionsByName([this.selectedTeamId!]).then((collections: ExtensionDataCollection[]) => {
-                    this.fetchedCollections.add(this.selectedTeamId!);
-                    if (collections && collections[0] && collections[0].documents) {
-                        const oldData: ICalendarEvent[] = [];
-                        collections[0].documents.forEach((doc: ICalendarEvent) => {
-                            this.eventMap[doc.id!] = doc;
-                            oldData.push(doc);
-                        });
-                        this.convertData(oldData);
-                    }
-                    return this.eventMap;
-                });
-            }
             return Promise.resolve(this.eventMap);
         });
     };

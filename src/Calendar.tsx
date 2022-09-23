@@ -173,7 +173,7 @@ class ExtensionContent extends React.Component {
                                 <Icon ariaLabel="Video icon" iconName="ChevronRight" />
                                 <Observer teams={this.teams}>
                                     {(props: { teams: WebApiTeam[] }) => {
-                                        return props.teams === [] ? null : (
+                                        return (
                                             <Dropdown
                                                 items={this.getTeamPickerOptions()}
                                                 onSelect={this.onSelectTeam}
@@ -485,7 +485,6 @@ class ExtensionContent extends React.Component {
         event: EventApi;
         revert: () => void;
         jsEvent: Event;
-        view: View;
     }) => {
         if (arg.event.id.startsWith(FreeFormId)) {
             let inclusiveEndDate;
@@ -515,7 +514,6 @@ class ExtensionContent extends React.Component {
         allDay: boolean;
         resource?: any;
         jsEvent: MouseEvent;
-        view: View;
     }) => {
         this.selectedEndDate = new Date(arg.end);
         this.selectedEndDate.setDate(arg.end.getDate() - 1);

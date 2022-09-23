@@ -1,12 +1,12 @@
 {
   "manifestVersion": 1,
   "id": "team-calendar",
-  "publisher": "ms-devlabs",
-  "version": "2.0.16",
+  "publisher": "pabramshrsdc",
+  "version": "2.0.20",
   "name": "Team Calendar",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
-  "public": true,
-  "categories": ["Plan and track"],
+  "public": false,
+  "categories": ["Azure Boards"],
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
@@ -53,41 +53,6 @@
     {
       "path": "dist",
       "addressable": true
-    },
-    {
-      "path": "legacy/static",
-      "packagePath": "static",
-      "addressable": true
-    },
-    {
-      "path": "legacy/dist/js",
-      "packagePath": "js",
-      "addressable": true
-    },
-    {
-      "path": "legacy/dist/css",
-      "packagePath": "css",
-      "addressable": true
-    },
-    {
-      "path": "legacy/node_modules/vss-web-extension-sdk/lib",
-      "addressable": true,
-      "packagePath": "sdk"
-    },
-    {
-      "path": "legacy/node_modules/jquery/dist",
-      "addressable": true,
-      "packagePath": "lib/jquery"
-    },
-    {
-      "path": "legacy/node_modules/moment/min",
-      "addressable": true,
-      "packagePath": "lib/moment"
-    },
-    {
-      "path": "legacy/node_modules/fullcalendar/dist",
-      "addressable": true,
-      "packagePath": "lib/fullcalendar"
     }
   ]
 }

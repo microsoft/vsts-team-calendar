@@ -50,9 +50,13 @@
     "build:dev": "npm run compile:dev && npm run postbuild",
     "postbuild": "npm run package:dev -- --rev-version",
     "package:dev": "node ./scripts/packageDev",
+    "package:release": "node ./scripts/packageRelease",
     "package-extension": "tfx extension create --manifest-globs azure-devops-extension.json src/*.json",
     "publish-extension": "tfx extension publish --manifest-globs azure-devops-extension.json src/*.json",
     "dev": "webpack-dev-server --hot --progress --static ./ --https --port 8888"
+   
+   
+    
   },
   "dependencies": {
     "azure-devops-extension-api": "~1.158.0",

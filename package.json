@@ -53,20 +53,19 @@
     "package:release": "node ./scripts/packageRelease",
     "package-extension": "tfx extension create --manifest-globs azure-devops-extension.json src/*.json",
     "publish-extension": "tfx extension publish --manifest-globs azure-devops-extension.json src/*.json",
-    "dev": "webpack-dev-server --hot --progress --static ./ --https --port 8888"
-   
-   
-    
+    "dev:webpack": "webpack --watch",
+    "dev": "webpack-dev-server --hot --progress --static ./ --https --port 8888",
+    "dev:http": "webpack-dev-server --progress  --static ./ --port 8888"
   },
   "dependencies": {
-    "azure-devops-extension-api": "~1.158.0",
-    "azure-devops-extension-sdk": "~2.0.11",
-    "azure-devops-ui": "~1.159.0",
     "@fullcalendar/core": "^4.1.0",
     "@fullcalendar/daygrid": "^4.1.0",
     "@fullcalendar/interaction": "^4.1.0",
     "@fullcalendar/react": "^4.1.0",
     "@fullcalendar/timegrid": "^4.1.0",
+    "azure-devops-extension-api": "~1.158.0",
+    "azure-devops-extension-sdk": "~2.0.11",
+    "azure-devops-ui": "~1.159.0",
     "moment": "^2.29.4",
     "react": "~16.8.1",
     "react-dom": "~16.8.1"

@@ -1,7 +1,7 @@
 import React = require("react");
 
 import { TeamMember } from "azure-devops-extension-api/WebApi/WebApi";
-import { TeamSettingsIteration } from "azure-devops-extension-api/work";
+import { TeamSettingsIteration } from "azure-devops-extension-api/work/Work";
 
 import { getUser } from "azure-devops-extension-sdk";
 

@@ -84,8 +84,8 @@
     "tfx-cli": "^0.12.0",
     "ts-loader": "~5.2.2",
     "typescript": "^3.9.10",
-    "webpack": "^5.75.0",
+    "webpack": "^5.72.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.9.0"
+    "webpack-dev-server": "^4.9.0" 
   }
 }

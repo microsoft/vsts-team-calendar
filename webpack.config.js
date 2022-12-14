@@ -1,57 +1,69 @@
 const path = require("path");
-const fs = require("fs");
+const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-    mode: "production", // "production" | "development" | "none"
-    optimization: {
-        minimize: true
+    mode: "production",
+  target: "web",
+  optimization: {
+    minimize: true
+},
+  entry: {
+    Calendar: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar.tsx"))
+  },
+  output: {
+    filename: "[name].js",
+    path:  path.resolve(__dirname, 'dist')
+
+  },
+  devtool: "inline-source-map",
+  resolve: {
+    extensions: [".ts", ".tsx", ".js"],
+    alias: {
+      "azure-devops-extension-sdk": path.resolve("node_modules/azure-devops-extension-sdk")
     },
-    entry: {
-        Calendar: "./" + path.relative(process.cwd(), path.join(__dirname, "src", "Calendar.tsx"))
-    },
-    devtool: "inline-source-map",
-    output: {
-        filename: "[name].js"
-    },
-    resolve: {
-        extensions: [".ts", ".tsx", ".js"],
-        alias: {
-            "azure-devops-extension-sdk": path.resolve("node_modules/azure-devops-extension-sdk"),
-            "azure-devops-extension-api": path.resolve("node_modules/azure-devops-extension-api")
-        }
-    },
-    stats: {
-        warnings: false
-    },
-    module: {
-        rules: [
-            {
-                test: /\.tsx?$/,
-                loader: "ts-loader",
-                exclude: /node_modules/
-            },
-            {
-                test: /\.scss$/,
-                use: ["style-loader", "css-loader", "azure-devops-ui/buildScripts/css-variables-loader", "sass-loader"]
-            },
-            {
-                test: /\.css$/,
-                use: ["style-loader", "css-loader"]
-            },
-            {
-                test: /\.woff$/,
-                use: [
-                    {
-                        loader: "base64-inline-loader"
-                    }
-                ]
-            },
-            {
-                test: /\.html$/,
-                loader: "file-loader"
-            }
+    modules: [path.resolve("."), "node_modules"]
+  },
+  module: {
+    rules: [
+           {
+        test: /\.tsx?$/,
+        use: "ts-loader"
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          "style-loader",
+          "css-loader",
+          "sass-loader"
         ]
-    },
-    plugins: [new CopyWebpackPlugin({patterns: [{ from: "**/*.html", context: "src" }]})]
+      },
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"]
+      },
+      {
+        test: /\.woff$/,
+        use: [
+          {
+            loader: "base64-inline-loader"
+          }
+        ]
+      },
+      {
+        test: /\.(png|svg|jpg|gif|html)$/,
+        use: "file-loader"
+      }
+    ]
+  },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: "**/*.html", to: "./", context: "src" },
+        { from: "**/*.png", to: "./static/v2-images", context: "static/v2-images" },
+        { from: "./azure-devops-extension.json", to: "azure-devops-extension.json" },
+        { from: "./overview.md", to: "./" },
+      ]
+    })
+  ]
 };

@@ -68,7 +68,8 @@
     "azure-devops-ui": "~1.159.0",
     "moment": "^2.29.4",
     "react": "~16.8.1",
-    "react-dom": "~16.8.1"
+    "react-dom": "~16.8.1",
+    "webpack-server": "^0.1.2"
   },
   "devDependencies": {
     "@types/react": "~16.8.2",
@@ -86,6 +87,10 @@
     "typescript": "^3.9.10",
     "webpack": "^5.72.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.9.0" 
+
+    "webpack-dev-server": "^4.11.1"
+
   }
 }
+
+

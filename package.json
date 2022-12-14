@@ -44,8 +44,8 @@
   "homepage": "https://github.com/Microsoft/vso-team-calendar#readme",
   "scripts": {
     "clean": "rimraf ./dist",
-    "compile": "npm run clean && webpack --mode production --config ./webpack.config.js",
-    "compile:dev": "npm run clean && webpack --mode development --config ./webpack.config.js",
+    "compile": "npm run clean && webpack --config webpack.config.js",
+    "compile:dev": "npm run clean && webpack --mode development --config webpack.config.js",
     "build:release": "npm run compile",
     "build:dev": "npm run compile:dev && npm run postbuild",
     "postbuild": "npm run package:dev -- --rev-version",

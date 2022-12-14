@@ -7,9 +7,7 @@ exec(command, (error, stdout) => {
         console.error(`Could not create package: '${error}'`);
         return;
     }
-
-    let output = JSON.parse(stdout);
-
+     let output = JSON.parse(stdout);
     console.log(`Package created ${output.path}`);
 }
 );

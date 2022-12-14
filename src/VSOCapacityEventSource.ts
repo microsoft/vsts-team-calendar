@@ -1,23 +1,13 @@
 import { getClient } from "azure-devops-extension-api";
 import { TeamContext } from "azure-devops-extension-api/Core";
-import {
-    CapacityPatch,
-    TeamMemberCapacity,
-    TeamSettingsDaysOff,
-    TeamSettingsDaysOffPatch,
-    TeamSettingsIteration,
-    WorkRestClient,
-    TeamMemberCapacityIdentityRef
-} from "azure-devops-extension-api/work";
-
 import { ObservableValue, ObservableArray } from "azure-devops-ui/Core/Observable";
-
 import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
-
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
 import { formatDate, getDatesInRange, shiftToUTC, shiftToLocal } from "./TimeLib";
+import { TeamMemberCapacityIdentityRef, TeamSettingsIteration, TeamSettingsDaysOff, TeamSettingsDaysOffPatch, CapacityPatch, TeamMemberCapacity } from "azure-devops-extension-api/work/Work";
+import { WorkRestClient } from "azure-devops-extension-api/Work/WorkClient";
 
 export const DaysOffId = "daysOff";
 export const Everyone = "Everyone";

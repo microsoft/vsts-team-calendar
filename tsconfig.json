@@ -9,10 +9,13 @@
     "strict": true,
     "target": "es5",
     "rootDir": "src/",
+    "sourceMap": true,
     "outDir": "dist/",
     "jsx": "react",
     "lib": ["es5", "es6", "dom", "es2015.promise"],
-    "types": ["react"]
+    "types": ["react"],
+    "noEmit": false
   },
+  "include": ["src/**/*"],
   "exclude": ["legacy"]
 }

@@ -67,8 +67,8 @@
     "jquery": "~3.5.0",
     "moment": "^2.29.4",
     "office-ui-fabric-react": "~5.14.0",
-    "react": "~16.0.0",
-    "react-dom": "~16.0.1",
+    "react": "~16.14.0",
+    "react-dom": "~16.14.0",
     "tslib": "~1.8.0",
     "vss-ui": "4.134.0",
     "vss-web-extension-sdk": "5.134.0"

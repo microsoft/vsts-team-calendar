@@ -129,7 +129,7 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
                                 </div>
                             </div>
                             <div className="input-row flex-row">
-                                <span>End Date</span>
+                                <span>End Date Amin</span>
                                 <div className="bolt-textfield column-2">
                                     <input
                                         className="bolt-textfield-input input-date"

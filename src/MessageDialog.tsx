@@ -1,6 +1,6 @@
-import React = require("react");
+import * as React from "react";
+import { Dialog } from "../node_modules/azure-devops-ui/Dialog";
 
-import { Dialog } from "azure-devops-ui/Dialog";
 
 interface IMessageDialogProps {
     /**
@@ -29,6 +29,7 @@ interface IMessageDialogProps {
  * only admin can authorize extension update
  */
 export class MessageDialog extends React.Component<IMessageDialogProps> {
+    [x: string]: any;
     constructor(props: IMessageDialogProps) {
         super(props);
     }

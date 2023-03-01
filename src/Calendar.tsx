@@ -363,7 +363,7 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-        const queryParam = await this.navigationService.getQueryParams();
+        const queryParam = await this.navigationService!.getQueryParams();
         let selectedTeamId;
 
         // if URL has team id in it, use that

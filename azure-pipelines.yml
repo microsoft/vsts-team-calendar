@@ -8,7 +8,7 @@ variables:
 - name: marketplaceServiceConnection
   value: 'marketplaceServiceConnection'
 - name: publisherId
-  value: 'ms-devlabs'
+  value: 'AminTi'
 - name: publicExtensionName
   value: "Team Calendar"
 

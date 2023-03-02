@@ -1,11 +1,11 @@
 {
   "manifestVersion": 1,
   "id": "team-calendar",
-  "publisher": "AminTi",
+  "publisher": "AminTiti1",
   "version": "2.0.17",
   "name": "Team Calendar",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
-  "public": true,
+  "public": false,
   "categories": ["Plan and track"],
   "targets": [
     {

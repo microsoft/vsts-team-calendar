@@ -8,7 +8,7 @@ variables:
 - name: marketplaceServiceConnection
   value: 'marketplaceServiceConnection'
 - name: publisherId
-  value: 'AminTi'
+  value: 'AminTiti1'
 - name: publicExtensionName
   value: "Team Calendar"
 

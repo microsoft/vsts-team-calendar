@@ -32,7 +32,7 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps> {
                     {(props: { url: string }) => {
                         return (
                             <Link className="category-heading" href={props.url} key={props.url} target="_blank">
-                                Iterations.
+                                Iterations
                             </Link>
                         );
                     }}

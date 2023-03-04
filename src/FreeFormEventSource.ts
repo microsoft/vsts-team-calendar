@@ -1,6 +1,6 @@
 import { IExtensionDataManager, ExtensionDataCollection } from "azure-devops-extension-api";
 
-import { ObservableArray } from "azure-devops-ui/Core/Observable";
+
 
 import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
@@ -8,6 +8,7 @@ import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventCategory } from "./Contracts";
 import { shiftToLocal, shiftToUTC, getMonthYearInRange, formatDate } from "./TimeLib";
+import { ObservableArray } from "../node_modules/azure-devops-ui/Core/Observable";
 
 export const FreeFormId = "FreeForm";
 

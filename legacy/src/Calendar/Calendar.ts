@@ -89,7 +89,7 @@ export class Calendar extends Controls.Control<CalendarOptions> {
                     eventAfterRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterRender),
                     eventAfterAllRender: this._getComposedCallback(FullCalendarCallbackType.eventAfterAllRender),
                     eventDestroy: this._getComposedCallback(FullCalendarCallbackType.eventDestroy),
-                    viewRender: (view: FullCalendar.ViewObject, element: JQuery) => this._viewRender(view, element),
+                    viewRender: (view: FullCalendar.ViewObject, element) => this._viewRender(view, element),
                     viewDestroy: this._getComposedCallback(FullCalendarCallbackType.viewDestroy),
                     dayRender: this._getComposedCallback(FullCalendarCallbackType.dayRender),
                     windowResize: this._getComposedCallback(FullCalendarCallbackType.windowResize),

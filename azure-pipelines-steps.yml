@@ -11,3 +11,11 @@ steps:
 - script: |
     npm run build
   displayName: 'Compile and package'
+
+- task: CopyFiles@2
+  inputs:
+    contents: '*.vsix'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- publish: '$(Build.ArtifactStagingDirectory)'
+  artifact: drop 

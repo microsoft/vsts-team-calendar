@@ -2,15 +2,9 @@
 # To learn more about Azure Pipelines: https://aka.ms/learn-azure-pipelines
 
 jobs:
-- job: Linux
-  pool:
-    vmImage: 'windows-latest'
-  steps:
-  - template: azure-pipelines-steps.yml
-
 - job: Windows
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'windows-latest'
   steps:
   - template: azure-pipelines-steps.yml
   

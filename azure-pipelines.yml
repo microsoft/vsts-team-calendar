@@ -1,16 +1,89 @@
-# Azure Pipelines configuration that builds and packages the extension.
-# To learn more about Azure Pipelines: https://aka.ms/learn-azure-pipelines
+variables:
+- name: major
+  value: '2'
+- name: minor
+  value: '0'
+- name: extensionName
+  value: 'team-calendar'
+- name: marketplaceServiceConnection
+  value: 'marketplaceServiceConnection'
+- name: publisherId
+  value: 'ms-devlabs'
+- name: publicExtensionName
+  value: "Team Calendar"
 
-jobs:
-- job: Linux
-  pool:
-    vmImage: 'ubuntu-16.04'
-  steps:
-  - template: azure-pipelines-steps.yml
+name: $(major).$(minor)$(rev:.r)
 
-- job: Windows
-  pool:
-    vmImage: 'vs2017-win2016'
-  steps:
-  - template: azure-pipelines-steps.yml
-  
+trigger:
+  branches:
+    include:
+    - master
+
+pr: none
+
+resources:
+  repositories:
+    - repository: pipeline-templates
+      type: git
+      name: Sage/pipeline-templates
+      ref: main
+
+stages:
+- stage: 'Build'
+  jobs:
+  - job: 'BuildPack'
+    displayName: "Build and package"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '14.x'
+    - template: build.yml@pipeline-templates
+    - template: package.yml@pipeline-templates
+      parameters:
+        extensionName: $(extensionName)
+        outputPath: 'out'
+
+- stage: 'DeployDev'
+  displayName: 'Deploy to dev'
+  dependsOn: Build
+  condition: succeeded()
+  jobs: 
+  - template: deploy.yml@pipeline-templates
+    parameters:
+      environment: 'dev'
+      extensionName: $(extensionName)
+      marketplaceConnectedServiceName: $(marketplaceServiceConnection)
+      publisherId: $(publisherId)
+      publicExtensionName: $(publicExtensionName)
+      updateTaskVersion: true
+
+- stage: 'DeployTest'
+  displayName: 'Deploy to Test'
+  dependsOn: DeployDev
+  condition: succeeded()
+  jobs:
+  - template: deploy.yml@pipeline-templates
+    parameters:
+      environment: 'test'
+      extensionName: $(extensionName)
+      marketplaceConnectedServiceName: $(marketplaceServiceConnection)
+      publisherId: $(publisherId)
+      publicExtensionName: $(publicExtensionName)
+      updateTaskVersion: true
+
+- stage: 'DeployRelease'
+  displayName: 'Deploy Release'
+  dependsOn: DeployTest
+  condition: succeeded()
+  jobs:
+  - template: deploy.yml@pipeline-templates
+    parameters:
+      environment: 'public'
+      extensionName: $(extensionName)
+      marketplaceConnectedServiceName: $(marketplaceServiceConnection)
+      publisherId: $(publisherId)
+      publicExtensionName: $(publicExtensionName)
+      extensionVisibility: 'public'
+      updateTaskVersion: true

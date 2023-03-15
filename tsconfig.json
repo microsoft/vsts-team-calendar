@@ -2,17 +2,25 @@
   "compilerOptions": {
     "charset": "utf8",
     "experimentalDecorators": true,
-    "module": "amd",
+    "module": "AMD",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strict": true,
     "target": "es5",
     "rootDir": "src/",
+    "sourceMap": true,
     "outDir": "dist/",
     "jsx": "react",
     "lib": ["es5", "es6", "dom", "es2015.promise"],
-    "types": ["react"]
+    "types": ["react"],
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": { 
+      "azure-devops-extension-api": ["node_modules/azure-devops-extension-api" ]
+    }
+
   },
-  "exclude": ["legacy"]
+  "include": ["src/**/*"],
+  "exclude": ["legacy","node_modules", "dist"]
 }

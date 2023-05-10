@@ -6,7 +6,7 @@
   "name": "Team Calendar",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
   "public": true,
-  "categories": ["Plan and track"],
+  "categories": ["Plan and Track"],
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
@@ -55,39 +55,67 @@
       "addressable": true
     },
     {
-      "path": "legacy/static",
-      "packagePath": "static",
-      "addressable": true
-    },
-    {
-      "path": "legacy/dist/js",
-      "packagePath": "js",
-      "addressable": true
-    },
-    {
-      "path": "legacy/dist/css",
-      "packagePath": "css",
-      "addressable": true
-    },
-    {
-      "path": "legacy/node_modules/vss-web-extension-sdk/lib",
-      "addressable": true,
-      "packagePath": "sdk"
-    },
-    {
-      "path": "legacy/node_modules/jquery/dist",
-      "addressable": true,
-      "packagePath": "lib/jquery"
-    },
-    {
-      "path": "legacy/node_modules/moment/min",
+      "path": "node_modules/moment/min",
       "addressable": true,
       "packagePath": "lib/moment"
-    },
-    {
-      "path": "legacy/node_modules/fullcalendar/dist",
-      "addressable": true,
-      "packagePath": "lib/fullcalendar"
     }
+  ],
+  "branding": {
+      "color": "rgb(149, 37, 0)",
+      "theme": "dark"
+  },
+  "contributions": [
+      {
+          "id": "calendar-has-moved-banner",
+          "type": "ms.vss-web.global-message-banner",
+          "description": "Banner points out that the Calendar has moved to the Boards hub.",
+          "targets": [
+              "ms.vss-web.home-hub-group"
+          ],
+          "properties": {
+              "message": "The Calendar has moved! You may now find it under the Boards menu.",
+              "level": "info"
+          }
+      },
+      {
+          "id": "calendar",
+          "type": "ms.vss-web.hub",
+          "description": "Calendar hub in the Work hub group.",
+          "targets": [
+              "ms.vss-work-web.work-hub-group"
+          ],
+          "properties": {
+              "name": "Calendar",
+              "order": 22,
+              "uri": "dist/calendar.html"
+          }
+      },
+      {
+          "id": "calendar-event-sources",
+          "type": ".calendar-event-source-collection",
+          "description": "Target for calendar event sources",
+          "targets": [
+              ".calendar"
+          ]
+      }
+  ],
+  "contributionTypes": [
+      {
+          "id": "calendar-event-source-collection",
+          "name": "Calendar event source collection",
+          "description": "A collection of calendar event sources."
+      },
+      {
+          "id": "calendar-event-source",
+          "name": "Calendar event source",
+          "description": "A provider of calendar events.",
+          "properties": {
+              "uri": {
+                  "description": "URI to the (background/hidden) HTML content which registers the calendar event source object.",
+                  "type": "string",
+                  "required": true
+              }
+          }
+      }
   ]
 }

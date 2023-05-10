@@ -1,0 +1,7 @@
+{
+    "public": false,
+    "baseUri": "https://localhost:8888",
+    "name": "Team Calendar (Dev)",
+    "publisher": "ms-devlabs"
+
+}

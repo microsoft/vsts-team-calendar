@@ -1,5 +1,16 @@
-# Azure Pipelines configuration that builds and packages the extension.
-# To learn more about Azure Pipelines: https://aka.ms/learn-azure-pipelines
+variables:
+- name: major
+  value: '2'
+- name: minor
+  value: '0'
+- name: extensionName
+  value: 'team-calendar'
+- name: marketplaceServiceConnection
+  value: 'marketplaceServiceConnection'
+- name: publisherId
+  value: 'ms-devlabs'
+- name: publicExtensionName
+  value: "Team Calendar"
 
 jobs:
 - job: Windows

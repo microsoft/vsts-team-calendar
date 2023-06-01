@@ -355,6 +355,8 @@ class ExtensionContent extends React.Component {
     }
 
     private async initialize() {
+
+        try{
         const dataSvc = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
         const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
         const project = await projectService.getProject();
@@ -380,13 +382,20 @@ class ExtensionContent extends React.Component {
             const client = getClient(CoreRestClient);
 
             const allTeams = [];
-            let teams;
+            let teams = []
             let callCount = 0;
             const fetchCount = 1000;
+
+          
             do {
+              try{
                 teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
                 allTeams.push(...teams);
                 callCount++;
+                } catch(err){
+                    console.log(err)
+                    continue
+                }
             } while (teams.length === fetchCount);
 
             this.projectId = project.id;
@@ -415,6 +424,9 @@ class ExtensionContent extends React.Component {
             this.teams.value = allTeams;
             this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
         }
+    }catch(err){
+    console.log(err)
+    }
     }
 
     private onClickNewItem = () => {

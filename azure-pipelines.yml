@@ -34,7 +34,7 @@ stages:
   - job: 'BuildPack'
     displayName: "Build and package"
     pool:
-      vmImage: ubuntu-latest
+      vmImage: windows-latest
     steps:
     - task: NodeTool@0
       inputs:

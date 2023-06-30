@@ -1,0 +1,6 @@
+{
+    "id": "team-calendar-dev",
+    "name": "Team Calendar (dev)",
+    "public": false,
+    "baseUri": "https://localhost:3000"    
+}

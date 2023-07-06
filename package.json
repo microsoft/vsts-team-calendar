@@ -49,6 +49,8 @@
     "clean": "rimraf ./dist && cd legacy && npm run clean && cd ..",
     "compile": "npm run clean && webpack --mode production",
     "compile:dev": "npm run clean && webpack --mode development",
+    "build:release": "npm run compile",
+    "package:dev": "node ./scripts/packageDev",
     "build": "npm run compile && cd legacy && npm run build && cd ..",
     "build:dev": "npm run compile:dev && npm run postbuild",
     "postbuild": "npm run package-extension -- --rev-version",

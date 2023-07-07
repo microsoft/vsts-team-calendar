@@ -38,7 +38,7 @@ stages:
     steps:
     - task: NodeTool@0
       inputs:
-        versionSpec: '8.12.0'
+        versionSpec: '12.18.0'
     - script: |
         cd legacy
         npm install

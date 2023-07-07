@@ -80,12 +80,12 @@
       "packagePath": "lib/jquery"
     },
     {
-      "path": "legacy/node_modules/moment/min",
+      "path": "../legacy/node_modules/moment/min",
       "addressable": true,
       "packagePath": "lib/moment"
     },
     {
-      "path": "legacy/node_modules/fullcalendar/dist",
+      "path": "./legacy/node_modules/fullcalendar/dist",
       "addressable": true,
       "packagePath": "lib/fullcalendar"
     }

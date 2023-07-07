@@ -55,37 +55,37 @@
       "addressable": true
     },
     {
-      "path": "legacy/static",
+      "path": "/static",
       "packagePath": "static",
       "addressable": true
     },
     {
-      "path": "legacy/dist/js",
+      "path": "/dist/js",
       "packagePath": "js",
       "addressable": true
     },
     {
-      "path": "legacy/dist/css",
+      "path": "/dist/css",
       "packagePath": "css",
       "addressable": true
     },
     {
-      "path": "legacy/node_modules/vss-web-extension-sdk/lib",
+      "path": "/node_modules/vss-web-extension-sdk/lib",
       "addressable": true,
       "packagePath": "sdk"
     },
     {
-      "path": "legacy/node_modules/jquery/dist",
+      "path": "/node_modules/jquery/dist",
       "addressable": true,
       "packagePath": "lib/jquery"
     },
     {
-      "path": "legacy/node_modules/moment/min",
+      "path": "/node_modules/moment/min",
       "addressable": true,
       "packagePath": "lib/moment"
     },
     {
-      "path": "legacy/node_modules/fullcalendar/dist",
+      "path": "/node_modules/fullcalendar/dist",
       "addressable": true,
       "packagePath": "lib/fullcalendar"
     }

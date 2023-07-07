@@ -43,7 +43,7 @@ stages:
         cd legacy
         npm install
         npm run build
-      displayName: 'npm install and build'
+      displayName: 'Build Legacy '
     - template: build.yml@pipeline-templates
     - template: package.yml@pipeline-templates
       parameters:

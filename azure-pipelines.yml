@@ -39,6 +39,11 @@ stages:
     - task: NodeTool@0
       inputs:
         versionSpec: '8.12.0'
+    - script: |
+        cd legacy
+        npm install
+        npm run build
+      displayName: 'npm install and build'
     - template: build.yml@pipeline-templates
     - template: package.yml@pipeline-templates
       parameters:

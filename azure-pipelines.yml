@@ -41,11 +41,7 @@ stages:
          versionSpec: '14.x'
       displayName: 'Install Node.js'
          
-    - script: |
-        cd legacy
-        npm install
-        npm run build
-      displayName: 'Build Legacy '
+
     - template: build.yml@pipeline-templates
     - template: package.yml@pipeline-templates
       parameters:

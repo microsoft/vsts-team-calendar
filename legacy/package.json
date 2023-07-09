@@ -1,5 +1,5 @@
 {
-  "name": "vsts-teams-calendar",
+  "name": "vso-team-calendar",
   "version": "0.0.2",
   "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
   "repository": {
@@ -48,7 +48,7 @@
     "css-loader": "~0.28.7",
     "extract-text-webpack-plugin": "~3.0.2",
     "ncp": "~2.0.0",
-    "node-sass": "^9.0.0",
+    "node-sass": "~4.9.0",
     "postcss-loader": "~2.0.8",
     "rimraf": "~2.5.4",
     "sass-loader": "~6.0.6",

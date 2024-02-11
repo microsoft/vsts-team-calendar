@@ -406,14 +406,23 @@ class ExtensionContent extends React.Component {
                 this.navigationService.setQueryParams({ team: selectedTeamId });
             }
 
-            this.hostUrl = await locationService.getServiceLocation();
-            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
-            this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
-            this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
-            this.displayCalendar.value = true;
-            this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
-            this.teams.value = allTeams;
-            this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
+            try {
+                this.hostUrl = await locationService.getServiceLocation();
+                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+                this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
+                this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
+                this.displayCalendar.value = true;
+                this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
+                this.teams.value = allTeams;
+                this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
+            }
+            catch(error){
+            console.error(error);
+          this.selectedTeamName = 'Default Team Name'; 
+
+            }
+
+           
         }
     }
 

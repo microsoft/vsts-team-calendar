@@ -407,7 +407,13 @@ class ExtensionContent extends React.Component {
             }
 
             this.hostUrl = await locationService.getServiceLocation();
-            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            try {
+                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            } catch (error) {
+                console.error(`Failed to get team with ID ${selectedTeamId}: ${error}`);
+              
+                
+            }
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;

@@ -411,7 +411,7 @@ class ExtensionContent extends React.Component {
                 this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
             } catch (error) {
                 console.error(`Failed to get team with ID ${selectedTeamId}: ${error}`);
-                this.selectedTeamName = 'Default Team Name'; 
+              
                 
             }
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);

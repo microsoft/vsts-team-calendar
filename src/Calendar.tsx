@@ -363,12 +363,17 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-        const queryParam = await this.navigationService.getQueryParams();
+        function getTeamIdFromUrl(): string | null {
+            const pathParts = window.location.pathname.split('/');
+            const teamIdIndex = pathParts.indexOf('DefaultCollection') + 2;
+            return pathParts[teamIdIndex] || null;
+        }
+        
         let selectedTeamId;
 
         // if URL has team id in it, use that
-        if (queryParam && queryParam["team"]) {
-            selectedTeamId = queryParam["team"];
+        if (getTeamIdFromUrl()) {
+            selectedTeamId = getTeamIdFromUrl();
         }
 
         if (project) {
@@ -401,7 +406,7 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = allTeams[0].id;
             }
 
-            if (!queryParam || !queryParam["team"]) {
+            if (!getTeamIdFromUrl()) {
                 // Add team id to URL
                 this.navigationService.setQueryParams({ team: selectedTeamId });
             }

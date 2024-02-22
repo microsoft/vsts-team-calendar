@@ -363,12 +363,18 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-        const queryParam = await this.navigationService.getQueryParams();
+       
+
         let selectedTeamId;
 
+        const hash = await this.navigationService.getHash();
+        console.log("hask", hash)
+        const params = new URLSearchParams(hash.slice(1)); // Remove the '#' at the start
+        const teamName = params.get('teamName');
+
         // if URL has team id in it, use that
-        if (queryParam && queryParam["team"]) {
-            selectedTeamId = queryParam["team"];
+        if (teamName) {
+            selectedTeamId = teamName;
         }
 
         if (project) {
@@ -401,9 +407,9 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = allTeams[0].id;
             }
 
-            if (!queryParam || !queryParam["team"]) {
+            if (!teamName) {
                 // Add team id to URL
-                this.navigationService.setQueryParams({ team: selectedTeamId });
+                this.navigationService.setHash(`teamName=${selectedTeamId}`)
             }
 
             this.hostUrl = await locationService.getServiceLocation();

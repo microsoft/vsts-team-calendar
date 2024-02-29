@@ -362,12 +362,33 @@ class ExtensionContent extends React.Component {
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
+        const organization = SDK.getHost().name;
+        const token = await SDK.getAccessToken();
+       
 
         function getTeamIdFromUrl(): string | null {
             const pathParts = window.location.pathname.split('/');
             const teamIdIndex = pathParts.indexOf('DefaultCollection') + 2;
             return pathParts[teamIdIndex] || null;
         }
+
+     
+
+
+        const useGetTeams  = async ()=>{
+            const url = `https://dev.azure.com/${organization}/_apis/projects/e5150bea-bea4-4522-9133-4ba681654a85/teams?api-version=5.1`
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+            });
+            const data = await response.json();
+            return data;
+    
+        }
+
         
         let selectedTeamId;
 
@@ -382,14 +403,15 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = await this.dataManager.getValue<string>("selected-team-" + project.id, { scopeType: "User" });
             }
 
+           
             const client = getClient(CoreRestClient);
-
             const allTeams = [];
-            let teams;
+            let teams = await useGetTeams()
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
+                teams = await
+                console.log("toto", teams)
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);
@@ -412,7 +434,12 @@ class ExtensionContent extends React.Component {
             }
 
             this.hostUrl = await locationService.getServiceLocation();
-            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            try {
+                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            } catch (err) {
+                console.log(err)
+            }
+
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;
@@ -539,7 +566,14 @@ class ExtensionContent extends React.Component {
 
     private onSelectTeam = async (event: React.SyntheticEvent<HTMLElement, Event>, item: IListBoxItem<{}>) => {
         const newTeam = item.data! as WebApiTeam;
-        this.selectedTeamName = newTeam.name;
+
+        try{
+            this.selectedTeamName = newTeam.name;
+        }
+        catch(err){
+            console.log(err);
+        }
+      
         this.freeFormEventSource.initialize(newTeam.id, this.dataManager!);
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
         this.getCalendarApi().refetchEvents();

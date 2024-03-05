@@ -362,39 +362,13 @@ class ExtensionContent extends React.Component {
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-        const organization = SDK.getHost().name;
-        const token = await SDK.getAccessToken();
-       
-
-        function getTeamIdFromUrl(): string | null {
-            const pathParts = window.location.pathname.split('/');
-            const teamIdIndex = pathParts.indexOf('DefaultCollection') + 2;
-            return pathParts[teamIdIndex] || null;
-        }
-
-     
-
-
-        const useGetTeams  = async ()=>{
-            const url = `https://dev.azure.com/${organization}/_apis/projects/e5150bea-bea4-4522-9133-4ba681654a85/teams?api-version=5.1`
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-            });
-            const data = await response.json();
-            return data;
-    
-        }
-
-        
+        const organization = await SDK.getHost().name
+        const queryParam = await this.navigationService.getHash();
         let selectedTeamId;
 
-        // if URL has team id in it, use that
-        if (getTeamIdFromUrl()) {
-            selectedTeamId = getTeamIdFromUrl();
+      // if URL has team id in it, use that
+        if (queryParam ) {
+            selectedTeamId = queryParam;
         }
 
         if (project) {
@@ -403,15 +377,32 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = await this.dataManager.getValue<string>("selected-team-" + project.id, { scopeType: "User" });
             }
 
-           
             const client = getClient(CoreRestClient);
+  
+
+            const useGetTeams = async () => {
+            const url = `https://dev.azure.com/${organization}/_apis/projects/${project.id}/teams?api-version=5.1`
+            const token = await SDK.getAccessToken();
+            const response = await fetch(url, {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            const data = await response.json();
+            return  data.value
+
+        }
+
+
+     
+
             const allTeams = [];
-            let teams = await useGetTeams()
+            let teams;
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams = await
-                console.log("toto", teams)
+                teams = await useGetTeams()
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);
@@ -428,18 +419,13 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = allTeams[0].id;
             }
 
-            if (!getTeamIdFromUrl()) {
+            if (!queryParam ) {
                 // Add team id to URL
-                this.navigationService.setQueryParams({ team: selectedTeamId });
+               await this.navigationService.setHash(selectedTeamId);
             }
 
             this.hostUrl = await locationService.getServiceLocation();
-            try {
-                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
-            } catch (err) {
-                console.log(err)
-            }
-
+            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;
@@ -566,14 +552,7 @@ class ExtensionContent extends React.Component {
 
     private onSelectTeam = async (event: React.SyntheticEvent<HTMLElement, Event>, item: IListBoxItem<{}>) => {
         const newTeam = item.data! as WebApiTeam;
-
-        try{
-            this.selectedTeamName = newTeam.name;
-        }
-        catch(err){
-            console.log(err);
-        }
-      
+        this.selectedTeamName = newTeam.name;
         this.freeFormEventSource.initialize(newTeam.id, this.dataManager!);
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
         this.getCalendarApi().refetchEvents();

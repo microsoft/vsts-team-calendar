@@ -362,13 +362,13 @@ class ExtensionContent extends React.Component {
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-        const organization = await SDK.getHost().name
-        const queryParam = await this.navigationService.getHash();
+
+        const queryParam = await this.navigationService.getQueryParams();
         let selectedTeamId;
 
-      // if URL has team id in it, use that
-        if (queryParam ) {
-            selectedTeamId = queryParam;
+        // if URL has team id in it, use that
+        if (queryParam && queryParam["team"]) {
+            selectedTeamId = queryParam["team"];
         }
 
         if (project) {
@@ -378,31 +378,13 @@ class ExtensionContent extends React.Component {
             }
 
             const client = getClient(CoreRestClient);
-  
-
-            const useGetTeams = async () => {
-            const url = `https://dev.azure.com/${organization}/_apis/projects/${project.id}/teams?api-version=5.1`
-            const token = await SDK.getAccessToken();
-            const response = await fetch(url, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            const data = await response.json();
-            return  data.value
-
-        }
-
-
-     
 
             const allTeams = [];
             let teams;
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams = await useGetTeams()
+                teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);
@@ -419,13 +401,21 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = allTeams[0].id;
             }
 
-            if (!queryParam ) {
+            if (!queryParam || !queryParam["team"]) {
                 // Add team id to URL
-               await this.navigationService.setHash(selectedTeamId);
+                this.navigationService.setQueryParams({ team: selectedTeamId });
             }
 
             this.hostUrl = await locationService.getServiceLocation();
-            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+
+            try{
+                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            }
+            catch(err){
+                console.log(err)
+
+            }
+
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;

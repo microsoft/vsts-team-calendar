@@ -378,9 +378,9 @@ async function useGetTeams() {
           
     
         let selectedTeamId;
-        const t  = await useGetTeams();
-        console.log(t)
-
+        const teamValue  = await useGetTeams();
+    
+console.log(teamValue.value);
         if (project) {
             if (!selectedTeamId) {
                 // Nothing in URL - check data service
@@ -394,7 +394,7 @@ async function useGetTeams() {
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams = await useGetTeams();
+                teams =  teamValue.value;
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);

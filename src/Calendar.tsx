@@ -408,7 +408,7 @@ class ExtensionContent extends React.Component {
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams =  teamValue.value;
+                teams =  teamValue?.value;
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);

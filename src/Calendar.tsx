@@ -394,7 +394,7 @@ class ExtensionContent extends React.Component {
         let selectedTeamId;
         const teamValue  = await useGetTeams();
     
-       console.log(teamValue.value);
+  
         if (project) {
             if (!selectedTeamId) {
                 // Nothing in URL - check data service

@@ -363,13 +363,9 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-        const queryParam = await this.navigationService.getQueryParams();
+    
         let selectedTeamId;
 
-        // if URL has team id in it, use that
-        if (queryParam && queryParam["team"]) {
-            selectedTeamId = queryParam["team"];
-        }
 
         if (project) {
             if (!selectedTeamId) {
@@ -401,13 +397,15 @@ class ExtensionContent extends React.Component {
                 selectedTeamId = allTeams[0].id;
             }
 
-            if (!queryParam || !queryParam["team"]) {
-                // Add team id to URL
-                this.navigationService.setQueryParams({ team: selectedTeamId });
+            
+            this.hostUrl = await locationService.getServiceLocation();
+            try{
+                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+            }
+            catch(er){
+                console.log(er);
             }
 
-            this.hostUrl = await locationService.getServiceLocation();
-            this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
             this.displayCalendar.value = true;

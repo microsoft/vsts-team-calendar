@@ -345,6 +345,24 @@ class ExtensionContent extends React.Component {
         return options;
     }
 
+
+    private  async useGetTeams() {
+        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+        const project = await projectService.getProject();
+        const organization  = SDK.getHost().name;
+        const url =   `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`
+        const token = await SDK.getAccessToken();
+       ;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return response.json();
+      }
+      
+
+
     private getTeamPickerOptions(): IListBoxItem[] {
         const options: IListBoxItem[] = [];
         this.teams.value.forEach(function(item) {
@@ -363,24 +381,12 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-async function useGetTeams() {
-            const organization  = SDK.getHost().name;
-            const url =   `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`
-            const token = await SDK.getAccessToken();
-           ;
-            const response = await fetch(url, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            return response.json();
-          }
-          
+      
     
         let selectedTeamId;
-        const teamValue  = await useGetTeams();
+        const teamValue  = await this.useGetTeams();
     
-console.log(teamValue.value);
+       console.log(teamValue.value);
         if (project) {
             if (!selectedTeamId) {
                 // Nothing in URL - check data service

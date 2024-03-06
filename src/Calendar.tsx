@@ -363,9 +363,23 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
+async function useGetTeams() {
+            const organization  = SDK.getHost().name;
+            const url =   `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`
+            const token = await SDK.getAccessToken();
+           ;
+            const response = await fetch(url, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            return response.json();
+          }
+          
     
         let selectedTeamId;
-
+        const t  = await useGetTeams();
+        console.log(t)
 
         if (project) {
             if (!selectedTeamId) {
@@ -380,7 +394,7 @@ class ExtensionContent extends React.Component {
             let callCount = 0;
             const fetchCount = 1000;
             do {
-                teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
+                teams = await useGetTeams();
                 allTeams.push(...teams);
                 callCount++;
             } while (teams.length === fetchCount);

@@ -346,21 +346,7 @@ class ExtensionContent extends React.Component {
     }
 
 
-    private  async useGetTeams() {
-        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-        const project = await projectService.getProject();
-        const organization  = SDK.getHost().name;
-        const url =   `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`
-        const token = await SDK.getAccessToken();
-       ;
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        return response.json();
-      }
-      
+   
 
 
     private getTeamPickerOptions(): IListBoxItem[] {
@@ -381,10 +367,32 @@ class ExtensionContent extends React.Component {
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 
-      
+        const useGetTeams = async () => {
+            const organization = SDK.getHost().name;
+            const url = `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`;
+            const token = await SDK.getAccessToken();
+          
+            try {
+              const response = await fetch(url, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+          
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+          
+              return await response.json();
+            } catch (error) {
+              console.error('Failed to fetch teams:', error);
+              return null;
+            }
+          };
+          
     
         let selectedTeamId;
-        const teamValue  = await this.useGetTeams();
+        const teamValue  = await useGetTeams();
     
        console.log(teamValue.value);
         if (project) {

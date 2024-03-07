@@ -411,12 +411,12 @@ class ExtensionContent extends React.Component {
                 teams =  teamValue?.value;
                 allTeams.push(...teams);
                 callCount++;
-            } while (teams.length === fetchCount);
+            } while (teams?.length === fetchCount);
 
             this.projectId = project.id;
             this.projectName = project.name;
 
-            allTeams.sort((a, b) => {
+            allTeams?.sort((a, b) => {
                 return a.name.toUpperCase().localeCompare(b.name.toUpperCase());
             });
 

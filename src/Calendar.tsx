@@ -366,12 +366,13 @@ class ExtensionContent extends React.Component {
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-
+        let callCount = 0;
+         const fetchCount = 1000;
         const useGetTeams = async () => {
             const organization = SDK.getHost().name;
-            const url = `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1`;
+               const url = `https://dev.azure.com/${organization}/_apis/projects/${project?.id}/teams?api-version=5.1&$top=${fetchCount}&$skip=${callCount * fetchCount}&api-version=5.1-preview.3`;
             const token = await SDK.getAccessToken();
-          
+
             try {
               const response = await fetch(url, {
                 headers: {
@@ -394,7 +395,7 @@ class ExtensionContent extends React.Component {
         let selectedTeamId;
         const teamValue  = await useGetTeams();
     
-  
+          console.log("teamValue",teamValue)
         if (project) {
             if (!selectedTeamId) {
                 // Nothing in URL - check data service
@@ -405,8 +406,7 @@ class ExtensionContent extends React.Component {
 
             const allTeams = [];
             let teams;
-            let callCount = 0;
-            const fetchCount = 1000;
+            
             do {
                 teams =  teamValue?.value;
                 allTeams.push(...teams);
@@ -435,7 +435,10 @@ class ExtensionContent extends React.Component {
             }
 
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
-            this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
+            try {
+                this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
+            } catch (e) {console.log(e)}
+  
             this.displayCalendar.value = true;
             this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
             this.teams.value = allTeams;

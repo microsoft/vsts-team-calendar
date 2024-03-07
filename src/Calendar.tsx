@@ -420,6 +420,8 @@ class ExtensionContent extends React.Component {
                 return a.name.toUpperCase().localeCompare(b.name.toUpperCase());
             });
 
+
+            console.log("allTeams",allTeams)
             // if team id wasn't in URL or database use first available team
             if (!selectedTeamId) {
                 selectedTeamId = allTeams[0].id;

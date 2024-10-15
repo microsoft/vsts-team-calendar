@@ -66,11 +66,6 @@
             "addressable": true
         },
         {
-            "path": "dist/css",
-            "packagePath": "css",
-            "addressable": true
-        },
-        {
             "path": "node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
             "packagePath": "sdk"

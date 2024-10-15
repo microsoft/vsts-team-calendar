@@ -7,7 +7,7 @@
     "url": "git+https://github.com/Microsoft/vso-team-calendar.git"
   },
   "scripts": {
-    "compile": "webpack",
+    "compile": "npm run clean &&  webpack",
     "compile:prod": "webpack --env=production",
     "build": "npm run compile",
     "clean": "rimraf ./dist"
@@ -45,18 +45,19 @@
     "@types/react": "~16.0.18",
     "@types/react-dom": "~16.0.2",
     "autoprefixer": "~7.1.6",
-    "css-loader": "~0.28.7",
+    "copy-webpack-plugin": "^7.0.0",
+    "css-loader": "^5.2.4",
     "extract-text-webpack-plugin": "~3.0.2",
     "ncp": "~2.0.0",
-    "node-sass": "~4.9.0",
     "postcss-loader": "~2.0.8",
     "rimraf": "~2.5.4",
-    "sass-loader": "~6.0.6",
-    "style-loader": "~0.19.0",
+    "sass": "^1.55.0",
+    "sass-loader": "^10.1.1",
+    "style-loader": "^1.2.1",
     "tfx-cli": "~0.4.10",
-    "ts-loader": "~3.0.3",
+    "ts-loader": "~5.2.2",
     "typescript": "~2.9.2",
-    "webpack": "~3.8.1"
+    "webpack-cli": "^4.10.0"
   },
   "dependencies": {
     "@types/es6-promise": "~0.0.33",
@@ -71,6 +72,6 @@
     "react-dom": "~16.0.0",
     "tslib": "~1.8.0",
     "vss-ui": "4.134.0",
-    "vss-web-extension-sdk": "5.134.0"
+    "vss-web-extension-sdk": "5.141.0"
   }
 }

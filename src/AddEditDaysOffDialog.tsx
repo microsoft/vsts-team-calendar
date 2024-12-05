@@ -1,7 +1,7 @@
 import React = require("react");
 
 import { TeamMember } from "azure-devops-extension-api/WebApi/WebApi";
-import { TeamSettingsIteration } from "azure-devops-extension-api/work/Work";
+
 
 import { getUser } from "azure-devops-extension-sdk";
 
@@ -24,6 +24,7 @@ import { ICalendarEvent } from "./Contracts";
 import { MessageDialog } from "./MessageDialog";
 import { toDate, formatDate } from "./TimeLib";
 import { VSOCapacityEventSource, Everyone } from "./VSOCapacityEventSource";
+import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 
 interface IAddEditDaysOffDialogProps {
     /**

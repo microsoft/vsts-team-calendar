@@ -4,7 +4,7 @@ variables:
 - name: minor
   value: '0'
 - name: extensionName
-  value: 'vsts-tems-calendar'
+  value: 'team-calendar'
 - name: marketplaceServiceConnection
   value: 'marketplaceServiceConnection'
 - name: publisherId
@@ -25,7 +25,7 @@ resources:
   repositories:
     - repository: pipeline-templates
       type: git
-      name: Sage/pipeline-templates
+      name: DevLabs Extensions/pipeline-templates
       ref: main
 
 stages:

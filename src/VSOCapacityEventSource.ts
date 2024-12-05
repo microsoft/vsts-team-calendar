@@ -6,8 +6,8 @@ import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
 import { formatDate, getDatesInRange, shiftToUTC, shiftToLocal } from "./TimeLib";
-import { TeamMemberCapacityIdentityRef, TeamSettingsIteration, TeamSettingsDaysOff, TeamSettingsDaysOffPatch, CapacityPatch, TeamMemberCapacity } from "azure-devops-extension-api/work/Work";
-import { WorkRestClient } from "azure-devops-extension-api/Work/WorkClient";
+import { TeamMemberCapacityIdentityRef, TeamSettingsIteration, TeamSettingsDaysOff, TeamSettingsDaysOffPatch, CapacityPatch, TeamMemberCapacity, WorkRestClient } from "azure-devops-extension-api/Work";
+
 
 export const DaysOffId = "daysOff";
 export const Everyone = "Everyone";
@@ -45,14 +45,14 @@ export class VSOCapacityEventSource {
                 this.capacityMap[iterationId] && this.capacityMap[iterationId][memberId]
                     ? this.capacityMap[iterationId][memberId]
                     : {
-                          activities: [
-                              {
-                                  capacityPerDay: 0,
-                                  name: ""
-                              }
-                          ],
-                          daysOff: []
-                      };
+                        activities: [
+                            {
+                                capacityPerDay: 0,
+                                name: ""
+                            }
+                        ],
+                        daysOff: []
+                    };
             // delete from cached copy
             delete this.capacityMap[iterationId];
             const capacityPatch: CapacityPatch = { activities: capacity.activities, daysOff: capacity.daysOff };

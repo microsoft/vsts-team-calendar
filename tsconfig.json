@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "charset": "utf8",
     "experimentalDecorators": true,
     "module": "AMD",
     "moduleResolution": "node",

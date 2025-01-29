@@ -173,7 +173,7 @@ class ExtensionContent extends React.Component {
                                 <Icon ariaLabel="Video icon" iconName="ChevronRight" />
                                 <Observer teams={this.teams}>
                                     {(props: { teams: WebApiTeam[] }) => {
-                                        return props.teams === [] ? null : (
+                                        return props.teams.length === 0 ? null : (
                                             <Dropdown
                                                 items={this.getTeamPickerOptions()}
                                                 onSelect={this.onSelectTeam}
@@ -361,9 +361,9 @@ class ExtensionContent extends React.Component {
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
-        this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-
-        const queryParam = await this.navigationService.getQueryParams();
+        this.navigationService =  await SDK.getService<IHostNavigationService>( CommonServiceIds.HostNavigationService);
+       
+        const queryParam = this.navigationService ? await this.navigationService.getQueryParams() : {};
         let selectedTeamId;
 
         // if URL has team id in it, use that
@@ -403,7 +403,7 @@ class ExtensionContent extends React.Component {
 
             if (!queryParam || !queryParam["team"]) {
                 // Add team id to URL
-                this.navigationService.setQueryParams({ team: selectedTeamId });
+                setQuery({ team: selectedTeamId });
             }
 
             this.hostUrl = await locationService.getServiceLocation();
@@ -545,7 +545,7 @@ class ExtensionContent extends React.Component {
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
         this.getCalendarApi().refetchEvents();
         this.dataManager!.setValue<string>("selected-team-" + this.projectId, newTeam.id, { scopeType: "User" });
-        this.navigationService!.setQueryParams({ team: newTeam.id });
+         await setQuery({ team: newTeam.id });
         this.members = await getClient(CoreRestClient).getTeamMembersWithExtendedProperties(this.projectId, newTeam.id);
     };
 
@@ -559,5 +559,20 @@ class ExtensionContent extends React.Component {
 function showRootComponent(component: React.ReactElement<any>) {
     ReactDOM.render(component, document.getElementById("team-calendar"));
 }
-
-showRootComponent(<ExtensionContent />);
+const setQuery = async (parameters:any ,hash?:string)=>{
+    const navSvc = await SDK.getService<IHostNavigationService>(
+        CommonServiceIds.HostNavigationService
+      );
+    
+      const newParameters = parameters?.gId ? parameters : { gId: "" };
+    
+    
+      navSvc.setQueryParams(newParameters);
+      
+}
+export const getQuery = async (hash?:any)=>{
+    const navSvc = await SDK.getService<IHostNavigationService>( CommonServiceIds.HostNavigationService);
+    navSvc.setHash(hash);
+      navSvc.getQueryParams()
+      }
+      

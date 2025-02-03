@@ -66,6 +66,36 @@ class ExtensionContent extends React.Component {
     teams: ObservableValue<WebApiTeam[]>;
     vsoCapacityEventSource: VSOCapacityEventSource;
 
+    async calendarInit() {
+        const dataSvc = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
+        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+        const project = await projectService.getProject();
+        const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
+
+        // Ensure dataManager is correctly initialized
+        this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
+        if (!this.dataManager) {
+            throw new Error('Data manager is not initialized');
+        }
+
+        this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
+
+        if (project) {
+            const { selectedTeamId, allTeams, hostUrl } = await this.loadProjectData(project, locationService);
+            this.projectId = project.id;
+            this.projectName = project.name;
+            this.hostUrl = hostUrl;
+            this.selectedTeamName = await this.getTeamName(project.id, selectedTeamId);
+
+            if (selectedTeamId !== null) {
+                this.initializeEventSources(project, selectedTeamId);
+            } else {
+                console.error('Selected Team ID is null');
+            }
+            this.updateTeamData(project.id, selectedTeamId, allTeams);
+        }
+    }
+
     constructor(props: {}) {
         super(props);
 
@@ -173,7 +203,7 @@ class ExtensionContent extends React.Component {
                                 <Icon ariaLabel="Video icon" iconName="ChevronRight" />
                                 <Observer teams={this.teams}>
                                     {(props: { teams: WebApiTeam[] }) => {
-                                        return props.teams === [] ? null : (
+                                        return props.teams.length === 0 ? null : (
                                             <Dropdown
                                                 items={this.getTeamPickerOptions()}
                                                 onSelect={this.onSelectTeam}
@@ -269,8 +299,20 @@ class ExtensionContent extends React.Component {
 
     componentDidMount() {
         SDK.init();
-        this.initialize();
+        this.calendarInit();
         window.addEventListener("resize", this.updateDimensions);
+
+        // Retrieve the current hash and set the state
+        this.getHash().then(hash => {
+            const params = new URLSearchParams(hash);
+            const teamId = params.get('team');
+            if (teamId) {
+                const selectedTeam = this.teams.value.find(team => team.id === teamId);
+                if (selectedTeam) {
+                    this.onSelectTeam(null as any, { data: selectedTeam } as unknown as IListBoxItem<{}>);
+                }
+            }
+        });
     }
 
     private calcMonths(current: MonthAndYear, monthDelta: number): MonthAndYear {
@@ -282,15 +324,10 @@ class ExtensionContent extends React.Component {
         return { month, year };
     }
 
-    /**
-     * Edits the rendered event if required
-     */
     private eventRender = (arg: { isMirror: boolean; isStart: boolean; isEnd: boolean; event: EventApi; el: HTMLElement; view: View }) => {
         if (arg.event.id.startsWith(DaysOffId) && arg.event.start) {
-            // get grouped event for that date
             const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start);
             if (capacityEvent && capacityEvent.icons) {
-                // add all user icons in to event
                 capacityEvent.icons.forEach(element => {
                     if (element.src) {
                         var img: HTMLImageElement = document.createElement("img");
@@ -309,19 +346,16 @@ class ExtensionContent extends React.Component {
                 });
             }
         } else if (arg.event.id.startsWith(IterationId) && arg.isStart) {
-            // iterations are background event, show title for only start
             arg.el.innerText = arg.event.title;
             arg.el.style.color = "black";
         }
     };
 
     private getCalendarApi(): Calendar {
-        return this.calendarComponentRef.current!.getApi();
+        return this.calendarComponentRef!.current!.getApi();
+       
     }
 
-    /**
-     * Manually calculates available vertical space for calendar
-     */
     private getCalendarHeight(): number {
         var height = document.getElementById("team-calendar");
         if (height) {
@@ -347,79 +381,140 @@ class ExtensionContent extends React.Component {
 
     private getTeamPickerOptions(): IListBoxItem[] {
         const options: IListBoxItem[] = [];
-        this.teams.value.forEach(function(item) {
+        this.teams.value.forEach(function (item) {
             options.push({ data: item, id: item.id, text: item.name });
         });
 
         return options;
     }
 
-    private async initialize() {
+    async init() {
         const dataSvc = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
         const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
         const project = await projectService.getProject();
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
 
+        // Ensure dataManager is correctly initialized
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
-        this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-
-        const queryParam = await this.navigationService.getQueryParams();
-        let selectedTeamId;
-
-        // if URL has team id in it, use that
-        if (queryParam && queryParam["team"]) {
-            selectedTeamId = queryParam["team"];
+        if (!this.dataManager) {
+            throw new Error('Data manager is not initialized');
         }
 
+        this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
+
         if (project) {
-            if (!selectedTeamId) {
-                // Nothing in URL - check data service
-                selectedTeamId = await this.dataManager.getValue<string>("selected-team-" + project.id, { scopeType: "User" });
-            }
-
-            const client = getClient(CoreRestClient);
-
-            const allTeams = [];
-            let teams;
-            let callCount = 0;
-            const fetchCount = 1000;
-            do {
-                teams = await client.getTeams(project.id, false, fetchCount, callCount * fetchCount);
-                allTeams.push(...teams);
-                callCount++;
-            } while (teams.length === fetchCount);
-
+            const { selectedTeamId, allTeams, hostUrl } = await this.loadProjectData(project, locationService);
             this.projectId = project.id;
             this.projectName = project.name;
+            this.hostUrl = hostUrl;
+            this.selectedTeamName = await this.getTeamName(project.id, selectedTeamId);
+            if (selectedTeamId !== null) {
+                this.initializeEventSources(project, selectedTeamId);
+            } else {
+                console.error('Selected Team ID is null');
+            }
 
-            allTeams.sort((a, b) => {
-                return a.name.toUpperCase().localeCompare(b.name.toUpperCase());
+            this.updateTeamData(project.id, selectedTeamId, allTeams);
+        }
+    }
+
+    // Function to load project data
+    async loadProjectData(project: { id: string }, locationService: ILocationService) {
+        let selectedTeamId = await this.getSelectedTeamIdFromService(project.id);
+
+        const allTeams = await this.fetchAllTeams(project.id);
+        if (!selectedTeamId) selectedTeamId = allTeams[0]?.id;
+
+        const hostUrl = await locationService.getServiceLocation();
+        return { selectedTeamId, allTeams, hostUrl };
+    }
+
+    // Function to get selected team ID from service
+    async getSelectedTeamIdFromService(projectId: string) {
+        return await this.dataManager?.getValue<string>("selected-team-" + projectId, { scopeType: "User" }) || null;
+    }
+
+    // Function to fetch all teams
+   
+
+    private async fetchAllTeams(projectId: string, fetchCount: number = 1000) {
+        const token = await SDK.getAccessToken();
+        const organization = SDK.getHost().name;
+        const allTeams: any[] = [];
+        let callCount = 0;
+    
+        while (true) {
+            const url = `https://dev.azure.com/${organization}/_apis/projects/${projectId}/teams?api-version=5.1&$top=${fetchCount}&$skip=${callCount * fetchCount}`;
+    
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
             });
-
-            // if team id wasn't in URL or database use first available team
-            if (!selectedTeamId) {
-                selectedTeamId = allTeams[0].id;
+    
+            // Log the response status and content for debugging
+            console.log('Response Status:', response.status);
+            const responseText = await response.text();
+            console.log('Response Content:', responseText);
+    
+            if (!response.ok) {
+                console.error('Error fetching teams:', response.status, response.statusText);
+                console.error('Error details:', responseText);
+                break;
             }
-
-            if (!queryParam || !queryParam["team"]) {
-                // Add team id to URL
-                this.navigationService.setQueryParams({ team: selectedTeamId });
-            }
-
-            this.hostUrl = await locationService.getServiceLocation();
+    
             try {
-                this.selectedTeamName = (await client.getTeam(project.id, selectedTeamId)).name;
+                const teams = JSON.parse(responseText); // Parse the response text as JSON
+                allTeams.push(...teams.value);
+                callCount++;
+    
+                if (teams.value.length < fetchCount) break;
             } catch (error) {
-                console.error(`Failed to get team with ID ${selectedTeamId}: ${error}`);
-              
-                
+                console.error('Error parsing JSON:', error);
+                break;
             }
+        }
+    
+        return allTeams.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+   
+ 
+
+    // Function to get team name by ID
+    async getTeamName(projectId: string, selectedTeamId: string | null) {
+        const client = getClient(CoreRestClient);
+        try {
+            return selectedTeamId ? (await client.getTeam(projectId, selectedTeamId)).name : '';
+        } catch (error) {
+            console.error(`Failed to get team with ID ${selectedTeamId}: ${error}`);
+            return '';  // Return an empty string if there is an error
+        }
+    }
+
+    // Function to initialize event sources
+    initializeEventSources = (project: any, selectedTeamId: string) => {
+        if (this.freeFormEventSource && selectedTeamId && this.dataManager) {
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
+        }
+
+        if (this.vsoCapacityEventSource && selectedTeamId && this.dataManager) {
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
-            this.displayCalendar.value = true;
-            this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
-            this.teams.value = allTeams;
-            this.members = await client.getTeamMembersWithExtendedProperties(project.id, selectedTeamId);
+        }
+    };
+
+    // Function to update team data
+    async updateTeamData(projectId: string, selectedTeamId: string | null, allTeams: any[]) {
+        this.displayCalendar.value = true;
+        if (this.dataManager && selectedTeamId) {
+            this.dataManager.setValue<string>("selected-team-" + projectId, selectedTeamId, { scopeType: "User" });
+        }
+        this.teams.value = allTeams; // Assign the value property of ObservableValue
+        if (selectedTeamId) {
+            const client = getClient(CoreRestClient);
+            this.members = await client.getTeamMembersWithExtendedProperties(projectId, selectedTeamId);
         }
     }
 
@@ -545,9 +640,26 @@ class ExtensionContent extends React.Component {
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
         this.getCalendarApi().refetchEvents();
         this.dataManager!.setValue<string>("selected-team-" + this.projectId, newTeam.id, { scopeType: "User" });
-        this.navigationService!.setQueryParams({ team: newTeam.id });
+
+        // Update the URL hash with the selected team
+        await this.setHash(`team=${newTeam.id}`);
+
         this.members = await getClient(CoreRestClient).getTeamMembersWithExtendedProperties(this.projectId, newTeam.id);
     };
+
+    private getHash = async () => {
+        const navSvc = await SDK.getService<IHostNavigationService>(
+            CommonServiceIds.HostNavigationService
+        );
+        return navSvc.getHash();
+    }
+
+    private setHash = async (hash: string) => {
+        const navSvc = await SDK.getService<IHostNavigationService>(
+            CommonServiceIds.HostNavigationService
+        );
+        return navSvc.setHash(hash);
+    }
 
     private updateDimensions = () => {
         if (this.calendarComponentRef.current) {

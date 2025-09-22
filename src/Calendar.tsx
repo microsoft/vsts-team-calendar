@@ -173,7 +173,7 @@ class ExtensionContent extends React.Component {
                                 <Icon ariaLabel="Video icon" iconName="ChevronRight" />
                                 <Observer teams={this.teams}>
                                     {(props: { teams: WebApiTeam[] }) => {
-                                        return props.teams === [] ? null : (
+                                        return props.teams.length === 0 ? null : (
                                             <Dropdown
                                                 items={this.getTeamPickerOptions()}
                                                 onSelect={this.onSelectTeam}
@@ -416,6 +416,14 @@ class ExtensionContent extends React.Component {
             }
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
             this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
+            
+            const preloadPromises = [
+                this.freeFormEventSource.preloadCurrentMonthEvents(),
+                this.vsoCapacityEventSource.preloadCurrentIterations()
+            ];
+            
+            await Promise.all(preloadPromises);
+            
             this.displayCalendar.value = true;
             this.dataManager.setValue<string>("selected-team-" + project.id, selectedTeamId, { scopeType: "User" });
             this.teams.value = allTeams;
@@ -543,6 +551,14 @@ class ExtensionContent extends React.Component {
         this.selectedTeamName = newTeam.name;
         this.freeFormEventSource.initialize(newTeam.id, this.dataManager!);
         this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
+        
+        const preloadPromises = [
+            this.freeFormEventSource.preloadCurrentMonthEvents(),
+            this.vsoCapacityEventSource.preloadCurrentIterations()
+        ];
+        
+        await Promise.all(preloadPromises);
+        
         this.getCalendarApi().refetchEvents();
         this.dataManager!.setValue<string>("selected-team-" + this.projectId, newTeam.id, { scopeType: "User" });
         this.navigationService!.setQueryParams({ team: newTeam.id });

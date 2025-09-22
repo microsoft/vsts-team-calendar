@@ -54,8 +54,8 @@
     "package-extension": "tfx extension create --manifest-globs azure-devops-extension.json src/*.json",
     "publish-extension": "tfx extension publish --manifest-globs azure-devops-extension.json src/*.json",
     "dev:webpack": "webpack --watch",
-    "dev": "webpack-dev-server --hot --progress --static ./ --https --port 8888",
-    "dev:http": "webpack-dev-server --progress  --static ./ --port 8888"
+    "dev": "webpack-dev-server",
+    "dev:http": "webpack-dev-server --server http"
   },
   "dependencies": {
     "@fullcalendar/core": "^4.1.0",
@@ -81,11 +81,11 @@
     "sass": "^1.55.0",
     "sass-loader": "^10.1.1",
     "style-loader": "^1.2.1",
-    "tfx-cli": "^0.12.0",
-    "ts-loader": "~5.2.2",
+    "tfx-cli": "^0.22.1",
+    "ts-loader": "^9.5.4",
     "typescript": "^3.9.10",
     "webpack": "^5.72.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1"
+    "webpack-dev-server": "^5.2.2"
   }
 }

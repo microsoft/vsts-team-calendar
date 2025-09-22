@@ -270,6 +270,14 @@ export class VSOCapacityEventSource {
         this.updateUrls();
     }
 
+    public preloadCurrentIterations(): Promise<void> {
+        return this.fetchIterations().then(iterations => {
+            console.log(`[VSOCapacityEventSource] Preload complete - ${iterations ? iterations.length : 0} iterations cached`);
+        }).catch(error => {
+            console.error(`[VSOCapacityEventSource] Error preloading iterations:`, error);
+        });
+    }
+
     public updateEvent = (oldEvent: ICalendarEvent, iterationId: string, startDate: Date, endDate: Date) => {
         const isTeam = oldEvent.member!.displayName === Everyone;
         const orignalStartDate = shiftToUTC(new Date(oldEvent.startDate));

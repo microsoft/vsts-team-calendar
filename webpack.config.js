@@ -17,6 +17,12 @@ module.exports = {
 
   },
   devtool: "inline-source-map",
+  devServer: {
+    static: "./",
+    hot: true,
+    port: 8888,
+    server: "https"
+  },
   resolve: {
     extensions: [".ts", ".tsx", ".js"],
     alias: {

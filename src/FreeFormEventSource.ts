@@ -47,12 +47,24 @@ export class FreeFormEventsSource {
                 addedEvent.endDate = end.toISOString();
                 return addedEvent;
             }
-        );
+        ).catch((error: any) => {
+            // If document already exists, provide a more user-friendly error
+            if (error.status === 400 && error.responseText && error.responseText.indexOf('DocumentExistsException') > -1) {
+                throw new Error(`Event "${title}" already exists or there was a conflict creating it.`);
+            }
+            throw error;
+        });
     };
 
     public deleteEvent = (eventId: string, startDate: Date) => {
         delete this.eventMap[eventId];
-        return this.dataManager!.deleteDocument(this.selectedTeamId! + "." + formatDate(startDate, "MM-YYYY"), eventId);
+        return this.dataManager!.deleteDocument(this.selectedTeamId! + "." + formatDate(startDate, "MM-YYYY"), eventId).catch((error: any) => {
+            // If document/collection doesn't exist or any 404 error, treat as successful deletion
+            if (error.status === 404) {
+                return; // Treat as success
+            }
+            throw error;
+        });
     };
 
     public getCategories = (): Set<string> => {
@@ -151,6 +163,54 @@ export class FreeFormEventsSource {
         this.fetchedCollections.clear();
     }
 
+    public preloadCurrentMonthEvents(): Promise<void> {
+        if (!this.dataManager || !this.selectedTeamId) {
+            return Promise.resolve();
+        }
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        // First, check for any legacy data that might not have been migrated
+        return this.ensureLegacyDataMigration().then(() => {
+            // Then fetch current month events
+            return this.fetchEvents(startOfMonth, endOfMonth).then(() => {
+                // Preload complete
+            });
+        });
+    }
+
+    private ensureLegacyDataMigration(): Promise<void> {
+        if (!this.dataManager || !this.selectedTeamId) {
+            return Promise.resolve();
+        }
+
+        // Check the main team collection for any remaining legacy events
+        return this.dataManager.queryCollectionsByName([this.selectedTeamId]).then((collections: ExtensionDataCollection[]) => {
+            if (collections && collections[0] && collections[0].documents && collections[0].documents.length > 0) {
+                const oldData: ICalendarEvent[] = [];
+                collections[0].documents.forEach((doc: ICalendarEvent) => {
+                    // Add to current cache immediately
+                    this.eventMap[doc.id!] = doc;
+                    oldData.push(doc);
+                });
+                
+                // Convert/migrate the data
+                this.convertData(oldData);
+                
+                // Mark the legacy collection as processed
+                this.fetchedCollections.add(this.selectedTeamId);
+            } else {
+                // Still mark as processed to avoid future checks
+                this.fetchedCollections.add(this.selectedTeamId);
+            }
+        }).catch(error => {
+            // Mark as processed even if there's an error to avoid infinite retries
+            this.fetchedCollections.add(this.selectedTeamId);
+        });
+    }
+
     public updateEvent = (
         id: string,
         title: string,
@@ -176,6 +236,8 @@ export class FreeFormEventsSource {
                 // add event
                 this.eventMap[updatedEvent.id!] = updatedEvent;
                 return updatedEvent;
+            }).catch((error: any) => {
+                throw error;
             });
         } else {
             // move data to new month's collection
@@ -184,15 +246,31 @@ export class FreeFormEventsSource {
                     // add event
                     this.eventMap[updatedEvent.id!] = updatedEvent;
                     return updatedEvent;
+                }).catch((createError: any) => {
+                    // If creation fails due to document already existing, treat as successful
+                    if (createError.status === 400 && createError.responseText && createError.responseText.indexOf('DocumentExistsException') > -1) {
+                        return oldEvent; // Return the original event as if it was successful
+                    }
+                    throw createError;
                 });
+            }).catch((deleteError: any) => {
+                // If delete fails with 404, try to create in new location anyway
+                if (deleteError.status === 404) {
+                    return this.dataManager!.createDocument(collectionNameNew, oldEvent).then((updatedEvent: ICalendarEvent) => {
+                        this.eventMap[updatedEvent.id!] = updatedEvent;
+                        return updatedEvent;
+                    }).catch((createError: any) => {
+                        if (createError.status === 400 && createError.responseText && createError.responseText.indexOf('DocumentExistsException') > -1) {
+                            return oldEvent;
+                        }
+                        throw createError;
+                    });
+                }
+                throw deleteError;
             });
         }
     };
 
-    /**
-     * Copies legqacy data from single collection in to respective monthly collection
-     * Deletes legacy data
-     */
     private convertData = (oldData: ICalendarEvent[]) => {
         // chain all actions in to max 10 queues
         let queue: Promise<void>[] = [];
@@ -209,15 +287,28 @@ export class FreeFormEventsSource {
                 index = 0;
             }
             queue[index] = queue[index].then(() => {
-                this.dataManager!.createDocument(this.selectedTeamId! + "." + formatDate(new Date(doc.startDate), "MM-YYYY"), doc);
+                const collectionName = this.selectedTeamId! + "." + formatDate(new Date(doc.startDate), "MM-YYYY");
+                return this.dataManager!.createDocument(collectionName, doc).catch((error: any) => {
+                    // If document already exists, skip creation
+                    if (error.status === 400 && error.responseText && error.responseText.indexOf('DocumentExistsException') > -1) {
+                        return;
+                    }
+                    throw error;
+                });
             });
             queue[index] = queue[index].then(() => {
-                this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!);
+                return this.dataManager!.deleteDocument(this.selectedTeamId!, doc.id!).catch((error: any) => {
+                    // If any 404 error, treat as successful deletion
+                    if (error.status === 404) {
+                        return;
+                    }
+                    throw error;
+                });
             });
             index++;
         });
 
-        // delete catagories data if there is any
+        // delete categories data if there is any
         this.dataManager!.queryCollectionsByName([this.selectedTeamId! + "-categories"]).then((collections: ExtensionDataCollection[]) => {
             if (collections && collections[0] && collections[0].documents) {
                 collections[0].documents.forEach(doc => {
@@ -225,13 +316,55 @@ export class FreeFormEventsSource {
                         index = 0;
                     }
                     queue[index] = queue[index].then(() => {
-                        this.dataManager!.deleteDocument(this.selectedTeamId! + "-categories", doc.id!);
+                        return this.dataManager!.deleteDocument(this.selectedTeamId! + "-categories", doc.id!).catch((error: any) => {
+                            // If any 404 error, treat as successful deletion
+                            if (error.status === 404) {
+                                return;
+                            }
+                            throw error;
+                        });
                     });
                     index++;
                 });
             }
+        }).catch((error: any) => {
+            // This is not critical, so we can continue
         });
     };
+
+    private generatePotentialLegacyCollections(start: Date, end: Date): string[] {
+        const legacyCollections: string[] = [];
+        
+        // Check for potential variations in date formatting that might have been used
+        const monthsInRange = getMonthYearInRange(start, end);
+        
+        monthsInRange.forEach(monthYear => {
+            // Current format: teamId.M.YYYY or teamId.MM.YYYY
+            const teamPrefix = this.selectedTeamId + ".";
+            
+            // Try different potential formats that might have been used historically
+            const [month, year] = monthYear.split('.');
+            const monthNum = parseInt(month);
+            
+            // Variations to check:
+            // 1. Zero-padded month: teamId.09.2025
+            const paddedMonth = monthNum < 10 ? "0" + monthNum : monthNum.toString();
+            legacyCollections.push(teamPrefix + paddedMonth + "." + year);
+            
+            // 2. Different separator: teamId-M-YYYY  
+            legacyCollections.push(this.selectedTeamId + "-" + month + "-" + year);
+            legacyCollections.push(this.selectedTeamId + "-" + paddedMonth + "-" + year);
+            
+            // 3. Different order: teamId.YYYY.M
+            legacyCollections.push(teamPrefix + year + "." + month);
+            legacyCollections.push(teamPrefix + year + "." + paddedMonth);
+        });
+        
+        // Also check for the plain team ID collection (legacy format)
+        legacyCollections.push(this.selectedTeamId);
+        
+        return legacyCollections.filter((item, index, arr) => arr.indexOf(item) === index); // Remove duplicates
+    }
 
     private fetchEvents = (start: Date, end: Date): Promise<{ [id: string]: ICalendarEvent }> => {
         const collectionNames = getMonthYearInRange(start, end).map(item => {
@@ -242,16 +375,52 @@ export class FreeFormEventsSource {
         collectionNames.forEach(collection => {
             if (!this.fetchedCollections.has(collection)) {
                 collectionsToFetch.push(collection);
-                this.fetchedCollections.add(collection);
+                // DON'T mark as fetched yet - wait until after successful fetch
+            }
+        });
+
+        // Also check for potential legacy collection variations for backward compatibility
+        const legacyCollections = this.generatePotentialLegacyCollections(start, end);
+        legacyCollections.forEach(collection => {
+            if (!this.fetchedCollections.has(collection) && collectionsToFetch.indexOf(collection) === -1) {
+                collectionsToFetch.push(collection);
             }
         });
 
         return this.dataManager!.queryCollectionsByName(collectionsToFetch).then((collections: ExtensionDataCollection[]) => {
+            // Mark collections as fetched AFTER successful retrieval
+            collectionsToFetch.forEach(collectionName => {
+                this.fetchedCollections.add(collectionName);
+            });
+            
             collections.forEach(collection => {
-                if (collection && collection.documents) {
-                    collection.documents.forEach(doc => {
-                        this.eventMap[doc.id] = doc;
-                    });
+                if (collection && collection.documents && collection.documents.length > 0) {
+                    // Check if this is a legacy collection that needs migration
+                    const isLegacyCollection = collection.collectionName === this.selectedTeamId || 
+                                             collection.collectionName.indexOf('-') > -1 || // Old separator format
+                                             !collection.collectionName.match(/\.\d{1,2}\.\d{4}$/); // Doesn't match current format
+                    
+                    if (isLegacyCollection && collection.documents.length > 0) {
+                        const eventsToMigrate: ICalendarEvent[] = [];
+                        
+                        collection.documents.forEach(doc => {
+                            // Add to current cache immediately for availability
+                            this.eventMap[doc.id] = doc;
+                            eventsToMigrate.push(doc);
+                        });
+                        
+                        // Migrate the events to proper monthly collections (async, don't wait)
+                        if (eventsToMigrate.length > 0) {
+                            setTimeout(() => {
+                                this.convertData(eventsToMigrate);
+                            }, 100); // Small delay to ensure current operation completes first
+                        }
+                    } else {
+                        // Regular collection processing
+                        collection.documents.forEach(doc => {
+                            this.eventMap[doc.id] = doc;
+                        });
+                    }
                 }
             });
 
@@ -265,12 +434,25 @@ export class FreeFormEventsSource {
                             this.eventMap[doc.id!] = doc;
                             oldData.push(doc);
                         });
-                        this.convertData(oldData);
+                        // Migrate the data (async, don't wait)
+                        setTimeout(() => {
+                            this.convertData(oldData);
+                        }, 100);
                     }
+                    return this.eventMap;
+                }).catch((error: any) => {
+                    // Mark as fetched even on error to prevent retries
+                    this.fetchedCollections.add(this.selectedTeamId!);
                     return this.eventMap;
                 });
             }
             return Promise.resolve(this.eventMap);
+        }).catch((error: any) => {
+            // Mark collections as fetched even on error to prevent infinite retries
+            collectionsToFetch.forEach(collectionName => {
+                this.fetchedCollections.add(collectionName);
+            });
+            return this.eventMap;
         });
     };
 }

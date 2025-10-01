@@ -313,10 +313,6 @@ export class VSOCapacityEventSource {
     };
 
     private buildTeamImageUrl(id: string): string {
-        // Modern Azure DevOps Services API endpoint format
-        // For Azure DevOps Services: https://dev.azure.com/{organization}/_apis/GraphProfile/MemberAvatars/{id}
-        // For on-premises (ADO Server): {hostUrl}_api/_common/IdentityImage?id={id}
-        
         if (this.hostUrl.includes('dev.azure.com') || this.hostUrl.includes('visualstudio.com')) {
             // Azure DevOps Services
             return this.hostUrl + "_apis/GraphProfile/MemberAvatars/" + id;

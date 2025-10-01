@@ -35,22 +35,22 @@ Team Calendar is written in [TypeScript](https://www.typescriptlang.org/). To bu
 
 ### Compile the code
 
-To compile and package the extension run:
+To compile and package the development version of the extension run:
 
 ```
-npm run build
+npm run build:dev
 ```
 
 This will compile the TypeScript code in the project and create a .vsix file.
 
-### Package the extension
+### Publish the extension
 
 To install your own version of the Team Calendar extension into your VSTS account, you need to create a publisher on the Visual Studio Marketplace. There is no cost for creating or having a publisher. [Learn how to create a publisher](https://www.visualstudio.com/docs/integrate/extensions/publish/overview).
 
 1. Update your version of the extension manifest (`vss-extension.json`) file:
     1. Set the `publisher` property to your Visual Studio Marketplace publisher ID
     2. Set the `public` property to `false`
-2. Package the extension (`npm run build`) to produce a .vsix file. Note: you should see your publisher ID in the name of this file.
+2. Re-package the extension (`npm run build:dev`) to produce a .vsix file. Note: you should see your publisher ID in the name of this file.
 3. Go to the [manage](https://marketplace.visualstudio.com/manage) page of the Marketplace and click **Upload** to publish your version of the extension (don't worry, only you will be able to see it)
 4. After uploading, select the extension, click **Share** ,and enter the name of the VSTS account you want to be able to install the extension into
 5. Click the extension's title to open its details page

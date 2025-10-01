@@ -313,7 +313,17 @@ export class VSOCapacityEventSource {
     };
 
     private buildTeamImageUrl(id: string): string {
-        return this.hostUrl + "_api/_common/IdentityImage?id=" + id;
+        // Modern Azure DevOps Services API endpoint format
+        // For Azure DevOps Services: https://dev.azure.com/{organization}/_apis/GraphProfile/MemberAvatars/{id}
+        // For on-premises (ADO Server): {hostUrl}_api/_common/IdentityImage?id={id}
+        
+        if (this.hostUrl.includes('dev.azure.com') || this.hostUrl.includes('visualstudio.com')) {
+            // Azure DevOps Services
+            return this.hostUrl + "_apis/GraphProfile/MemberAvatars/" + id;
+        } else {
+            // On-premises Azure DevOps Server
+            return this.hostUrl + "_api/_common/IdentityImage?id=" + id;
+        }
     }
 
     private fetchCapacities = (iterationId: string): Promise<TeamMemberCapacityIdentityRef[]> => {
@@ -377,7 +387,7 @@ export class VSOCapacityEventSource {
 
                     const icon: IEventIcon = {
                         linkedEvent: event,
-                        src: capacity.teamMember.imageUrl
+                        src: capacity.teamMember.imageUrl || this.buildTeamImageUrl(capacity.teamMember.id)
                     };
 
                     // add personal day off event to calendar day off events
@@ -389,7 +399,7 @@ export class VSOCapacityEventSource {
                             } else {
                                 capacityCatagoryMap[capacity.teamMember.id] = {
                                     eventCount: 1,
-                                    imageUrl: capacity.teamMember.imageUrl,
+                                    imageUrl: capacity.teamMember.imageUrl || this.buildTeamImageUrl(capacity.teamMember.id),
                                     subTitle: formatDate(dateObj, "MM-DD-YYYY"),
                                     title: capacity.teamMember.displayName
                                 };
@@ -490,7 +500,10 @@ export class VSOCapacityEventSource {
                 if (iterations.length > 0) {
                     const iterationPath = iterations[0].path.substr(iterations[0].path.indexOf("\\") + 1);
                     this.capacityUrl.value =
-                        this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_backlogs/capacity/" + iterationPath;
+                        this.hostUrl + encodeURIComponent(this.teamContext.project) + "/_sprints/capacity/" +
+                        encodeURIComponent(this.teamContext.team) + "/" +
+                        encodeURIComponent(this.teamContext.project) + "/" +
+                        encodeURIComponent(iterationPath);
                 } else {
                     this.capacityUrl.value = this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_admin/_iterations";
                 }

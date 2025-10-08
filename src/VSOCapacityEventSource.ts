@@ -461,7 +461,7 @@ export class VSOCapacityEventSource {
                     src: teamImage
                 };
 
-                // add team day off event to calendar day off events (EXACTLY like personal days off)
+                // Add team day off event to calendar day off events
                 const dates = getDatesInRange(start, end);
                 for (const dateObj of dates) {
                     if (calendarStart <= dateObj && dateObj <= calendarEnd) {

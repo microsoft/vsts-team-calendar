@@ -312,7 +312,7 @@ export class VSOCapacityEventSource {
 
     private async buildTeamImageUrl(id: string): Promise<string> {
         if (!this.locationService) {
-            throw new Error("Location service is required for building team image URLs");
+            throw new Error("Location service is required for building team image URLs. Ensure the location service is properly initialized before calling this method.");
         }
 
         try {

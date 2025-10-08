@@ -1,5 +1,6 @@
 import { getClient } from "azure-devops-extension-api";
 import { TeamContext } from "azure-devops-extension-api/Core";
+import { ILocationService } from "azure-devops-extension-api/Common";
 import { ObservableValue, ObservableArray } from "azure-devops-ui/Core/Observable";
 import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
@@ -22,6 +23,7 @@ export class VSOCapacityEventSource {
     private iterations: TeamSettingsIteration[] = [];
     private iterationSummaryData: ObservableArray<IEventCategory> = new ObservableArray<IEventCategory>([]);
     private iterationUrl: ObservableValue<string> = new ObservableValue("");
+    private locationService: ILocationService | null = null;
     private teamContext: TeamContext = { projectId: "", teamId: "", project: "", team: "" };
     private teamDayOffMap: { [iterationId: string]: TeamSettingsDaysOff } = {};
     private workClient: WorkRestClient = getClient(WorkRestClient, {});
@@ -111,8 +113,7 @@ export class VSOCapacityEventSource {
         successCallback: (events: EventInput[]) => void,
         failureCallback: (error: EventSourceError) => void
     ): void | PromiseLike<EventInput[]> => {
-        const capacityPromises: PromiseLike<TeamMemberCapacity[]>[] = [];
-        const teamDaysOffPromises: PromiseLike<TeamSettingsDaysOff>[] = [];
+        const processingPromises: PromiseLike<void>[] = [];
         const renderedEvents: EventInput[] = [];
         const capacityCatagoryMap: { [id: string]: IEventCategory } = {};
         const currentIterations: IEventCategory[] = [];
@@ -178,48 +179,45 @@ export class VSOCapacityEventSource {
                 }
 
                 if (loadIterationData) {
-                    const teamsDayOffPromise = this.fetchTeamDaysOff(iteration.id);
-                    teamDaysOffPromises.push(teamsDayOffPromise);
-                    teamsDayOffPromise.then((teamDaysOff: TeamSettingsDaysOff) => {
-                        this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                    // Create processing promises that include the actual processing, not just fetching
+                    const teamsDayOffProcessingPromise = this.fetchTeamDaysOff(iteration.id).then(async (teamDaysOff: TeamSettingsDaysOff) => {
+                        await this.processTeamDaysOff(teamDaysOff, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
                     });
+                    processingPromises.push(teamsDayOffProcessingPromise);
 
-                    const capacityPromise = this.fetchCapacities(iteration.id);
-                    capacityPromises.push(capacityPromise);
-                    capacityPromise.then((capacities: TeamMemberCapacityIdentityRef[]) => {
-                        this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
+                    const capacityProcessingPromise = this.fetchCapacities(iteration.id).then(async (capacities: TeamMemberCapacityIdentityRef[]) => {
+                        await this.processCapacity(capacities, iteration.id, capacityCatagoryMap, calendarStart, calendarEnd);
                     });
+                    processingPromises.push(capacityProcessingPromise);
                 }
             }
 
-            Promise.all(teamDaysOffPromises).then(() => {
-                Promise.all(capacityPromises).then(() => {
-                    Object.keys(this.groupedEventMap).forEach(id => {
-                        const event = this.groupedEventMap[id];
-                        // skip events with date strings we can't parse.
-                        const start = new Date(event.startDate);
-                        const end = new Date(event.endDate);
-                        if ((calendarStart <= start && start <= calendarEnd) || (calendarStart <= end && end <= calendarEnd)) {
-                            renderedEvents.push({
-                                allDay: true,
-                                color: "transparent",
-                                editable: false,
-                                end: end,
-                                id: event.id,
-                                start: start,
-                                title: ""
-                            });
-                        }
-                    });
-                    successCallback(renderedEvents);
-                    this.iterationSummaryData.value = currentIterations;
-                    this.capacitySummaryData.value = Object.keys(capacityCatagoryMap).map(key => {
-                        const catagory = capacityCatagoryMap[key];
-                        if (catagory.eventCount > 1) {
-                            catagory.subTitle = catagory.eventCount + " days off";
-                        }
-                        return catagory;
-                    });
+            Promise.all(processingPromises).then(() => {
+                Object.keys(this.groupedEventMap).forEach(id => {
+                    const event = this.groupedEventMap[id];
+                    // skip events with date strings we can't parse.
+                    const start = new Date(event.startDate);
+                    const end = new Date(event.endDate);
+                    if ((calendarStart <= start && start <= calendarEnd) || (calendarStart <= end && end <= calendarEnd)) {
+                        renderedEvents.push({
+                            allDay: true,
+                            color: "transparent",
+                            editable: false,
+                            end: end,
+                            id: event.id,
+                            start: start,
+                            title: ""
+                        });
+                    }
+                });
+                successCallback(renderedEvents);
+                this.iterationSummaryData.value = currentIterations;
+                this.capacitySummaryData.value = Object.keys(capacityCatagoryMap).map(key => {
+                    const catagory = capacityCatagoryMap[key];
+                    if (catagory.eventCount > 1) {
+                        catagory.subTitle = catagory.eventCount + " days off";
+                    }
+                    return catagory;
                 });
             });
         });
@@ -256,8 +254,9 @@ export class VSOCapacityEventSource {
         return this.iterationUrl;
     };
 
-    public initialize(projectId: string, projectName: string, teamId: string, teamName: string, hostUrl: string) {
+    public initialize(projectId: string, projectName: string, teamId: string, teamName: string, hostUrl: string, locationService?: ILocationService) {
         this.hostUrl = hostUrl;
+        this.locationService = locationService || null;
         this.teamContext = {
             project: projectName,
             projectId: projectId,
@@ -272,7 +271,6 @@ export class VSOCapacityEventSource {
 
     public preloadCurrentIterations(): Promise<void> {
         return this.fetchIterations().then(iterations => {
-            console.log(`[VSOCapacityEventSource] Preload complete - ${iterations ? iterations.length : 0} iterations cached`);
         }).catch(error => {
             console.error(`[VSOCapacityEventSource] Error preloading iterations:`, error);
         });
@@ -312,8 +310,24 @@ export class VSOCapacityEventSource {
         }
     };
 
-    private buildTeamImageUrl(id: string): string {
-        return this.hostUrl + "_api/_common/IdentityImage?id=" + id;
+    private async buildTeamImageUrl(id: string): Promise<string> {
+        if (!this.locationService) {
+            throw new Error("Location service is required for building team image URLs. Ensure the location service is properly initialized before calling this method.");
+        }
+
+        try {
+            // Use location service to get the proper resource area URL for GraphProfile
+            const graphResourceLocation = await this.locationService.getResourceAreaLocation("79134C72-4A58-4B42-976C-04E7115F32BF");
+            if (graphResourceLocation) {
+                return graphResourceLocation + "_apis/GraphProfile/MemberAvatars/" + id;
+            }
+        } catch (error) {
+            console.warn("GraphProfile resource area not available, trying service location fallback", error);
+        }
+
+        // Fallback to service location with legacy endpoint
+        const serviceLocation = await this.locationService.getServiceLocation();
+        return serviceLocation + "_api/_common/IdentityImage?id=" + id;
     }
 
     private fetchCapacities = (iterationId: string): Promise<TeamMemberCapacityIdentityRef[]> => {
@@ -344,7 +358,7 @@ export class VSOCapacityEventSource {
         return this.workClient.getTeamDaysOff(this.teamContext, iterationId);
     };
 
-    private processCapacity = (
+    private processCapacity = async (
         capacities: TeamMemberCapacityIdentityRef[],
         iterationId: string,
         capacityCatagoryMap: { [id: string]: IEventCategory },
@@ -377,7 +391,7 @@ export class VSOCapacityEventSource {
 
                     const icon: IEventIcon = {
                         linkedEvent: event,
-                        src: capacity.teamMember.imageUrl
+                        src: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id)
                     };
 
                     // add personal day off event to calendar day off events
@@ -389,7 +403,7 @@ export class VSOCapacityEventSource {
                             } else {
                                 capacityCatagoryMap[capacity.teamMember.id] = {
                                     eventCount: 1,
-                                    imageUrl: capacity.teamMember.imageUrl,
+                                    imageUrl: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id),
                                     subTitle: formatDate(dateObj, "MM-DD-YYYY"),
                                     title: capacity.teamMember.displayName
                                 };
@@ -416,7 +430,7 @@ export class VSOCapacityEventSource {
         }
     };
 
-    private processTeamDaysOff = (
+    private processTeamDaysOff = async (
         teamDaysOff: TeamSettingsDaysOff,
         iterationId: string,
         capacityCatagoryMap: { [id: string]: IEventCategory },
@@ -426,7 +440,7 @@ export class VSOCapacityEventSource {
         if (teamDaysOff && teamDaysOff.daysOff) {
             this.teamDayOffMap[iterationId] = teamDaysOff;
             for (const daysOffRange of teamDaysOff.daysOff) {
-                const teamImage = this.buildTeamImageUrl(this.teamContext.teamId);
+                const teamImage = await this.buildTeamImageUrl(this.teamContext.teamId);
                 const start = shiftToLocal(daysOffRange.start);
                 const end = shiftToLocal(daysOffRange.end);
 
@@ -447,7 +461,7 @@ export class VSOCapacityEventSource {
                     src: teamImage
                 };
 
-                // add personal day off event to calendar day off events
+                // Add team day off event to calendar day off events
                 const dates = getDatesInRange(start, end);
                 for (const dateObj of dates) {
                     if (calendarStart <= dateObj && dateObj <= calendarEnd) {
@@ -490,7 +504,10 @@ export class VSOCapacityEventSource {
                 if (iterations.length > 0) {
                     const iterationPath = iterations[0].path.substr(iterations[0].path.indexOf("\\") + 1);
                     this.capacityUrl.value =
-                        this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_backlogs/capacity/" + iterationPath;
+                        this.hostUrl + encodeURIComponent(this.teamContext.project) + "/_sprints/capacity/" +
+                        encodeURIComponent(this.teamContext.team) + "/" +
+                        encodeURIComponent(this.teamContext.project) + "/" +
+                        encodeURIComponent(iterationPath);
                 } else {
                     this.capacityUrl.value = this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_admin/_iterations";
                 }

@@ -54,6 +54,7 @@ class ExtensionContent extends React.Component {
     eventToEdit?: ICalendarEvent;
     freeFormEventSource: FreeFormEventsSource;
     hostUrl: string;
+    locationService: ILocationService | undefined;
     members: TeamMember[];
     navigationService: IHostNavigationService | undefined;
     openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
@@ -362,6 +363,7 @@ class ExtensionContent extends React.Component {
 
         this.dataManager = await dataSvc.getExtensionDataManager(SDK.getExtensionContext().id, await SDK.getAccessToken());
         this.navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
+        this.locationService = locationService;
 
         const queryParam = await this.navigationService.getQueryParams();
         let selectedTeamId;
@@ -415,7 +417,7 @@ class ExtensionContent extends React.Component {
                 
             }
             this.freeFormEventSource.initialize(selectedTeamId, this.dataManager);
-            this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl);
+            this.vsoCapacityEventSource.initialize(project.id, this.projectName, selectedTeamId, this.selectedTeamName, this.hostUrl, locationService);
             
             const preloadPromises = [
                 this.freeFormEventSource.preloadCurrentMonthEvents(),
@@ -550,7 +552,7 @@ class ExtensionContent extends React.Component {
         const newTeam = item.data! as WebApiTeam;
         this.selectedTeamName = newTeam.name;
         this.freeFormEventSource.initialize(newTeam.id, this.dataManager!);
-        this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl);
+        this.vsoCapacityEventSource.initialize(this.projectId, this.projectName, newTeam.id, newTeam.name, this.hostUrl, this.locationService);
         
         const preloadPromises = [
             this.freeFormEventSource.preloadCurrentMonthEvents(),

@@ -312,7 +312,7 @@ export class VSOCapacityEventSource {
 
     private async buildTeamImageUrl(id: string): Promise<string> {
         if (!this.locationService) {
-            throw new Error("Location service is required for building team image URLs");
+            throw new Error("Location service is required for building team image URLs. Ensure the location service is properly initialized before calling this method.");
         }
 
         try {
@@ -461,7 +461,7 @@ export class VSOCapacityEventSource {
                     src: teamImage
                 };
 
-                // add team day off event to calendar day off events (EXACTLY like personal days off)
+                // add team day off event to calendar day off events
                 const dates = getDatesInRange(start, end);
                 for (const dateObj of dates) {
                     if (calendarStart <= dateObj && dateObj <= calendarEnd) {

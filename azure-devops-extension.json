@@ -89,6 +89,7 @@
               "ms.vss-work-web.work-hub-group"
           ],
           "properties": {
+              "iconName": "Calendar",
               "name": "Calendar",
               "order": 22,
               "uri": "dist/calendar.html"

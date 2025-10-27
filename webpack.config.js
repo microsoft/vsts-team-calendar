@@ -68,6 +68,7 @@ module.exports = {
         { from: "**/*.html", to: "./", context: "src" },
         { from: "**/*.png", to: "./static/v2-images", context: "static/v2-images" },
         { from: "./azure-devops-extension.json", to: "azure-devops-extension.json" },
+        { from: "./src/Calendar.json", to: "Calendar.json" },
         { from: "./overview.md", to: "./" },
       ]
     })

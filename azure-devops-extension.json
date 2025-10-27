@@ -9,7 +9,11 @@
   "categories": ["Plan and Track"],
   "targets": [
     {
-      "id": "Microsoft.VisualStudio.Services"
+      "id": "Microsoft.VisualStudio.Services.Cloud"
+    },
+    {
+      "id": "Microsoft.TeamFoundation.Server",
+      "version": "[18.0,)"
     }
   ],
   "scopes": ["vso.work_write"],

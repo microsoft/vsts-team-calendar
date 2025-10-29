@@ -9,7 +9,11 @@
   "categories": ["Plan and Track"],
   "targets": [
     {
-      "id": "Microsoft.VisualStudio.Services"
+      "id": "Microsoft.VisualStudio.Services.Cloud"
+    },
+    {
+      "id": "Microsoft.TeamFoundation.Server",
+      "version": "[18.0,)"
     }
   ],
   "scopes": ["vso.work_write"],
@@ -85,6 +89,7 @@
               "ms.vss-work-web.work-hub-group"
           ],
           "properties": {
+              "iconName": "Calendar",
               "name": "Calendar",
               "order": 22,
               "uri": "dist/calendar.html"

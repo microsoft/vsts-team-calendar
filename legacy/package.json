@@ -56,7 +56,7 @@
     "tfx-cli": "~0.12.0",
     "ts-loader": "~3.0.3",
     "typescript": "~2.9.2",
-    "webpack": "~5.75.0"
+    "webpack": "~5.94.0"
   },
   "dependencies": {
     "@types/es6-promise": "~0.0.33",

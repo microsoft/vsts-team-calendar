@@ -1,10 +1,8 @@
-# Team Calendar Extension for Visual Studio Team Services
-
-![buildstatus](https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/5979/badge)
+# Team Calendar Extension for Azure DevOps Server and Team Foundation Server
 
 Team Calendar helps busy teams stay on track and informed about important deadlines, sprint schedules, and upcoming milestones. It is the one place to see and manage the date important to your teams, including sprint schedule, days off (for individuals or the team), and custom events.
 
-Team Calendar installs into either a Visual Studio Team Services account or into Team Foundation Server.
+> **This version supports the versions of Azure DevOps Server/Team Foundation Server up to 2019. For more current versions, and Azure DevOps Services, the [Azure DevOps Open in Excel extension](https://marketplace.visualstudio.com/items?itemName=blueprint.vsts-open-work-items-in-excel) should be used.**
 
 ![screenshot](static/v2-images/calendar-screen-shot.png)
 
@@ -18,9 +16,7 @@ To learn more about Extensions, see the [overview of extensions](https://www.vis
 
 ## Install
 
-To try out the extension in your VSTS account, visit the [Team Calendar extension](https://marketplace.visualstudio.com/items?itemName=ms-devlabs.team-calendar) page on the Visual Studio Marketplace.
-
-Don't have a [free] VSTS account? [Learn more](https://www.visualstudio.com/team-services/) about getting one.
+To try out the extension in your Azure DevOps account, visit the [Team Calendar extension](https://marketplace.visualstudio.com/items?itemName=ms-devlabs.team-calendar-2019) page on the Visual Studio Marketplace.
 
 ## Develop
 
@@ -59,3 +55,5 @@ To install your own version of the Team Calendar extension into your VSTS accoun
 ## Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+> Microsoft DevLabs is an outlet for experiments from Microsoft, experiments that represent some of the latest ideas around developer tools. Solutions in this category are designed for broad usage and you are encouraged to use and provide feedback on them; however, these extensions are not supported nor are any commitments made as to their longevity.

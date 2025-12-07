@@ -1,15 +1,16 @@
 {
   "manifestVersion": 1,
-  "id": "team-calendar",
+  "id": "team-calendar-2019",
   "publisher": "ms-devlabs",
   "version": "2.0.16",
-  "name": "Team Calendar",
-  "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more.",
+  "name": "Team Calendar 2019",
+  "description": "Track events important to your team, view and manage days off, quickly see when sprints start and end, and more. Support for Azure DevOps 2019 and earlier.",
   "public": true,
-  "categories": ["Plan and track"],
+  "categories": ["Azure Boards"],
   "targets": [
     {
-      "id": "Microsoft.VisualStudio.Services"
+      "id": "Microsoft.TeamFoundation.Server",
+      "version": "[10.0, 17.0]"
     }
   ],
   "scopes": ["vso.work_write"],
@@ -26,20 +27,13 @@
   },
   "links": {
     "support": {
-      "uri": "https://github.com/Microsoft/vsts-team-calendar/issues"
+      "uri": "https://github.com/microsoft/vsts-team-calendar/issues"
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vsts-team-calendar"
+    "url": "https://github.com/microsoft/vsts-team-calendar"
   },
-  "badges": [
-    {
-      "href": "https://github.com/Microsoft/vsts-team-calendar",
-      "uri": "https://mseng.visualstudio.com/_apis/public/build/definitions/b924d696-3eae-4116-8443-9a18392d8544/2715/badge",
-      "description": "Team Calendar CI build status"
-    }
-  ],
   "screenshots": [
     {
       "path": "static/v2-images/calendar-screen-shot.png"

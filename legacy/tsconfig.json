@@ -19,7 +19,8 @@
         },
         "skipLibCheck": true,
         "types": [
-            "vss-web-extension-sdk"
+            "vss-web-extension-sdk",
+            "fullcalendar"
         ]
     },
     "include": [

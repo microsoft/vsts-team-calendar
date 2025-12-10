@@ -85,7 +85,7 @@ export class FreeFormEventsSource {
         const calendarEnd = new Date(arg.end);
         calendarEnd.setDate(arg.end.getDate() - 1);
 
-        this.fetchEvents(calendarStart, calendarEnd).then(() => {
+        return this.fetchEvents(calendarStart, calendarEnd).then(() => {
             const inputs: EventInput[] = [];
             const catagoryMap: { [id: string]: IEventCategory } = {};
             Object.keys(this.eventMap).forEach(id => {
@@ -148,6 +148,9 @@ export class FreeFormEventsSource {
                 }
                 return catagory;
             });
+        }).catch((error: any) => {
+            console.error("[FreeFormEventSource] Error fetching events:", error);
+            failureCallback({ message: error.message || "Failed to load custom events" });
         });
     };
 

@@ -8,7 +8,7 @@ import {
     TeamSettingsIteration,
     WorkRestClient,
     TeamMemberCapacityIdentityRef
-} from "azure-devops-extension-api/work";
+} from "azure-devops-extension-api/Work";
 
 import { ObservableValue, ObservableArray } from "azure-devops-ui/Core/Observable";
 
@@ -488,7 +488,7 @@ export class VSOCapacityEventSource {
         this.iterationUrl.value = this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_admin/_iterations";
 
         this.workClient.getTeamIterations(this.teamContext, "current").then(
-            iterations => {
+            (iterations: TeamSettingsIteration[]) => {
                 if (iterations.length > 0) {
                     const iterationPath = iterations[0].path.substr(iterations[0].path.indexOf("\\") + 1);
                     this.capacityUrl.value =
@@ -497,7 +497,7 @@ export class VSOCapacityEventSource {
                     this.capacityUrl.value = this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_admin/_iterations";
                 }
             },
-            error => {
+            (error: any) => {
                 this.capacityUrl.value = this.hostUrl + this.teamContext.project + "/" + this.teamContext.team + "/_admin/_iterations";
             }
         );

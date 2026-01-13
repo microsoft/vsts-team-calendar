@@ -1,5 +1,5 @@
 import { WebApiTeam } from 'TFS/Core/Contracts';
-import * as FullCalendar from 'FullCalendar';
+import * as FullCalendar from 'fullcalendar';
 
 /**
  * Content to be rendered by the Add Event Dialog

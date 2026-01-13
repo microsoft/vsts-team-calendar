@@ -6,7 +6,7 @@ import * as Controls from "VSS/Controls";
 import * as Culture from "VSS/Utils/Culture";
 import * as Utils_Date from "VSS/Utils/Date";
 import * as Utils_String from "VSS/Utils/String";
-import * as FullCalendar from "fullCalendar";
+import * as FullCalendar from "fullcalendar";
 
 export interface CalendarOptions {
     fullCalendarOptions: IDictionaryStringTo<any>;

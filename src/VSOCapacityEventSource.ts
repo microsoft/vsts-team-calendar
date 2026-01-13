@@ -120,7 +120,7 @@ export class VSOCapacityEventSource {
 
         this.groupedEventMap = {};
 
-        this.fetchIterations().then(iterations => {
+        return this.fetchIterations().then(iterations => {
             if (!iterations) {
                 iterations = [];
             }
@@ -220,6 +220,9 @@ export class VSOCapacityEventSource {
                     return catagory;
                 });
             });
+        }).catch((error: any) => {
+            console.error("[VSOCapacityEventSource] Error fetching events:", error);
+            failureCallback({ message: error.message || "Failed to load iteration and days off data" });
         });
     };
 

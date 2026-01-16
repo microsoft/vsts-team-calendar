@@ -134,7 +134,8 @@ export class FreeFormEventsSource {
                                 color: eventColor,
                                 eventCount: 1,
                                 subTitle: event.title,
-                                title: event.category
+                                title: event.category,
+                                linkedEvent: event
                             };
                         }
                     }

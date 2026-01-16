@@ -10,6 +10,7 @@ import { TeamMember } from "azure-devops-extension-api/WebApi/WebApi";
 
 import * as SDK from "azure-devops-extension-sdk";
 
+import { Button } from "azure-devops-ui/Button";
 import { Dropdown, DropdownExpandableButton } from "azure-devops-ui/Dropdown";
 import { CustomHeader, HeaderTitleArea } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem, HeaderCommandBar } from "azure-devops-ui/HeaderCommandBar";
@@ -58,6 +59,7 @@ class ExtensionContent extends React.Component {
     members: TeamMember[];
     navigationService: IHostNavigationService | undefined;
     openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
+    isPaneOpen: ObservableValue<boolean> = new ObservableValue<boolean>(true);
     projectId: string;
     projectName: string;
     selectedEndDate: Date;
@@ -151,11 +153,13 @@ class ExtensionContent extends React.Component {
     public render(): JSX.Element {
         return (
             <Page className="flex-grow flex-row">
-                <div className="flex-column scroll-hidden calendar-area">
-                    <CustomHeader className="bolt-header-with-commandbar">
-                        <HeaderTitleArea className="flex-grow">
-                            <div className="flex-grow">
-                                <Observer currentMonthAndYear={this.currentMonthAndYear}>
+                <Observer isPaneOpen={this.isPaneOpen}>
+                    {(props: { isPaneOpen: boolean }) => (
+                        <div className={`flex-column scroll-hidden calendar-area ${props.isPaneOpen ? 'pane-open' : 'pane-closed'}`}>
+                            <CustomHeader className="bolt-header-with-commandbar">
+                                <HeaderTitleArea className="flex-grow">
+                                    <div className="flex-grow">
+                                        <Observer currentMonthAndYear={this.currentMonthAndYear}>
                                     {(props: { currentMonthAndYear: MonthAndYear }) => {
                                         return (
                                             <Dropdown
@@ -188,10 +192,25 @@ class ExtensionContent extends React.Component {
                             </div>
                         </HeaderTitleArea>
                         <HeaderCommandBar items={this.commandBarItems} />
+                        <Observer isPaneOpen={this.isPaneOpen}>
+                            {(paneProps: { isPaneOpen: boolean }) => (
+                                !paneProps.isPaneOpen ? (
+                                    <div className="header-pane-toggle">
+                                        <Button
+                                            iconProps={{ iconName: "DoubleChevronLeft" }}
+                                            onClick={() => this.isPaneOpen.value = true}
+                                            text="Open"
+                                            tooltipProps={{ text: "Open pane" }}
+                                            ariaLabel="Open pane"
+                                        />
+                                    </div>
+                                ) : null
+                            )}
+                        </Observer>
                     </CustomHeader>
                     <Observer display={this.displayCalendar}>
-                        {(props: { display: boolean }) => {
-                            return props.display ? (
+                        {(dispProps: { display: boolean }) => {
+                            return dispProps.display ? (
                                 <div className="calendar-component">
                                     <FullCalendar
                                         defaultView="dayGridMonth"
@@ -212,12 +231,26 @@ class ExtensionContent extends React.Component {
                                         select={this.onSelectCalendarDates}
                                         selectable={true}
                                     />
-                                </div>
-                            ) : null;
-                        }}
-                    </Observer>
-                </div>
-                <SummaryComponent capacityEventSource={this.vsoCapacityEventSource} freeFormEventSource={this.freeFormEventSource} />
+                                    </div>
+                                ) : null;
+                            }}
+                        </Observer>
+                    </div>
+                    )}
+                </Observer>
+                <Observer isPaneOpen={this.isPaneOpen}>
+                    {(props: { isPaneOpen: boolean }) => (
+                        props.isPaneOpen ? (
+                            <SummaryComponent 
+                                capacityEventSource={this.vsoCapacityEventSource} 
+                                freeFormEventSource={this.freeFormEventSource}
+                                onEditDaysOff={this.onEditDaysOff}
+                                onEditEvent={this.onEditFreeFormEvent}
+                                onTogglePane={() => this.isPaneOpen.value = !this.isPaneOpen.value}
+                            />
+                        ) : null
+                    )}
+                </Observer>
                 <Observer anchorElement={this.anchorElement}>
                     {(props: { anchorElement: HTMLElement | undefined }) => {
                         return props.anchorElement ? (
@@ -455,6 +488,40 @@ class ExtensionContent extends React.Component {
 
     private onDialogDismiss = () => {
         this.openDialog.value = Dialogs.None;
+    };
+
+    private onEditDaysOff = (event: ICalendarEvent) => {
+        this.eventToEdit = event;
+        this.openDialog.value = Dialogs.NewDaysOffDialog;
+    };
+
+    private onEditFreeFormEvent = (eventId: string) => {
+        if (!eventId) {
+            console.error("Event ID is undefined");
+            return;
+        }
+        
+        const event = this.freeFormEventSource.eventMap[eventId];
+        if (!event) {
+            console.error("Event not found in eventMap:", eventId);
+            return;
+        }
+        
+        if (!this.calendarComponentRef.current) {
+            console.error("Calendar component ref is not available");
+            return;
+        }
+        
+        const calendarApi = this.getCalendarApi();
+        const calendarEvent = calendarApi.getEventById(FreeFormId + "." + eventId);
+        if (calendarEvent) {
+            this.eventApi = calendarEvent;
+            this.selectedStartDate = calendarEvent.start || new Date();
+            this.selectedEndDate = calendarEvent.end ? new Date(calendarEvent.end.getTime() - 86400000) : this.selectedStartDate;
+            this.openDialog.value = Dialogs.NewEventDialog;
+        } else {
+            console.error("Calendar event not found:", FreeFormId + "." + eventId);
+        }
     };
 
     private onEventClick = (arg: { el: HTMLElement; event: EventApi; jsEvent: MouseEvent; view: View }) => {

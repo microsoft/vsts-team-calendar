@@ -91,7 +91,13 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
         if (this.props.event) {
             this.startDate = new Date(this.props.event.startDate);
             this.endDate = new Date(this.props.event.endDate);
-            this.teamMembers.push({ id: this.props.event.member!.id, text: this.props.event.member!.displayName });
+            // Check if member exists before accessing its properties
+            if (this.props.event.member) {
+                this.teamMembers.push({ id: this.props.event.member.id, text: this.props.event.member.displayName });
+            } else {
+                console.warn("Event member is undefined, using Everyone as default");
+                this.teamMembers.push({ id: Everyone, text: Everyone });
+            }
         } else {
             this.startDate = props.start;
             this.endDate = props.end;

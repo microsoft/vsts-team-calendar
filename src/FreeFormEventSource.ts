@@ -116,6 +116,7 @@ export class FreeFormEventsSource {
                             id: FreeFormId + "." + event.id,
                             allDay: true,
                             editable: true,
+                            order: 0,
                             start: start,
                             end: excludedEndDate,
                             title: event.title,

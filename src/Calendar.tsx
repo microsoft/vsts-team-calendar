@@ -83,16 +83,8 @@ class ExtensionContent extends React.Component {
             calendarEvents: []
         };
 
+        // Navigation items for lower command bar
         this.commandBarItems = [
-            {
-                iconProps: {
-                    iconName: "Add"
-                },
-                id: "newItem",
-                important: true,
-                onActivate: this.onClickNewItem,
-                text: "New Item"
-            },
             {
                 id: "today",
                 important: true,
@@ -156,58 +148,75 @@ class ExtensionContent extends React.Component {
                 <Observer isPaneOpen={this.isPaneOpen}>
                     {(props: { isPaneOpen: boolean }) => (
                         <div className={`flex-column scroll-hidden calendar-area ${props.isPaneOpen ? 'pane-open' : 'pane-closed'}`}>
+                            {/* Top tier: Team selection and primary actions */}
                             <CustomHeader className="bolt-header-with-commandbar">
-                                <HeaderTitleArea className="flex-grow">
-                                    <div className="flex-grow">
-                                        <Observer currentMonthAndYear={this.currentMonthAndYear}>
-                                    {(props: { currentMonthAndYear: MonthAndYear }) => {
-                                        return (
-                                            <Dropdown
-                                                items={this.getMonthPickerOptions()}
-                                                key={props.currentMonthAndYear.month}
-                                                onSelect={this.onSelectMonthYear}
-                                                placeholder={monthAndYearToString(props.currentMonthAndYear)}
-                                                renderExpandable={expandableProps => (
-                                                    <DropdownExpandableButton hideDropdownIcon={true} {...expandableProps} />
-                                                )}
-                                                width={200}
-                                            />
-                                        );
-                                    }}
-                                </Observer>
-                                <Icon ariaLabel="Video icon" iconName="ChevronRight" />
-                                <Observer teams={this.teams}>
-                                    {(props: { teams: WebApiTeam[] }) => {
-                                        return props.teams.length === 0 ? null : (
-                                            <Dropdown
-                                                items={this.getTeamPickerOptions()}
-                                                onSelect={this.onSelectTeam}
-                                                placeholder={this.selectedTeamName}
-                                                renderExpandable={expandableProps => <DropdownExpandableButton {...expandableProps} />}
-                                                width={200}
-                                            />
-                                        );
-                                    }}
-                                </Observer>
-                            </div>
-                        </HeaderTitleArea>
-                        <HeaderCommandBar items={this.commandBarItems} />
-                        <Observer isPaneOpen={this.isPaneOpen}>
-                            {(paneProps: { isPaneOpen: boolean }) => (
-                                !paneProps.isPaneOpen ? (
-                                    <div className="header-pane-toggle">
-                                        <Button
-                                            iconProps={{ iconName: "DoubleChevronLeft" }}
-                                            onClick={() => this.isPaneOpen.value = true}
-                                            text="Open"
-                                            tooltipProps={{ text: "Open pane" }}
-                                            ariaLabel="Open pane"
-                                        />
+                                <HeaderTitleArea>
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <Observer teams={this.teams}>
+                                            {(teamProps: { teams: WebApiTeam[] }) => {
+                                                return teamProps.teams.length === 0 ? null : (
+                                                    <Dropdown
+                                                        items={this.getTeamPickerOptions()}
+                                                        onSelect={this.onSelectTeam}
+                                                        placeholder={this.selectedTeamName}
+                                                        renderExpandable={expandableProps => <DropdownExpandableButton {...expandableProps} />}
+                                                        showFilterBox={true}
+                                                        filterPlaceholderText="Filter teams"
+                                                        width={300}
+                                                    />
+                                                );
+                                            }}
+                                        </Observer>
                                     </div>
-                                ) : null
-                            )}
-                        </Observer>
-                    </CustomHeader>
+                                </HeaderTitleArea>
+                                <Observer isPaneOpen={this.isPaneOpen}>
+                                    {(paneProps: { isPaneOpen: boolean }) => (
+                                        <HeaderCommandBar
+                                            items={[
+                                                {
+                                                    id: "newItem",
+                                                    important: true,
+                                                    isPrimary: true,
+                                                    onActivate: this.onClickNewItem,
+                                                    text: "New Item",
+                                                    iconProps: { iconName: "Add" }
+                                                },
+                                                ...(!paneProps.isPaneOpen ? [{
+                                                    id: "openPane",
+                                                    important: true,
+                                                    onActivate: () => this.isPaneOpen.value = true,
+                                                    text: "Open",
+                                                    iconProps: { iconName: "DoubleChevronLeft" }
+                                                }] : [])
+                                            ]}
+                                        />
+                                    )}
+                                </Observer>
+                            </CustomHeader>
+                            {/* Lower tier: Calendar navigation */}
+                            <CustomHeader className="bolt-header-with-commandbar">
+                                <HeaderTitleArea>
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <Observer currentMonthAndYear={this.currentMonthAndYear}>
+                                            {(dateProps: { currentMonthAndYear: MonthAndYear }) => {
+                                                return (
+                                                    <Dropdown
+                                                        items={this.getMonthPickerOptions()}
+                                                        key={dateProps.currentMonthAndYear.month}
+                                                        onSelect={this.onSelectMonthYear}
+                                                        placeholder={monthAndYearToString(dateProps.currentMonthAndYear)}
+                                                        renderExpandable={expandableProps => (
+                                                            <DropdownExpandableButton {...expandableProps} />
+                                                        )}
+                                                        width={200}
+                                                    />
+                                                );
+                                            }}
+                                        </Observer>
+                                    </div>
+                                </HeaderTitleArea>
+                                <HeaderCommandBar items={this.commandBarItems} />
+                            </CustomHeader>
                     <Observer display={this.displayCalendar}>
                         {(dispProps: { display: boolean }) => {
                             return dispProps.display ? (
@@ -219,6 +228,7 @@ class ExtensionContent extends React.Component {
                                         eventDrop={this.onEventDrop}
                                         eventRender={this.eventRender}
                                         eventResize={this.onEventResize}
+                                        eventOrder="order,start,-duration,allDay,title"
                                         eventSources={[
                                             { events: this.freeFormEventSource.getEvents },
                                             { events: this.vsoCapacityEventSource.getEvents }
@@ -230,6 +240,7 @@ class ExtensionContent extends React.Component {
                                         ref={this.calendarComponentRef}
                                         select={this.onSelectCalendarDates}
                                         selectable={true}
+                                        eventLimit={true}
                                     />
                                     </div>
                                 ) : null;
@@ -321,6 +332,9 @@ class ExtensionContent extends React.Component {
      */
     private eventRender = (arg: { isMirror: boolean; isStart: boolean; isEnd: boolean; event: EventApi; el: HTMLElement; view: View }) => {
         if (arg.event.id.startsWith(DaysOffId) && arg.event.start) {
+            // Add days-off class for styling
+            arg.el.classList.add('fc-days-off-event');
+            
             // get grouped event for that date
             const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start);
             if (capacityEvent && capacityEvent.icons) {
@@ -342,10 +356,55 @@ class ExtensionContent extends React.Component {
                     }
                 });
             }
+            
+            // Make the entire days-off event clickable
+            arg.el.style.cursor = 'pointer';
+            arg.el.onclick = () => {
+                const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start!);
+                if (capacityEvent && capacityEvent.icons && capacityEvent.icons.length > 0) {
+                    this.eventToEdit = capacityEvent.icons[0].linkedEvent;
+                    this.openDialog.value = Dialogs.NewDaysOffDialog;
+                }
+            };
         } else if (arg.event.id.startsWith(IterationId) && arg.isStart) {
             // iterations are background event, show title for only start
-            arg.el.innerText = arg.event.title;
-            arg.el.style.color = "black";
+            // Create a span element to hold the text
+            const textSpan = document.createElement('span');
+            textSpan.innerText = arg.event.title;
+            textSpan.classList.add('sprint-label');
+            
+            // Detect theme using browser's prefers-color-scheme
+            const isDarkTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Dark mode: white text on dark background
+            // Light mode: black text on white background
+            const textColor = isDarkTheme ? '#ffffff' : '#000000';
+            const bgColor = isDarkTheme ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.95)';
+            
+            textSpan.style.cssText = `
+                color: ${textColor} !important;
+                font-weight: 700 !important;
+                font-size: 13px !important;
+                padding: 4px 8px !important;
+                display: block !important;
+                position: absolute !important;
+                top: 3px !important;
+                left: 6px !important;
+                z-index: 10 !important;
+                opacity: 1 !important;
+                line-height: normal !important;
+                pointer-events: none !important;
+                white-space: nowrap !important;
+                background: ${bgColor} !important;
+                border-radius: 3px !important;
+            `;
+            
+            // Make parent td positioned relative
+            arg.el.style.position = 'relative';
+            
+            // Clear any existing content and append the span
+            arg.el.innerHTML = '';
+            arg.el.appendChild(textSpan);
         }
     };
 
@@ -359,7 +418,7 @@ class ExtensionContent extends React.Component {
     private getCalendarHeight(): number {
         var height = document.getElementById("team-calendar");
         if (height) {
-            return height.offsetHeight - 90;
+            return height.offsetHeight - 150;
         }
         return 200;
     }
@@ -367,13 +426,16 @@ class ExtensionContent extends React.Component {
     private getMonthPickerOptions(): IListBoxItem[] {
         const options: IListBoxItem[] = [];
         const listSize = 3;
+        const currentMonth = this.currentMonthAndYear.value;
         for (let i = -listSize; i <= listSize; ++i) {
             const monthAndYear = this.calcMonths(this.currentMonthAndYear.value, i);
             const text = monthAndYearToString(monthAndYear);
+            const isCurrent = i === 0;
             options.push({
                 data: monthAndYear,
                 id: text,
-                text: text
+                text: text,
+                iconProps: isCurrent ? { iconName: "Calendar" } : undefined
             });
         }
         return options;

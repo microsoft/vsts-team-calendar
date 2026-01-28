@@ -2,9 +2,23 @@
 @import "~@fullcalendar/core/main.css";
 @import "~@fullcalendar/daygrid/main.css";
 
+// Constrain the overall page height to viewport
+.flex-row.flex-grow {
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+// Team dropdown styling - ensure it positions correctly
+.bolt-header-with-commandbar {
+    .bolt-header-title-area {
+        position: relative;
+    }
+}
+
 .calendar-area {
     overflow: auto;
     transition: width 0.2s ease;
+    align-self: stretch;
 
     &.pane-open {
         width: 75%;
@@ -23,6 +37,218 @@
         .fc-scroller {
             overflow-y: hidden !important;
         }
+
+        // Modernize FullCalendar with ADO design
+        .fc {
+            font-family: var(--fontFamily, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Helvetica, Ubuntu, Arial, sans-serif);
+        }
+
+        // Calendar header (days of week)
+        .fc-head {
+            background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
+            
+            th {
+                border-color: var(--palette-neutral-8, rgba(0, 0, 0, 0.06)) !important;
+                padding: 8px 4px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-secondary-color, rgba(0, 0, 0, 0.55));
+                text-transform: uppercase;
+            }
+        }
+
+        // Calendar cells
+        .fc-day {
+            background-color: var(--background-color, #ffffff);
+            border-color: var(--palette-neutral-8, rgba(0, 0, 0, 0.06)) !important;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+                background-color: var(--palette-neutral-2, rgba(0, 0, 0, 0.02));
+                cursor: pointer;
+            }
+        }
+
+        .fc-day-top {
+            padding: 4px 6px;
+        }
+
+        .fc-day-number {
+            color: var(--text-primary-color, rgba(0, 0, 0, 0.9));
+            font-size: 14px;
+            font-weight: 400;
+            padding: 2px;
+        }
+
+        // Today indicator
+        .fc-today {
+            background-color: var(--palette-accent-background, rgba(0, 120, 212, 0.20)) !important;
+            
+            .fc-day-number {
+                background-color: var(--communication-background, #0078d4);
+                color: #ffffff;
+                font-weight: 700;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        // Other month days
+        .fc-day.fc-other-month {
+            background-color: var(--palette-neutral-2, rgba(0, 0, 0, 0.02));
+            
+            .fc-day-number {
+                color: var(--text-disabled-color, rgba(0, 0, 0, 0.30));
+            }
+        }
+
+        // Events styling
+        .fc-event {
+            border: none !important;
+            border-radius: 3px;
+            padding: 3px 6px;
+            margin: 2px 4px;
+            font-size: 12px;
+            box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.08), 0 0.3px 0.9px 0 rgba(0,0,0,.05);
+            transition: all 0.15s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+
+            &:hover {
+                box-shadow: 0 3.2px 7.2px 0 rgba(0,0,0,.13), 0 0.6px 1.8px 0 rgba(0,0,0,.11);
+                transform: translateY(-1px);
+                z-index: 3;
+            }
+
+            .fc-content {
+                color: inherit;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .fc-title {
+                font-weight: 500;
+            }
+        }
+
+        // Days off events - styled distinctly with dashed borders and rendered horizontally
+        .fc-days-off-event {
+            background-color: var(--palette-neutral-2, rgba(0, 0, 0, 0.02)) !important;
+            border: 2px dashed var(--palette-neutral-20, rgba(0, 0, 0, 0.20)) !important;
+            border-radius: 4px;
+            padding: 2px 4px;
+            box-shadow: none !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 1;
+            margin: 2px 4px !important;
+            min-height: 24px;
+            display: inline-flex !important;
+            align-items: center;
+            vertical-align: top;
+            order: -1 !important; // Force to top in flex layouts
+            
+            // Multi-day days off span horizontally
+            &.fc-not-start,
+            &.fc-not-end {
+                display: inline-flex !important;
+            }
+
+            &:hover {
+                background-color: var(--palette-neutral-6, rgba(0, 0, 0, 0.06)) !important;
+                border-color: var(--palette-neutral-30, rgba(0, 0, 0, 0.30)) !important;
+                transform: none;
+                box-shadow: none !important;
+                z-index: 1;
+            }
+
+            .fc-content {
+                color: var(--text-secondary-color, rgba(0, 0, 0, 0.55));
+                font-size: 11px;
+                display: flex;
+                align-items: center;
+            }
+
+            .fc-title {
+                font-weight: 400;
+            }
+        }
+
+        // Background events (iterations)
+        .fc-bgevent {
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        // Event resizing
+        .fc-event-resizer {
+            display: none;
+        }
+
+        .fc-event.fc-allow-mouse-resize:hover .fc-event-resizer {
+            display: block;
+        }
+
+        // Day grid container
+        .fc-day-grid-container {
+            background-color: var(--background-color, #ffffff);
+        }
+
+        // Week number column
+        .fc-week-number {
+            background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
+            color: var(--text-secondary-color, rgba(0, 0, 0, 0.55));
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        // "+more" link styling
+        .fc-more {
+            color: var(--communication-foreground, #0078d4);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 8px;
+            background-color: var(--palette-accent-background, rgba(0, 120, 212, 0.10));
+            border-radius: 3px;
+            display: inline-block;
+            margin: 2px 4px;
+            text-decoration: none;
+            
+            &:hover {
+                color: #ffffff;
+                background-color: var(--communication-background, #0078d4);
+                box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.13);
+            }
+        }
+
+        // Popover for "+more" events
+        .fc-popover {
+            background-color: var(--background-color, #ffffff);
+            border: 1px solid var(--palette-neutral-8, rgba(0, 0, 0, 0.06));
+            box-shadow: 0 3.2px 7.2px 0 rgba(0,0,0,.13), 0 0.6px 1.8px 0 rgba(0,0,0,.11);
+            border-radius: 4px;
+            z-index: 1000;
+
+            .fc-header {
+                background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
+                border-bottom: 1px solid var(--palette-neutral-8, rgba(0, 0, 0, 0.06));
+                padding: 8px 12px;
+                font-weight: 600;
+                color: var(--text-primary-color, rgba(0, 0, 0, 0.9));
+            }
+
+            .fc-body {
+                padding: 4px;
+            }
+        }
     }
 }
 
@@ -34,10 +260,111 @@
             width: 250px;
 
             .input-date {
-                width: inherit;
+                width: 100%;
+                background-color: var(--input-background-color, var(--palette-neutral-2));
+                color: var(--text-primary-color);
+                border: 1px solid var(--palette-neutral-8);
+                padding: 6px 8px;
+                border-radius: 2px;
+                font-family: inherit;
+                font-size: 14px;
+            }
+        }
+
+        .date-picker-wrapper {
+            position: relative;
+            width: 250px;
+
+            .input-date {
+                cursor: pointer !important;
+            }
+
+            .date-picker-icon {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-secondary-color);
+                font-size: 16px;
+                cursor: pointer;
             }
         }
     }
+
+    &.picker-open {
+        min-height: 500px;
+    }
+}
+
+// React DatePicker theme customization
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker-popper {
+    z-index: 9999 !important;
+}
+
+.react-datepicker {
+    font-family: inherit;
+    background-color: var(--background-color, #ffffff) !important;
+    border: 1px solid var(--palette-neutral-8) !important;
+    border-radius: 2px;
+    box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108);
+}
+
+.react-datepicker__month-container {
+    width: 250px;
+}
+
+.react-datepicker__header {
+    background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04)) !important;
+    border-bottom: 1px solid var(--palette-neutral-8) !important;
+    padding-top: 8px;
+}
+
+.react-datepicker__month-container,
+.react-datepicker__month,
+.react-datepicker__week,
+.react-datepicker__day {
+    background-color: var(--background-color, #ffffff) !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker__day {
+    color: var(--text-primary-color);
+}
+
+.react-datepicker__day:hover {
+    background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04)) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+    background-color: var(--communication-background, #0078d4) !important;
+    color: #ffffff;
+    
+    &:hover {
+        background-color: var(--communication-background-hover, #005a9e) !important;
+    }
+}
+
+.react-datepicker__day--today {
+    font-weight: 600;
+    color: var(--communication-foreground, #0078d4);
+}
+
+.react-datepicker__day--disabled {
+    color: var(--text-disabled-color, rgba(0, 0, 0, 0.30));
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: var(--text-primary-color);
+}
+
+.react-datepicker__triangle {
+    display: none;
 }
 
 .fc-content .event-icon {
@@ -55,6 +382,7 @@
     transition: width 0.2s ease;
     display: flex;
     flex-direction: column;
+    align-self: stretch;
 
     .summary-header {
         display: flex;
@@ -64,6 +392,7 @@
         background: var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
         border-bottom: 1px solid var(--palette-neutral-8, rgba(0, 0, 0, 0.06));
         min-height: 48px;
+        flex-shrink: 0;
     }
 
     .summary-title {
@@ -75,14 +404,82 @@
     .summary-content {
         overflow-y: auto;
         flex: 1;
-        padding: 12px;
+        padding: 8px 0px 80px 4px; // Extra bottom padding for buttons
+        
+        // Custom scrollbar styling
+        scrollbar-width: thin;
+        scrollbar-color: var(--palette-neutral-30, rgba(127, 127, 127, 0.4)) var(--palette-neutral-2, rgba(0, 0, 0, 0.02));
+
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--palette-neutral-2, rgba(0, 0, 0, 0.02));
+            border-radius: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--palette-neutral-30, rgba(127, 127, 127, 0.4));
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+
+            &:hover {
+                background-color: var(--palette-neutral-40, rgba(127, 127, 127, 0.6));
+            }
+        }
     }
 
     .category-card {
-        margin-bottom: 12px;
+        margin: 0px 8px 12px 8px;
+        padding-bottom: 8px;
+        width: calc(100% - 16px);
+        box-sizing: border-box;
+        overflow: visible !important;
+        
+        // Override Azure DevOps UI Card internal styles
+        > * {
+            overflow: visible !important;
+        }
+        
+        .bolt-card-content {
+            overflow: visible !important;
+            padding-bottom: 8px !important;
+        }
         
         &:last-child {
             margin-bottom: 0;
+        }
+    }
+    
+    .category-section {
+        width: 100%;
+        overflow: visible !important;
+        min-height: 0;
+        padding-bottom: 8px;
+    }
+
+    .show-more-button {
+        width: 100% !important;
+        margin: 8px 0px 24px 0px !important;
+        justify-content: flex-start !important;
+        padding: 6px 12px !important;
+        color: var(--communication-foreground, #0078d4) !important;
+        background-color: transparent !important;
+        border: 1px solid transparent !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0;
+        font-size: 13px !important;
+        line-height: 20px !important;
+        text-align: left !important;
+        overflow: visible !important;
+        
+        &:hover {
+            background-color: var(--palette-neutral-4, rgba(0, 0, 0, 0.04)) !important;
+            border-color: var(--palette-neutral-8, rgba(0, 0, 0, 0.06)) !important;
         }
     }
 
@@ -90,7 +487,7 @@
         display: block;
         font-size: 14px;
         font-weight: 600;
-        padding: 12px 16px 8px 16px;
+        padding: 8px 12px 8px 12px;
         color: var(--communication-foreground, #0078d4);
         text-decoration: underline;
 
@@ -116,13 +513,22 @@
     }
 
     .catagory-summary-row {
-        padding: 8px 16px;
+        padding: 8px 12px 8px 12px;
+        margin: 4px 0px 4px 0px;
         width: 100%;
         min-height: 40px;
-        border-bottom: 1px solid var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
+        background-color: var(--background-color, #ffffff);
+        border-radius: 3px;
+        box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
+        transition: all 0.15s ease;
+        border: 1px solid var(--palette-neutral-8, rgba(0, 0, 0, 0.06));
+        box-sizing: border-box;
+
 
         &:hover {
-            background: var(--palette-neutral-4, rgba(0, 0, 0, 0.04));
+            box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.18);
+            transform: translateY(-1px);
+            background-color: var(--palette-neutral-2, rgba(0, 0, 0, 0.02)) !important;
         }
 
         .category-color {
@@ -149,12 +555,18 @@
             font-weight: 400;
             color: var(--text-primary-color, rgba(0, 0, 0, 0.9));
             margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .category-subtitle {
             font-size: 12px;
             color: var(--text-secondary-color, rgba(0, 0, 0, 0.55));
             line-height: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 }

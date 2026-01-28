@@ -63,11 +63,13 @@
     "@fullcalendar/interaction": "^4.1.0",
     "@fullcalendar/react": "^4.1.0",
     "@fullcalendar/timegrid": "^4.1.0",
+    "@types/react-datepicker": "^6.2.0",
     "azure-devops-extension-api": "^1.157.0",
     "azure-devops-extension-sdk": "^2.0.11",
     "azure-devops-ui": "~1.159.0",
     "moment": "^2.29.4",
     "react": "~16.8.1",
+    "react-datepicker": "^4.25.0",
     "react-dom": "~16.8.1"
   },
   "devDependencies": {

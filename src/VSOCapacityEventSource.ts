@@ -156,6 +156,12 @@ export class VSOCapacityEventSource {
                             color = generateColor("otherIteration");
                         }
 
+                        // Show only name if iteration starts within calendar view, otherwise include dates
+                        const iterationStartsInView = calendarStart <= iterationStart;
+                        const title = iterationStartsInView 
+                            ? iteration.name 
+                            : iteration.name + " (" + formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY") + ")";
+
                         renderedEvents.push({
                             allDay: true,
                             backgroundColor: color,
@@ -163,8 +169,7 @@ export class VSOCapacityEventSource {
                             id: IterationId + iteration.name,
                             rendering: "background",
                             start: iterationStart,
-                            textColor: "#FFFFFF",
-                            title: iteration.name + " (" + formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY") + ")"
+                            title: title
                         });
 
                         const iterationPath = iteration.path.substr(iteration.path.indexOf("\\") + 1);
@@ -213,11 +218,13 @@ export class VSOCapacityEventSource {
                             editable: false,
                             end: end,
                             id: event.id,
+                            order: -1,
                             start: start,
                             title: ""
                         });
                     }
                 });
+                
                 successCallback(renderedEvents);
                 this.iterationSummaryData.value = currentIterations;
                 this.capacitySummaryData.value = Object.keys(capacityCatagoryMap).map(key => {

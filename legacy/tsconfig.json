@@ -17,10 +17,7 @@
         "paths": {
             "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib/*"]
         },
-        "skipLibCheck": true,
-        "types": [
-            "vss-web-extension-sdk"
-        ]
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*.ts",

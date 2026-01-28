@@ -6,18 +6,19 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strict": true,
-    "target": "es5",
+    "target": "ES2015",
     "rootDir": "src/",
     "sourceMap": true,
     "outDir": "dist/",
     "jsx": "react",
-    "lib": ["es5", "es6", "dom", "es2015.promise"],
+    "lib": ["es2015", "dom"],
     "types": ["react"],
     "noEmit": false,
     "baseUrl": ".",
     "paths": { 
       "azure-devops-extension-api": ["node_modules/azure-devops-extension-api" ]
-    }
+    },
+    "skipLibCheck": true
 
   },
   "include": ["src/**/*"],

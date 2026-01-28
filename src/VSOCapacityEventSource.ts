@@ -153,8 +153,14 @@ export class VSOCapacityEventSource {
                         if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
                             color = generateColor("currentIteration");
                         } else {
-                            color = generateColor("otherIteration");
+                            color = generateColor("otherIteration", iteration.name);
                         }
+
+                        // Show only name if iteration starts within calendar view, otherwise include dates
+                        const iterationStartsInView = calendarStart <= iterationStart;
+                        const title = iterationStartsInView 
+                            ? iteration.name 
+                            : iteration.name + " (" + formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY") + ")";
 
                         renderedEvents.push({
                             allDay: true,
@@ -163,15 +169,22 @@ export class VSOCapacityEventSource {
                             id: IterationId + iteration.name,
                             rendering: "background",
                             start: iterationStart,
-                            textColor: "#FFFFFF",
-                            title: iteration.name
+                            title: title
                         });
+
+                        const iterationPath = iteration.path.substr(iteration.path.indexOf("\\") + 1);
+                        const iterationUrl = this.hostUrl + 
+                            encodeURIComponent(this.teamContext.project) + "/_sprints/taskboard/" +
+                            encodeURIComponent(this.teamContext.team) + "/" +
+                            encodeURIComponent(this.teamContext.project) + "/" +
+                            encodeURIComponent(iterationPath);
 
                         currentIterations.push({
                             color: color,
                             eventCount: 1,
-                            subTitle: formatDate(iterationStart, "MONTH-DD") + " - " + formatDate(iterationEnd, "MONTH-DD"),
-                            title: iteration.name
+                            subTitle: formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY"),
+                            title: iteration.name,
+                            url: iterationUrl
                         });
                     }
                 } else {
@@ -205,11 +218,13 @@ export class VSOCapacityEventSource {
                             editable: false,
                             end: end,
                             id: event.id,
+                            order: -1,
                             start: start,
                             title: ""
                         });
                     }
                 });
+                
                 successCallback(renderedEvents);
                 this.iterationSummaryData.value = currentIterations;
                 this.capacitySummaryData.value = Object.keys(capacityCatagoryMap).map(key => {
@@ -404,8 +419,9 @@ export class VSOCapacityEventSource {
                                 capacityCatagoryMap[capacity.teamMember.id] = {
                                     eventCount: 1,
                                     imageUrl: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id),
-                                    subTitle: formatDate(dateObj, "MM-DD-YYYY"),
-                                    title: capacity.teamMember.displayName
+                                    subTitle: formatDate(dateObj, "MM/DD/YYYY"),
+                                    title: capacity.teamMember.displayName,
+                                    linkedEvent: event
                                 };
                             }
 
@@ -471,8 +487,9 @@ export class VSOCapacityEventSource {
                             capacityCatagoryMap[this.teamContext.team] = {
                                 eventCount: 1,
                                 imageUrl: teamImage,
-                                subTitle: formatDate(dateObj, "MM-DD-YYYY"),
-                                title: this.teamContext.team
+                                subTitle: formatDate(dateObj, "MM/DD/YYYY"),
+                                title: this.teamContext.team,
+                                linkedEvent: event
                             };
                         }
 

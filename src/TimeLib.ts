@@ -7,7 +7,7 @@ export interface MonthAndYear {
 }
 
 export function formatDate(date: Date, format?: string): string {
-    if (format === "YYYY-MM-DD" || format === "MM-DD-YYYY") {
+    if (format === "YYYY-MM-DD") {
         let month = "" + (date.getMonth() + 1);
         let day = "" + date.getDate();
         const year = date.getFullYear();
@@ -15,7 +15,16 @@ export function formatDate(date: Date, format?: string): string {
         if (month.length < 2) month = "0" + month;
         if (day.length < 2) day = "0" + day;
 
-        return format === "YYYY-MM-DD" ? [year, month, day].join("-") : [month, day, year].join("-");
+        return [year, month, day].join("-");
+    } else if (format === "MM/DD/YYYY") {
+        let month = "" + (date.getMonth() + 1);
+        let day = "" + date.getDate();
+        const year = date.getFullYear();
+
+        if (month.length < 2) month = "0" + month;
+        if (day.length < 2) day = "0" + day;
+
+        return [month, day, year].join("/");
     } else if (format === "MONTH-DD") {
         return months[date.getMonth()] + " " + date.getDate();
     } else if (format === "MM-YYYY") {

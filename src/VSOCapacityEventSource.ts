@@ -153,7 +153,7 @@ export class VSOCapacityEventSource {
                         if (iteration.attributes.startDate <= now && now <= iteration.attributes.finishDate) {
                             color = generateColor("currentIteration");
                         } else {
-                            color = generateColor("otherIteration");
+                            color = generateColor("otherIteration", iteration.name);
                         }
 
                         // Show only name if iteration starts within calendar view, otherwise include dates

@@ -667,6 +667,13 @@ class ExtensionContent extends React.Component {
         this.selectedStartDate = arg.start;
         const dataDate = formatDate(this.selectedEndDate, "YYYY-MM-DD");
         this.anchorElement.value = document.querySelector("td.fc-day-top[data-date='" + dataDate + "']") as HTMLElement;
+        
+        // Prevent calendar from collapsing when context menu opens
+        setTimeout(() => {
+            if (this.calendarComponentRef.current) {
+                this.calendarComponentRef.current.getApi().updateSize();
+            }
+        }, 10);
     };
 
     private onSelectMonthYear = (event: React.SyntheticEvent<HTMLElement, Event>, item: IListBoxItem<{}>) => {

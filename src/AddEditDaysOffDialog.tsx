@@ -109,17 +109,41 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
         } else {
             this.startDate = new ObservableValue<Date>(props.start);
             this.endDate = new ObservableValue<Date>(props.end);
-            const userName = getUser().displayName;
-            let i = 1;
+            const currentUser = getUser();
+            const currentUserName = currentUser.displayName;
+            const currentUserId = currentUser.id;
+
+            // Add "Everyone" option first
             this.teamMembers.push({ id: Everyone, text: Everyone });
+
+            // Check if current user exists in the members list
+            const currentUserInList = this.props.members.some(
+                member => member.identity.id === currentUserId ||
+                          member.identity.displayName === currentUserName
+            );
+
+            // Always add current user as second option (after "Everyone")
+            // This ensures users added via group membership can still select themselves
+            this.teamMembers.push({
+                id: currentUserId,
+                text: currentUserName + (currentUserInList ? "" : " (You)")
+            });
+
+            // Default selection to current user (index 1)
+            selectedIndex = 1;
+
+            // Add remaining team members (excluding current user to avoid duplicates)
+            let i = 2;
             this.teamMembers.push(
-                ...this.props.members.map(item => {
-                    if (userName === item.identity.displayName) {
-                        selectedIndex = i;
-                    }
-                    i++;
-                    return { id: item.identity.id, text: item.identity.displayName };
-                })
+                ...this.props.members
+                    .filter(item =>
+                        item.identity.id !== currentUserId &&
+                        item.identity.displayName !== currentUserName
+                    )
+                    .map(item => {
+                        i++;
+                        return { id: item.identity.id, text: item.identity.displayName };
+                    })
             );
         }
 

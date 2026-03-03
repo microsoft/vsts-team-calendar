@@ -587,8 +587,10 @@ class ExtensionContent extends React.Component {
             // get grouped event for that date
             const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start);
             if (capacityEvent && capacityEvent.icons) {
-                // add all user icons in to event
-                capacityEvent.icons.forEach(element => {
+                const maxIconsToShow = 4;
+                const totalIcons = capacityEvent.icons.length;
+                
+                capacityEvent.icons.slice(0, maxIconsToShow).forEach(element => {
                     if (element.src) {
                         var img: HTMLImageElement = document.createElement("img");
                         img.src = element.src;
@@ -604,6 +606,17 @@ class ExtensionContent extends React.Component {
                         }
                     }
                 });
+                
+                if (totalIcons > maxIconsToShow) {
+                    const moreIndicator = document.createElement("span");
+                    moreIndicator.className = "event-icon-more";
+                    moreIndicator.innerText = `+${totalIcons - maxIconsToShow}`;
+                    moreIndicator.title = `${totalIcons - maxIconsToShow} more people`;
+                    var content = arg.el.querySelector(".fc-content");
+                    if (content) {
+                        content.appendChild(moreIndicator);
+                    }
+                }
             }
             
             // Make the entire days-off event clickable

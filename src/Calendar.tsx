@@ -586,9 +586,12 @@ class ExtensionContent extends React.Component {
             
             // get grouped event for that date
             const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start);
-            if (capacityEvent && capacityEvent.icons) {
-                // add all user icons in to event
-                capacityEvent.icons.forEach(element => {
+            
+            if (capacityEvent && capacityEvent.icons && capacityEvent.icons.length > 0) {
+                const maxIconsToShow = 4;
+                const totalIcons = capacityEvent.icons.length;
+                
+                capacityEvent.icons.slice(0, maxIconsToShow).forEach(element => {
                     if (element.src) {
                         var img: HTMLImageElement = document.createElement("img");
                         img.src = element.src;
@@ -604,17 +607,24 @@ class ExtensionContent extends React.Component {
                         }
                     }
                 });
-            }
-            
-            // Make the entire days-off event clickable
-            arg.el.style.cursor = 'pointer';
-            arg.el.onclick = () => {
-                const capacityEvent = this.vsoCapacityEventSource.getGroupedEventForDate(arg.event.start!);
-                if (capacityEvent && capacityEvent.icons && capacityEvent.icons.length > 0) {
-                    this.eventToEdit = capacityEvent.icons[0].linkedEvent;
-                    this.openDialog.value = Dialogs.NewDaysOffDialog;
+                
+                if (totalIcons > maxIconsToShow) {
+                    const hiddenPeople = capacityEvent.icons.slice(maxIconsToShow).map(icon => {
+                        const member = icon.linkedEvent.member;
+                        return member ? member.displayName : icon.linkedEvent.title;
+                    });
+                    
+                    const moreIndicator = document.createElement("span");
+                    moreIndicator.className = "event-icon-more";
+                    moreIndicator.innerText = `+${totalIcons - maxIconsToShow}`;
+                    moreIndicator.title = `${hiddenPeople.join('\n')}`;
+                    moreIndicator.style.cursor = 'default';
+                    var content = arg.el.querySelector(".fc-content");
+                    if (content) {
+                        content.appendChild(moreIndicator);
+                    }
                 }
-            };
+            }
         } else if (arg.event.id.startsWith(IterationId) && arg.isStart) {
             // iterations are background event, show title for only start
             // Create a span element to hold the text

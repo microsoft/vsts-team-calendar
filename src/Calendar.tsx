@@ -65,6 +65,7 @@ class ExtensionContent extends React.Component {
     openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
     isPaneOpen: ObservableValue<boolean> = new ObservableValue<boolean>(true);
     isColorPanelOpen: ObservableValue<boolean> = new ObservableValue<boolean>(false);
+    isExpandedView: ObservableValue<boolean> = new ObservableValue<boolean>(false);
     eventColorMap: ObservableValue<Map<string, string>> = new ObservableValue<Map<string, string>>(new Map());
     tempColorMap: Map<string, string> = new Map();
     projectId: string;
@@ -258,10 +259,19 @@ class ExtensionContent extends React.Component {
                 </CustomHeader>
                 {/* Side panel options row */}
                 <div className="side-panel-options-row">
-                    <Observer isPaneOpen={this.isPaneOpen}>
-                        {(props: { isPaneOpen: boolean }) => {
+                    <Observer isPaneOpen={this.isPaneOpen} isExpandedView={this.isExpandedView}>
+                        {(props: { isPaneOpen: boolean; isExpandedView: boolean }) => {
                             return (
                                 <>
+                                    <Button
+                                        onClick={() => {
+                                            this.isExpandedView.value = !this.isExpandedView.value;
+                                        }}
+                                        iconProps={{ iconName: props.isExpandedView ? "BackToWindow" : "FullScreen" }}
+                                        ariaLabel={props.isExpandedView ? "Collapse view" : "Expand all events"}
+                                        tooltipProps={{ text: props.isExpandedView ? "Collapse view" : "Expand all events" }}
+                                        subtle
+                                    />
                                     <Button
                                         onClick={() => {
                                             this.isColorPanelOpen.value = true;
@@ -330,8 +340,8 @@ class ExtensionContent extends React.Component {
                 </Observer>
                 {/* Content area: Calendar and side panel side by side */}
                 <div className="content-row flex-row">
-                    <Observer isPaneOpen={this.isPaneOpen} display={this.displayCalendar}>
-                        {(props: { isPaneOpen: boolean; display: boolean }) => (
+                    <Observer isPaneOpen={this.isPaneOpen} display={this.displayCalendar} isExpandedView={this.isExpandedView}>
+                        {(props: { isPaneOpen: boolean; display: boolean; isExpandedView: boolean }) => (
                             <div className={`flex-column scroll-hidden calendar-area ${props.isPaneOpen ? 'pane-open' : 'pane-closed'}`}>
                                 {props.display ? (
                                     <div className="calendar-component">
@@ -354,7 +364,7 @@ class ExtensionContent extends React.Component {
                                             ref={this.calendarComponentRef}
                                             select={this.onSelectCalendarDates}
                                             selectable={true}
-                                            eventLimit={true}
+                                            eventLimit={!props.isExpandedView}
                                         />
                                     </div>
                                 ) : null}

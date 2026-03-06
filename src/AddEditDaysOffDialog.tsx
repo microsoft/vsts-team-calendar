@@ -25,6 +25,7 @@ import { Calendar } from "@fullcalendar/core";
 
 import { ICalendarEvent } from "./Contracts";
 import { MessageDialog } from "./MessageDialog";
+import { getLocalizedDateFormat } from "./TimeLib";
 import { VSOCapacityEventSource, Everyone } from "./VSOCapacityEventSource";
 import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 
@@ -178,7 +179,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                                                     }}
                                                     onCalendarOpen={() => this.isDatePickerOpen.value = true}
                                                     onCalendarClose={() => this.isDatePickerOpen.value = false}
-                                                    dateFormat="MM/dd/yyyy"
+                                                    dateFormat={getLocalizedDateFormat()}
                                                     className="bolt-textfield-input input-date"
                                                 />
                                                 <Icon 
@@ -213,7 +214,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
                                                     }}
                                                     onCalendarOpen={() => this.isDatePickerOpen.value = true}
                                                     onCalendarClose={() => this.isDatePickerOpen.value = false}
-                                                    dateFormat="MM/dd/yyyy"
+                                                    dateFormat={getLocalizedDateFormat()}
                                                     className="bolt-textfield-input input-date"
                                                 />
                                                 <Icon 

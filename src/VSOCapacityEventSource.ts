@@ -6,7 +6,7 @@ import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
 import { generateColor } from "./Color";
 import { ICalendarEvent, IEventIcon, IEventCategory } from "./Contracts";
-import { formatDate, getDatesInRange, shiftToUTC, shiftToLocal } from "./TimeLib";
+import { formatDate, formatDateLocalized, getDatesInRange, shiftToUTC, shiftToLocal } from "./TimeLib";
 import { TeamMemberCapacityIdentityRef, TeamSettingsIteration, TeamSettingsDaysOff, TeamSettingsDaysOffPatch, CapacityPatch, TeamMemberCapacity, WorkRestClient } from "azure-devops-extension-api/Work";
 
 
@@ -160,7 +160,7 @@ export class VSOCapacityEventSource {
                         const iterationStartsInView = calendarStart <= iterationStart;
                         const title = iterationStartsInView 
                             ? iteration.name 
-                            : iteration.name + " (" + formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY") + ")";
+                            : iteration.name + " (" + formatDateLocalized(iterationStart) + " - " + formatDateLocalized(iterationEnd) + ")";
 
                         renderedEvents.push({
                             allDay: true,
@@ -185,7 +185,7 @@ export class VSOCapacityEventSource {
                         currentIterations.push({
                             color: color,
                             eventCount: 1,
-                            subTitle: formatDate(iterationStart, "MM/DD/YYYY") + " - " + formatDate(iterationEnd, "MM/DD/YYYY"),
+                            subTitle: formatDateLocalized(iterationStart) + " - " + formatDateLocalized(iterationEnd),
                             title: iteration.name,
                             url: iterationUrl
                         });
@@ -241,7 +241,7 @@ export class VSOCapacityEventSource {
                         // Single day off range - show the date range
                         const start = new Date(catagory.linkedEvent.startDate);
                         const end = new Date(catagory.linkedEvent.endDate);
-                        catagory.subTitle = formatDate(start, "MM/DD/YYYY") + " - " + formatDate(end, "MM/DD/YYYY");
+                        catagory.subTitle = formatDateLocalized(start) + " - " + formatDateLocalized(end);
                     }
                     return catagory;
                 });
@@ -440,7 +440,7 @@ export class VSOCapacityEventSource {
                                     capacityCatagoryMap[capacity.teamMember.id] = {
                                         eventCount: 1,
                                         imageUrl: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id),
-                                        subTitle: formatDate(start, "MM/DD/YYYY") + " - " + formatDate(end, "MM/DD/YYYY"),
+                                        subTitle: formatDateLocalized(start) + " - " + formatDateLocalized(end),
                                         title: capacity.teamMember.displayName,
                                         linkedEvent: event,
                                         linkedEvents: [event]
@@ -521,7 +521,7 @@ export class VSOCapacityEventSource {
                                 capacityCatagoryMap[this.teamContext.team] = {
                                     eventCount: 1,
                                     imageUrl: teamImage,
-                                    subTitle: formatDate(start, "MM/DD/YYYY") + " - " + formatDate(end, "MM/DD/YYYY"),
+                                    subTitle: formatDateLocalized(start) + " - " + formatDateLocalized(end),
                                     title: this.teamContext.team,
                                     linkedEvent: event,
                                     linkedEvents: [event]

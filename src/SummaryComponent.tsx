@@ -9,6 +9,7 @@ import { Surface, SurfaceBackground } from "azure-devops-ui/Surface";
 
 import { IEventCategory } from "./Contracts";
 import { FreeFormEventsSource } from "./FreeFormEventSource";
+import { formatDateLocalized } from "./TimeLib";
 import { VSOCapacityEventSource } from "./VSOCapacityEventSource";
 
 interface ISummaryComponentProps {
@@ -221,14 +222,6 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
 
         const displayColor = this.getDisplayColor(item);
 
-        const formatDate = (dateString: string): string => {
-            const date = new Date(dateString);
-            const month = ('0' + (date.getMonth() + 1)).slice(-2);
-            const day = ('0' + date.getDate()).slice(-2);
-            const year = date.getFullYear();
-            return `${month}/${day}/${year}`;
-        };
-
         return (
             <>
                 <div
@@ -283,7 +276,7 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
                         <div className="flex-column h-scroll-hidden catagory-data">
                             <div className="category-titletext" style={{ fontSize: "13px", opacity: 1 }}>{event.title}</div>
                             <div className="category-subtitle" style={{ fontSize: "11px", opacity: 0.9 }}>
-                                {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                                {formatDateLocalized(new Date(event.startDate))} - {formatDateLocalized(new Date(event.endDate))}
                             </div>
                         </div>
                     </div>

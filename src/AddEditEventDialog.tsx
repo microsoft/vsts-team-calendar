@@ -20,6 +20,7 @@ import { Calendar, EventApi } from "@fullcalendar/core";
 
 import { FreeFormEventsSource } from "./FreeFormEventSource";
 import { MessageDialog } from "./MessageDialog";
+import { getLocalizedDateFormat } from "./TimeLib";
 
 interface IAddEditEventDialogProps {
     /**
@@ -158,7 +159,7 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
                                                     }}
                                                     onCalendarOpen={() => this.isDatePickerOpen.value = true}
                                                     onCalendarClose={() => this.isDatePickerOpen.value = false}
-                                                    dateFormat="MM/dd/yyyy"
+                                                    dateFormat={getLocalizedDateFormat()}
                                                     className="bolt-textfield-input input-date"
                                                     popperProps={{
                                                         strategy: "fixed"
@@ -196,7 +197,7 @@ export class AddEditEventDialog extends React.Component<IAddEditEventDialogProps
                                                     }}
                                                     onCalendarOpen={() => this.isDatePickerOpen.value = true}
                                                     onCalendarClose={() => this.isDatePickerOpen.value = false}
-                                                    dateFormat="MM/dd/yyyy"
+                                                    dateFormat={getLocalizedDateFormat()}
                                                     className="bolt-textfield-input input-date"
                                                     popperProps={{
                                                         strategy: "fixed"

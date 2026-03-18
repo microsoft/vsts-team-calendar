@@ -13,6 +13,7 @@ import * as SDK from "azure-devops-extension-sdk";
 import { Button } from "azure-devops-ui/Button";
 import { Checkbox } from "azure-devops-ui/Checkbox";
 import { Dropdown, DropdownExpandableButton } from "azure-devops-ui/Dropdown";
+import { Toggle } from "azure-devops-ui/Toggle";
 import { CustomHeader, HeaderTitleArea } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
@@ -65,7 +66,7 @@ class ExtensionContent extends React.Component {
     openDialog: ObservableValue<Dialogs> = new ObservableValue(Dialogs.None);
     isPaneOpen: ObservableValue<boolean> = new ObservableValue<boolean>(true);
     isColorPanelOpen: ObservableValue<boolean> = new ObservableValue<boolean>(false);
-    isExpandedView: ObservableValue<boolean> = new ObservableValue<boolean>(false);
+    isExpandedView: ObservableValue<boolean> = new ObservableValue<boolean>(true);
     eventColorMap: ObservableValue<Map<string, string>> = new ObservableValue<Map<string, string>>(new Map());
     tempColorMap: Map<string, string> = new Map();
     projectId: string;
@@ -265,15 +266,6 @@ class ExtensionContent extends React.Component {
                                 <>
                                     <Button
                                         onClick={() => {
-                                            this.isExpandedView.value = !this.isExpandedView.value;
-                                        }}
-                                        iconProps={{ iconName: props.isExpandedView ? "BackToWindow" : "FullScreen" }}
-                                        ariaLabel={props.isExpandedView ? "Collapse view" : "Expand all events"}
-                                        tooltipProps={{ text: props.isExpandedView ? "Collapse view" : "Expand all events" }}
-                                        subtle
-                                    />
-                                    <Button
-                                        onClick={() => {
                                             this.isColorPanelOpen.value = true;
                                         }}
                                         iconProps={{ iconName: "Color" }}
@@ -283,7 +275,13 @@ class ExtensionContent extends React.Component {
                                     />
                                     <Button
                                         onClick={(e) => {
-                                            this.sidePanelAnchorElement.value = e.currentTarget as HTMLElement;
+                                            const currentElement = e.currentTarget as HTMLElement;
+
+                                            if (this.sidePanelAnchorElement.value === currentElement) {
+                                                this.sidePanelAnchorElement.value = undefined;
+                                            } else {
+                                                this.sidePanelAnchorElement.value = currentElement;
+                                            }
                                         }}
                                         iconProps={{ iconName: "Equalizer" }}
                                         ariaLabel="Side pane options"
@@ -296,16 +294,66 @@ class ExtensionContent extends React.Component {
                     </Observer>
                 </div>
                 {/* Contextual menu for side panel options */}
-                <Observer sidePanelAnchorElement={this.sidePanelAnchorElement} isPaneOpen={this.isPaneOpen}>
-                    {(props: { sidePanelAnchorElement: HTMLElement | undefined; isPaneOpen: boolean }) => {
+                <Observer sidePanelAnchorElement={this.sidePanelAnchorElement} isPaneOpen={this.isPaneOpen} isExpandedView={this.isExpandedView}>
+                    {(props: { sidePanelAnchorElement: HTMLElement | undefined; isPaneOpen: boolean; isExpandedView: boolean }) => {
                         return props.sidePanelAnchorElement ? (
                             <ContextualMenu
                                 anchorElement={props.sidePanelAnchorElement}
                                 anchorOffset={{ horizontal: 0, vertical: 0 }}
                                 anchorOrigin={{ horizontal: Location.start, vertical: Location.end }}
+                                onActivate={(menuItem, event) => {
+                                    if (event) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    if (menuItem.onActivate) {
+                                        const result = menuItem.onActivate(menuItem, event);
+                                        return result;
+                                    }
+                                    return false;
+                                }}
                                 menuProps={{
                                     id: "side-panel-options",
                                     items: [
+                                        {
+                                            id: "expand-events-header",
+                                            text: "Expand Events",
+                                            itemType: MenuItemType.Header,
+                                        },
+                                        {
+                                            id: "expand-events-toggle",
+                                            iconProps: {
+                                                render: () => (
+                                                    <div 
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        onMouseUp={(e) => e.stopPropagation()}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{ display: 'flex', alignItems: 'center' }}
+                                                    >
+                                                        <Toggle
+                                                            checked={props.isExpandedView}
+                                                            onText="On"
+                                                            offText="Off"
+                                                            onChange={(event, checked) => {
+                                                                if (event) {
+                                                                    event.stopPropagation();
+                                                                    event.preventDefault();
+                                                                }
+                                                                this.isExpandedView.value = checked;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ),
+                                            },
+                                            onActivate: () => {
+                                                this.isExpandedView.value = !this.isExpandedView.value;
+                                                return false;
+                                            },
+                                        },
+                                        {
+                                            id: "separator",
+                                            itemType: MenuItemType.Divider
+                                        },
                                         {
                                             id: "side-pane-section",
                                             text: "Side Pane",
@@ -313,20 +361,68 @@ class ExtensionContent extends React.Component {
                                         },
                                         {
                                             id: "events",
-                                            text: "Events",
-                                            iconProps: { render: () => <Checkbox checked={props.isPaneOpen} onChange={() => {}} /> },
-                                            onActivate: () => {
+                                            iconProps: { 
+                                                render: () => (
+                                                    <div 
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        onMouseUp={(e) => e.stopPropagation()}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{ display: 'flex', alignItems: 'center', width: '100%' }}
+                                                    >
+                                                        <Checkbox 
+                                                            checked={props.isPaneOpen}
+                                                            label="Events"
+                                                            onChange={(event, checked) => {
+                                                                if (event) {
+                                                                    event.stopPropagation();
+                                                                    event.preventDefault();
+                                                                }
+                                                                this.isPaneOpen.value = true;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )
+                                            },
+                                            onActivate: (menuItem: any, event: any) => {
+                                                if (event) {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                }
                                                 this.isPaneOpen.value = true;
-                                                this.sidePanelAnchorElement.value = undefined;
+                                                return false;
                                             }
                                         },
                                         {
                                             id: "off",
-                                            text: "Off",
-                                            iconProps: { render: () => <Checkbox checked={!props.isPaneOpen} onChange={() => {}} /> },
-                                            onActivate: () => {
+                                            iconProps: { 
+                                                render: () => (
+                                                    <div 
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        onMouseUp={(e) => e.stopPropagation()}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{ display: 'flex', alignItems: 'center', width: '100%' }}
+                                                    >
+                                                        <Checkbox 
+                                                            checked={!props.isPaneOpen}
+                                                            label="Off"
+                                                            onChange={(event, checked) => {
+                                                                if (event) {
+                                                                    event.stopPropagation();
+                                                                    event.preventDefault();
+                                                                }
+                                                                this.isPaneOpen.value = false;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )
+                                            },
+                                            onActivate: (menuItem: any, event: any) => {
+                                                if (event) {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                }
                                                 this.isPaneOpen.value = false;
-                                                this.sidePanelAnchorElement.value = undefined;
+                                                return false;
                                             }
                                         }
                                     ]

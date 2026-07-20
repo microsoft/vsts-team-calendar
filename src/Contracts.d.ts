@@ -64,6 +64,11 @@ export interface ICalendarMember {
      * Unique ID for the member
      */
     id: string;
+
+    /**
+     * Graph subject descriptor, used to fetch the member's avatar via the Graph API
+     */
+    descriptor?: string;
 }
 
 /**

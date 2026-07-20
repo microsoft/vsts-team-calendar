@@ -36,6 +36,7 @@ import { localeData } from "moment";
 
 import { AddEditDaysOffDialog } from "./AddEditDaysOffDialog";
 import { AddEditEventDialog } from "./AddEditEventDialog";
+import { getAvatarDataUri, getInitialsAvatar } from "./AvatarService";
 import { generateColor } from "./Color";
 import { ICalendarEvent } from "./Contracts";
 import { FreeFormId, FreeFormEventsSource } from "./FreeFormEventSource";
@@ -700,13 +701,21 @@ class ExtensionContent extends React.Component {
                 capacityEvent.icons.slice(0, maxIconsToShow).forEach(element => {
                     if (element.src) {
                         var img: HTMLImageElement = document.createElement("img");
-                        img.src = element.src;
+                        const member = element.linkedEvent.member;
+                        const displayName = member ? member.displayName : element.linkedEvent.title;
+                        // Show initials until the real avatar resolves.
+                        img.src = getInitialsAvatar(displayName);
                         img.className = "event-icon";
                         img.title = element.linkedEvent.title;
                         img.onclick = () => {
                             this.eventToEdit = element.linkedEvent;
                             this.openDialog.value = Dialogs.NewDaysOffDialog;
                         };
+                        if (member) {
+                            getAvatarDataUri(member.descriptor, member.id, displayName).then(src => {
+                                img.src = src;
+                            });
+                        }
                         var content = arg.el.querySelector(".fc-content");
                         if (content) {
                             content.appendChild(img);

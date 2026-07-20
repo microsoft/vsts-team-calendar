@@ -8,6 +8,7 @@ import { Observer } from "azure-devops-ui/Observer";
 import { Surface, SurfaceBackground } from "azure-devops-ui/Surface";
 
 import { IEventCategory } from "./Contracts";
+import { AvatarIcon } from "./AvatarIcon";
 import { FreeFormEventsSource } from "./FreeFormEventSource";
 import { formatDateLocalized } from "./TimeLib";
 import { VSOCapacityEventSource } from "./VSOCapacityEventSource";
@@ -230,7 +231,14 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
                     style={{ cursor: "pointer", padding: "2px 8px 2px 8px", alignItems: "center" }}
                     onClick={handleClick}
                 >
-                    {item.imageUrl && <img alt="" className="category-icon" src={item.imageUrl} />}
+                    {item.imageUrl && (
+                        <AvatarIcon
+                            className="category-icon"
+                            descriptor={item.linkedEvent && item.linkedEvent.member ? item.linkedEvent.member.descriptor : undefined}
+                            identityId={item.linkedEvent && item.linkedEvent.member ? item.linkedEvent.member.id : undefined}
+                            displayName={item.title}
+                        />
+                    )}
                     {!item.imageUrl && displayColor && <div className="category-color" style={{ backgroundColor: displayColor }} />}
                     <div className="flex-column h-scroll-hidden catagory-data" style={{ flex: 1 }}>
                         <div className="category-titletext">{item.title}</div>

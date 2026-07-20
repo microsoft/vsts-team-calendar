@@ -336,26 +336,6 @@ export class VSOCapacityEventSource {
         }
     };
 
-    private async buildTeamImageUrl(id: string): Promise<string> {
-        if (!this.locationService) {
-            throw new Error("Location service is required for building team image URLs. Ensure the location service is properly initialized before calling this method.");
-        }
-
-        try {
-            // Use location service to get the proper resource area URL for GraphProfile
-            const graphResourceLocation = await this.locationService.getResourceAreaLocation("79134C72-4A58-4B42-976C-04E7115F32BF");
-            if (graphResourceLocation) {
-                return graphResourceLocation + "_apis/GraphProfile/MemberAvatars/" + id;
-            }
-        } catch (error) {
-            console.warn("GraphProfile resource area not available, trying service location fallback", error);
-        }
-
-        // Fallback to service location with legacy endpoint
-        const serviceLocation = await this.locationService.getServiceLocation();
-        return serviceLocation + "_api/_common/IdentityImage?id=" + id;
-    }
-
     private fetchCapacities = (iterationId: string): Promise<TeamMemberCapacityIdentityRef[]> => {
         // fetch capacities only if not in cache
         if (this.capacityMap[iterationId]) {
@@ -417,7 +397,8 @@ export class VSOCapacityEventSource {
 
                     const icon: IEventIcon = {
                         linkedEvent: event,
-                        src: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id)
+                        // Presence flag that this icon has an avatar; the image is resolved from member.descriptor.
+                        src: capacity.teamMember.id
                     };
 
                     // Track this day off range in the category map (once per range, not per day)
@@ -439,7 +420,7 @@ export class VSOCapacityEventSource {
                                 } else {
                                     capacityCatagoryMap[capacity.teamMember.id] = {
                                         eventCount: 1,
-                                        imageUrl: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id),
+                                        imageUrl: capacity.teamMember.id,
                                         subTitle: formatDateLocalized(start) + " - " + formatDateLocalized(end),
                                         title: capacity.teamMember.displayName,
                                         linkedEvent: event,
@@ -480,7 +461,6 @@ export class VSOCapacityEventSource {
         if (teamDaysOff && teamDaysOff.daysOff) {
             this.teamDayOffMap[iterationId] = teamDaysOff;
             for (const daysOffRange of teamDaysOff.daysOff) {
-                const teamImage = await this.buildTeamImageUrl(this.teamContext.teamId);
                 const start = shiftToLocal(daysOffRange.start);
                 const end = shiftToLocal(daysOffRange.end);
 
@@ -498,7 +478,7 @@ export class VSOCapacityEventSource {
 
                 const icon: IEventIcon = {
                     linkedEvent: event,
-                    src: teamImage
+                    src: this.teamContext.teamId
                 };
 
                 // Track this day off range in the category map (once per range, not per day)
@@ -520,7 +500,7 @@ export class VSOCapacityEventSource {
                             } else {
                                 capacityCatagoryMap[this.teamContext.team] = {
                                     eventCount: 1,
-                                    imageUrl: teamImage,
+                                    imageUrl: this.teamContext.teamId,
                                     subTitle: formatDateLocalized(start) + " - " + formatDateLocalized(end),
                                     title: this.teamContext.team,
                                     linkedEvent: event,

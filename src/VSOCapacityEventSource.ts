@@ -1,6 +1,8 @@
 import { getClient } from "azure-devops-extension-api";
 import { TeamContext } from "azure-devops-extension-api/Core";
 import { ILocationService } from "azure-devops-extension-api/Common";
+import { IdentityRef } from "azure-devops-extension-api/WebApi/WebApi";
+import * as SDK from "azure-devops-extension-sdk";
 import { ObservableValue, ObservableArray } from "azure-devops-ui/Core/Observable";
 import { EventInput } from "@fullcalendar/core";
 import { EventSourceError } from "@fullcalendar/core/structs/event-source";
@@ -15,6 +17,7 @@ export const Everyone = "Everyone";
 export const IterationId = "iteration";
 
 export class VSOCapacityEventSource {
+    private avatarCache: { [descriptor: string]: string } = {};
     private capacityMap: { [iterationId: string]: { [memberId: string]: TeamMemberCapacityIdentityRef } } = {};
     private capacitySummaryData: ObservableArray<IEventCategory> = new ObservableArray<IEventCategory>([]);
     private capacityUrl: ObservableValue<string> = new ObservableValue("");
@@ -289,6 +292,7 @@ export class VSOCapacityEventSource {
             team: teamName,
             teamId: teamId
         };
+        this.avatarCache = {};
         this.teamDayOffMap = {};
         this.capacityMap = {};
         this.iterations = [];
@@ -335,6 +339,80 @@ export class VSOCapacityEventSource {
             return this.workClient.updateCapacityWithIdentityRef(capacityPatch, this.teamContext, iterationId, oldEvent.member!.id);
         }
     };
+
+    /**
+     * Extracts the subject descriptor from an avatar href such as
+     * "https://.../_apis/GraphProfile/MemberAvatars/aad.Abc123..."
+     */
+    private extractDescriptorFromUrl(url: string | undefined): string | undefined {
+        if (!url) { return undefined; }
+        const match = url.match(/MemberAvatars\/([^\/\?]+)/);
+        return match ? match[1] : undefined;
+    }
+
+    /**
+     * Fetches the avatar for an identity using the Azure DevOps Graph Avatar API
+     * (GET _apis/graph/Subjects/{subjectDescriptor}/avatars).  The response
+     * contains base64-encoded image data which is returned as a data: URL so
+     * that the browser never needs to make a second authenticated request.
+     *
+     * Supports both Azure DevOps Service and Server 2020+.  The correct base
+     * URL is resolved via the location service's resource-area lookup, which
+     * automatically routes to the right host on both environments.
+     *
+     * Results are cached by descriptor for the lifetime of the event-source
+     * instance so that each team member's avatar is only fetched once.
+     */
+    private async fetchAvatarDataUrl(identity: IdentityRef): Promise<string | undefined> {
+        const descriptor: string | undefined =
+            identity.descriptor ||
+            this.extractDescriptorFromUrl((identity as any)._links?.avatar?.href);
+
+        if (!descriptor || !this.locationService) {
+            return undefined;
+        }
+
+        if (this.avatarCache[descriptor]) {
+            return this.avatarCache[descriptor];
+        }
+
+        try {
+            // "bb1e7ec9-e901-4b68-999a-de7012b920f8" is the Graph resource area.
+            // getResourceAreaLocation routes to vssps.dev.azure.com on Service
+            // and to the server base URL on Azure DevOps Server 2020+.
+            const graphBase = await this.locationService.getResourceAreaLocation("bb1e7ec9-e901-4b68-999a-de7012b920f8");
+            if (!graphBase) {
+                return undefined;
+            }
+
+            const accessToken = await SDK.getAccessToken();
+            // api-version 6.0-preview.1 is the earliest version that supports
+            // this endpoint and is therefore compatible with Server 2020+.
+            const url = `${graphBase}_apis/graph/Subjects/${encodeURIComponent(descriptor)}/avatars?api-version=6.0-preview.1`;
+
+            const response = await fetch(url, {
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Accept": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                return undefined;
+            }
+
+            const data = await response.json();
+            if (data.value) {
+                const dataUrl = `data:image/png;base64,${data.value}`;
+                this.avatarCache[descriptor] = dataUrl;
+                return dataUrl;
+            }
+        } catch (error) {
+            console.warn("[VSOCapacityEventSource] Graph Avatar API unavailable, falling back", error);
+        }
+
+        return undefined;
+    }
 
     private async buildTeamImageUrl(id: string): Promise<string> {
         if (!this.locationService) {
@@ -417,7 +495,9 @@ export class VSOCapacityEventSource {
 
                     const icon: IEventIcon = {
                         linkedEvent: event,
-                        src: capacity.teamMember.imageUrl || await this.buildTeamImageUrl(capacity.teamMember.id)
+                        src: await this.fetchAvatarDataUrl(capacity.teamMember)
+                        || capacity.teamMember.imageUrl
+                        || await this.buildTeamImageUrl(capacity.teamMember.id)
                     };
 
                     // Track this day off range in the category map (once per range, not per day)

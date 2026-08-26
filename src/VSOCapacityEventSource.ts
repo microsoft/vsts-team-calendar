@@ -17,7 +17,7 @@ export const Everyone = "Everyone";
 export const IterationId = "iteration";
 
 export class VSOCapacityEventSource {
-    private avatarCache: { [descriptor: string]: string } = {};
+    private avatarCache: { [descriptor: string]: Promise<string | undefined> } = {};
     private capacityMap: { [iterationId: string]: { [memberId: string]: TeamMemberCapacityIdentityRef } } = {};
     private capacitySummaryData: ObservableArray<IEventCategory> = new ObservableArray<IEventCategory>([]);
     private capacityUrl: ObservableValue<string> = new ObservableValue("");
@@ -292,7 +292,7 @@ export class VSOCapacityEventSource {
             team: teamName,
             teamId: teamId
         };
-        this.avatarCache = {};
+        this.avatarCache = {} as { [descriptor: string]: Promise<string | undefined> };
         this.teamDayOffMap = {};
         this.capacityMap = {};
         this.iterations = [];
@@ -372,15 +372,22 @@ export class VSOCapacityEventSource {
             return undefined;
         }
 
-        if (this.avatarCache[descriptor]) {
+        if (descriptor in this.avatarCache) {
             return this.avatarCache[descriptor];
         }
 
+        // Store the promise before any await so concurrent callers share one request.
+        const fetchPromise = this.doFetchAvatarDataUrl(descriptor);
+        this.avatarCache[descriptor] = fetchPromise;
+        return fetchPromise;
+    }
+
+    private async doFetchAvatarDataUrl(descriptor: string): Promise<string | undefined> {
         try {
             // "bb1e7ec9-e901-4b68-999a-de7012b920f8" is the Graph resource area.
             // getResourceAreaLocation routes to vssps.dev.azure.com on Service
             // and to the server base URL on Azure DevOps Server 2020+.
-            const graphBase = await this.locationService.getResourceAreaLocation("bb1e7ec9-e901-4b68-999a-de7012b920f8");
+            const graphBase = await this.locationService!.getResourceAreaLocation("bb1e7ec9-e901-4b68-999a-de7012b920f8");
             if (!graphBase) {
                 return undefined;
             }
@@ -403,9 +410,7 @@ export class VSOCapacityEventSource {
 
             const data = await response.json();
             if (data.value) {
-                const dataUrl = `data:image/png;base64,${data.value}`;
-                this.avatarCache[descriptor] = dataUrl;
-                return dataUrl;
+                return `data:image/png;base64,${data.value}`;
             }
         } catch (error) {
             console.warn("[VSOCapacityEventSource] Graph Avatar API unavailable, falling back", error);

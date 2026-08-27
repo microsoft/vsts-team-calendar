@@ -16,7 +16,7 @@
       "version": "[18.0,)"
     }
   ],
-  "scopes": ["vso.work_write"],
+  "scopes": ["vso.work_write", "vso.graph"],
   "icons": {
     "default": "static/v2-images/calendar-logo.png"
   },

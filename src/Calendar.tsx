@@ -25,6 +25,7 @@ import { Panel } from "azure-devops-ui/Panel";
 import { Spinner, SpinnerSize } from "azure-devops-ui/Spinner";
 import { TextField } from "azure-devops-ui/TextField";
 import { Location } from "azure-devops-ui/Utilities/Position";
+import { VssPersona } from "azure-devops-ui/VssPersona";
 
 import { View, EventApi, Duration, Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -698,19 +699,26 @@ class ExtensionContent extends React.Component {
                 const totalIcons = capacityEvent.icons.length;
                 
                 capacityEvent.icons.slice(0, maxIconsToShow).forEach(element => {
-                    if (element.src) {
-                        var img: HTMLImageElement = document.createElement("img");
-                        img.src = element.src;
-                        img.className = "event-icon";
-                        img.title = element.linkedEvent.title;
-                        img.onclick = () => {
-                            this.eventToEdit = element.linkedEvent;
-                            this.openDialog.value = Dialogs.NewDaysOffDialog;
-                        };
-                        var content = arg.el.querySelector(".fc-content");
-                        if (content) {
-                            content.appendChild(img);
-                        }
+                    const container = document.createElement("span");
+                    container.className = "event-icon";
+                    container.title = element.linkedEvent.title;
+                    container.onclick = () => {
+                        this.eventToEdit = element.linkedEvent;
+                        this.openDialog.value = Dialogs.NewDaysOffDialog;
+                    };
+                    const displayName = element.linkedEvent.member?.displayName || element.linkedEvent.title;
+                    ReactDOM.render(
+                        <VssPersona
+                            imageUrl={element.src}
+                            displayName={displayName}
+                            size="small"
+                            showInitialsOnImageError={true}
+                        />,
+                        container
+                    );
+                    var content = arg.el.querySelector(".fc-content");
+                    if (content) {
+                        content.appendChild(container);
                     }
                 });
                 

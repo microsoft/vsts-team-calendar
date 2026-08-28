@@ -9,7 +9,7 @@ import { Surface, SurfaceBackground } from "azure-devops-ui/Surface";
 
 import { IEventCategory } from "./Contracts";
 import { FreeFormEventsSource } from "./FreeFormEventSource";
-import { formatDateLocalized } from "./TimeLib";
+import { formatDateLocalized, shiftToLocal } from "./TimeLib";
 import { VSOCapacityEventSource } from "./VSOCapacityEventSource";
 
 interface ISummaryComponentProps {
@@ -194,6 +194,12 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
         return item.color;
     };
 
+    private getDisplayDate = (dateString: string): Date => {
+        // Summary items are stored as UTC-backed dates, but this panel is meant to show
+        // the user's calendar day, not the raw UTC instant.
+        return shiftToLocal(new Date(dateString));
+    };
+
     private renderSimpleRow = (item: IEventCategory, index: number): JSX.Element => {
         const hasMultipleEvents = item.eventCount > 1 && item.linkedEvents && item.linkedEvents.length > 1;
         const isExpanded = this.state.expandedCategories.has(item.title);
@@ -243,8 +249,8 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
                     )}
                 </div>
                 {isExpanded && hasMultipleEvents && [...item.linkedEvents!].sort((a, b) => {
-                    const dateA = new Date(a.startDate).getTime();
-                    const dateB = new Date(b.startDate).getTime();
+                    const dateA = this.getDisplayDate(a.startDate).getTime();
+                    const dateB = this.getDisplayDate(b.startDate).getTime();
                     return dateA - dateB;
                 }).map((event, eventIndex) => (
                     <div
@@ -276,7 +282,7 @@ export class SummaryComponent extends React.Component<ISummaryComponentProps, IS
                         <div className="flex-column h-scroll-hidden catagory-data">
                             <div className="category-titletext" style={{ fontSize: "13px", opacity: 1 }}>{event.title}</div>
                             <div className="category-subtitle" style={{ fontSize: "11px", opacity: 0.9 }}>
-                                {formatDateLocalized(new Date(event.startDate))} - {formatDateLocalized(new Date(event.endDate))}
+                                {formatDateLocalized(this.getDisplayDate(event.startDate))} - {formatDateLocalized(this.getDisplayDate(event.endDate))}
                             </div>
                         </div>
                     </div>

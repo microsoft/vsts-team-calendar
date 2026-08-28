@@ -73,7 +73,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
     endDate: ObservableValue<Date>;
     isConfirmationDialogOpen: ObservableValue<boolean>;
     isDatePickerOpen: ObservableValue<boolean>;
-    iteration?: TeamSettingsIteration;
+    iterations?: TeamSettingsIteration[];
     memberSelection: IListSelection;
     message: ObservableValue<string>;
     okButtonEnabled: ObservableValue<boolean>;
@@ -283,12 +283,12 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
         if (this.props.event) {
             promise = this.props.eventSource.updateEvent(this.props.event, this.props.event.iterationId!, this.startDate.value, this.endDate.value);
         } else {
-            promise = this.props.eventSource.addEvent(
-                this.iteration!.id,
-                this.startDate.value,
-                this.endDate.value,
-                this.selectedMemberName,
-                this.selectedMemberId
+            promise = Promise.all(
+                this.iterations!.map((iteration) => {
+                    const startDate = this.startDate.value > iteration.attributes.startDate ? this.startDate.value : iteration.attributes.startDate;
+                    const endDate = this.endDate.value < iteration.attributes.finishDate ? this.endDate.value : iteration.attributes.finishDate;
+                    return this.props.eventSource.addEvent(iteration.id, startDate, endDate, this.selectedMemberName, this.selectedMemberId);
+                })
             );
         }
         promise.then(() => {
@@ -305,8 +305,8 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
     private validateSelections = () => {
         let valid: boolean = this.startDate.value <= this.endDate.value;
         // start date and end date should be in same iteration
-        this.iteration = this.props.eventSource.getIterationForDate(this.startDate.value, this.endDate.value);
-        valid = valid && !!this.iteration;
+        this.iterations = this.props.eventSource.getIterationsForDate(this.startDate.value, this.endDate.value);
+        valid = valid && this.iterations.length > 0;
 
         if (valid) {
             if (this.message.value !== "") {
@@ -316,7 +316,7 @@ export class AddEditDaysOffDialog extends React.Component<IAddEditDaysOffDialogP
             if (this.startDate.value > this.endDate.value) {
                 this.message.value = "Start date must be same or before the end date.";
             } else {
-                this.message.value = "Selected dates are not part of any or same Iteration.";
+                this.message.value = "Selected dates are not part of any Iterations.";
             }
         }
         this.okButtonEnabled.value = valid;

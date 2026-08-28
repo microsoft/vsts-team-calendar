@@ -257,22 +257,28 @@ export class VSOCapacityEventSource {
         return this.groupedEventMap[dateString];
     };
 
-    public getIterationForDate = (startDate: Date, endDate: Date): TeamSettingsIteration | undefined => {
-        let iteration = undefined;
+    public getIterationsForDate = (startDate: Date, endDate: Date): TeamSettingsIteration[] => {
         startDate = shiftToUTC(startDate);
         endDate = shiftToUTC(endDate);
-        this.iterations.forEach(item => {
-            if (
-                item.attributes.startDate <= startDate &&
-                startDate <= item.attributes.finishDate &&
-                item.attributes.startDate <= endDate &&
-                endDate <= item.attributes.finishDate
-            ) {
-                iteration = item;
+        return this.iterations.filter((item) => {
+            // Iteration contains the start date
+            if (item.attributes.startDate <= startDate && startDate <= item.attributes.finishDate) {
+                return true;
             }
-        });
 
-        return iteration;
+            // Iteration contains the end date
+            if (item.attributes.startDate <= endDate && endDate <= item.attributes.finishDate) {
+                return true;
+            }
+
+            // Iteration does not overlap with either start nor end, but
+            // is completely within the date range
+            if (startDate <= item.attributes.startDate && item.attributes.finishDate <= endDate) {
+                return true;
+            }
+
+            return false;
+        });
     };
 
     public getIterationSummaryData = (): ObservableArray<IEventCategory> => {

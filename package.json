@@ -57,7 +57,8 @@
     "dev": "webpack-dev-server",
     "dev:http": "webpack-dev-server --server http",
     "test:vsix": "jest tests/vsix-package.test.ts",
-    "test": "npm run package-extension && npm run test:vsix"
+    "test:unit": "jest --testPathIgnorePatterns=\"/node_modules/|/dist/|vsix-package.test.ts\"",
+    "test": "npm run test:unit && npm run package-extension && npm run test:vsix"
   },
   "dependencies": {
     "@fullcalendar/core": "^4.1.0",

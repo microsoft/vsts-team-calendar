@@ -45,9 +45,27 @@ stages:
         extensionName: $(extensionName)
         outputPath: 'out'
 
+- stage: 'Test'
+  displayName: 'Run unit tests'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: 'UnitTests'
+    displayName: 'Unit tests'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '22.x'
+    - script: npm ci
+      displayName: 'Install dependencies'
+    - script: npm run test:unit
+      displayName: 'Run unit tests'
+
 - stage: 'DeployDev'
   displayName: 'Deploy to dev'
-  dependsOn: Build
+  dependsOn: Test
   condition: succeeded()
   jobs: 
   - template: deploy.yml@pipeline-templates
